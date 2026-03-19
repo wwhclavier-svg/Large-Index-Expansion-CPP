@@ -1,0 +1,98 @@
+cmake_minimum_required(VERSION 3.10)
+project(IBPTests)
+
+# 设置 C++ 标准
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# 查找 Eigen3 库（头文件库）
+#find_package(Eigen3 REQUIRED)
+#if(EIGEN3_FOUND)
+#    message(STATUS "Eigen3 found: ${EIGEN3_INCLUDE_DIR}")
+#else()
+#    message(FATAL_ERROR "Eigen3 not found. Please install Eigen3 or set EIGEN3_INCLUDE_DIR.")
+#endif()
+
+# 尝试使用 Config 模式查找 Eigen3（如果已安装且有 Eigen3Config.cmake）
+find_package(Eigen3 CONFIG QUIET)
+if(NOT Eigen3_FOUND)
+    # 降级使用 FindEigen3.cmake 模块（通常 CMake 自带）
+    find_package(Eigen3 MODULE REQUIRED)
+endif()
+
+# 包含头文件目录
+# 假设头文件位于 include/ 下，Eigen3 路径已由 find_package 提供
+include_directories(
+    include
+    ${EIGEN3_INCLUDE_DIR}
+)
+
+# 公共源文件（所有测试都需要）
+set(COMMON_SOURCES
+    src/layerRecursion.cpp
+)
+
+# 生成测试可执行文件 test_expand
+add_executable(test_expand
+    tests/test_expand.cpp
+    ${COMMON_SOURCES}
+)
+
+# 链接 Eigen3（仅需头文件，但仍需添加依赖）
+target_link_libraries(test_expand PRIVATE Eigen3::Eigen)
+
+# 生成测试可执行文件 test_recons
+add_executable(test_recons
+    tests/test_recons.cpp
+    ${COMMON_SOURCES}
+)
+
+target_link_libraries(test_recons PRIVATE Eigen3::Eigen)
+
+# 如果需要线程支持（目前代码未使用，但可保留）
+# find_package(Threads REQUIRED)
+# target_link_libraries(test_recons PRIVATE Threads::Threads)
+
+option(BUILD_FF_TESTS "Build finite field tests (requires FireFly)" ON)
+
+if(BUILD_FF_TESTS)
+    # 查找 FireFly 头文件
+    find_path(FIREFLY_INCLUDE_DIR
+        NAMES firefly/FFInt.hpp
+        PATHS /usr/local/include /usr/include
+        PATH_SUFFIXES firefly
+    )
+    # 查找 FireFly 库
+    find_library(FIREFLY_LIBRARY
+        NAMES firefly
+        PATHS /usr/local/lib /usr/lib
+    )
+    # 查找 GMP 库（FireFly 依赖）
+    find_library(GMP_LIBRARY NAMES gmp gmpxx)
+
+    if(FIREFLY_INCLUDE_DIR AND FIREFLY_LIBRARY AND GMP_LIBRARY)
+        message(STATUS "Found FireFly: ${FIREFLY_INCLUDE_DIR} / ${FIREFLY_LIBRARY}")
+        set(HAVE_FIREFLY TRUE)
+    else()
+        message(WARNING "FireFly or GMP not found, disabling finite field tests")
+        set(HAVE_FIREFLY FALSE)
+    endif()
+endif()
+
+if(HAVE_FIREFLY)
+    # 添加 FireFly 头文件路径
+    include_directories(${FIREFLY_INCLUDE_DIR})
+
+    # 生成有限域测试可执行文件
+    add_executable(test_expandFF
+        tests/test_expandFF.cpp
+        ${COMMON_SOURCES}
+    )
+    target_link_libraries(test_expandFF PRIVATE
+        ${FIREFLY_LIBRARY}
+        ${GMP_LIBRARY}
+        Eigen3::Eigen
+    )
+endif()
+
+
