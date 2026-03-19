@@ -1,0 +1,593 @@
+#ifndef RELATION_RECON_HPP
+#define RELATION_RECON_HPP
+
+#include <vector>
+#include <unordered_map>
+#include <map>
+#include <algorithm>
+#include <numeric>
+#include <cmath>
+#include <iostream>
+#include <iomanip>
+#include <tuple>
+#include <cstring> // for memcpy
+#include <memory>
+
+#include <random>
+#include <stdint.h>
+
+#include "RingDataLoader.hpp"
+#include "LinearSolver_Eigen.hpp"
+#include "LinearSolver_FF.hpp"
+#include "binomial.hpp"
+#include "SeriesCoefficient.hpp"
+#include "UnifiedStorage.hpp"
+
+//using namespace std;
+
+// ==========================================
+// 1. 基础工具：组合数与多重指标映射
+// ==========================================
+
+// 获取组合数 C(n, k)
+inline long long getCapacity(int n_vars, int sum_val) {
+    if (n_vars == 0) return 1;
+    if (sum_val < 0) return 0;
+    int n = sum_val + n_vars - 1;
+    int k = n_vars - 1;
+    if (n >= MAX_VAL || k >= MAX_VAL) return -1;
+    return BINOM[n][k];
+}
+
+// 降序索引函数
+inline int getIndex(const std::vector<int>& v, int current_level) {
+    int n = v.size();
+    int index = 0;
+    int remaining_sum = current_level;
+    for (int i = 0; i < n - 1; ++i) {
+        if (remaining_sum > v[i]) {
+            int slots = n - i;
+            index += BINOM[remaining_sum - v[i] + slots - 2][slots - 1];
+        }
+        remaining_sum -= v[i];
+    }
+    return index;
+}
+
+inline std::vector<int> readIndex(int idx, int level, int ne) {
+    std::vector<int> seed(ne, 0);
+    int current_sum = level;
+
+    // 逐位还原（除了最后一位，最后一位由剩余和决定）
+    for (int i = 0; i < ne - 1; ++i) {
+        // 尝试在该位置放置数值 x (从 0 到 current_sum)
+        // 我们利用组合数判断 idx 落在哪一个区间
+        for (int x = current_sum; x >= 0; --x) {
+            // 计算如果当前位置为 x，后面剩余位能产生的状态总数
+            // 剩余位置数 = (ne - 1) - i
+            // 剩余总和 = current_sum - x
+            // 状态数 = BINOM[(current_sum - x) + (ne - i - 2)][ne - i - 2]
+            
+            long long count = BINOM[(current_sum - x) + (ne - i - 2)][ne - i - 2];
+            
+            if (idx < count) {
+                // 如果 idx 在当前 x 覆盖的范围内，确定该位为 x
+                seed[i] = x;
+                current_sum -= x;
+                break;
+            } else {
+                // 否则，减去当前区间的数量，尝试更大的 x（或下一个分支）
+                idx -= count;
+            }
+        }
+    }
+
+    // 最后一位填入剩余的总和
+    seed[ne - 1] = current_sum;
+    
+    return seed;
+}
+
+// ==========================================
+// 4. 辅助打印工具
+// ==========================================
+template <typename T>
+void printVec(const char* name, const std::vector<T>& v) {
+    cout << name << ": {";
+    for(size_t i=0; i<v.size(); ++i) cout << v[i] << (i<v.size()-1?",":"");
+    cout << "} ";
+}
+
+inline void printMat(double* data, int rows, int cols, const string& prefix) {
+    for(int i=0; i<rows; ++i) {
+        cout << prefix << "[ ";
+        for(int j=0; j<cols; ++j) cout << setw(5) << data[i*cols+j] << " ";
+        cout << "]" << endl;
+    }
+}
+
+
+
+
+// ==========================================
+// 6. 业务逻辑求解器
+// ==========================================
+
+/**
+ * @param ne      每个 nu 向量的维度 (例如 2 维或 3 维指标)
+ * @param num_nu  需要生成的采样点个数
+ * @param min_val 随机范围最小值 (默认 0.0)
+ * @param max_val 随机范围最大值 (默认 1.0)
+ */
+template<typename T>
+std::vector<std::vector<T>> generateRandomNu(
+    int ne, int num_nu,
+    T min_val,                 // 浮点时最小值；整数时最小值（通常0）
+    T max_val,                 // 浮点时最大值；整数时最大值（通常p-1）
+    int modulus = 0)           // 整数时有效，浮点时无用
+{
+    std::random_device rd;
+    std::mt19937 gen(rd());
+
+    // 根据 T 的类型分发
+    if constexpr (std::is_floating_point_v<T>) {
+        // 浮点版本：均匀实数分布
+        std::uniform_real_distribution<T> dis(min_val, max_val);
+        std::vector<std::vector<T>> result(num_nu, std::vector<T>(ne));
+        for (int i = 0; i < num_nu; ++i)
+            for (int j = 0; j < ne; ++j)
+                result[i][j] = dis(gen);
+        return result;
+    }
+    else if constexpr (std::is_same_v<T, firefly::FFInt>) {
+        uint64_t low  = 0;                     // 若需要非零最小值，可用 min_val.n
+        uint64_t high = (modulus > 0) ? (modulus - 1) : max_val.n;
+        std::uniform_int_distribution<uint64_t> dis(low, high);
+        std::vector<std::vector<T>> result(num_nu, std::vector<T>(ne));
+        for (int i = 0; i < num_nu; ++i)
+            for (int j = 0; j < ne; ++j)
+                result[i][j] = firefly::FFInt(dis(gen)); // 显式构造
+        return result;
+    }
+    else {
+        static_assert(sizeof(T) == 0, "Unsupported type for generateRandomNu");
+    }
+}
+
+template<typename T>
+struct RegimeData {
+    seriesCoefficient<T>* C;      // 指向 std::vector 中的某一个元素
+    std::vector<int> theta;              // 当前区域的 theta 向量
+    std::vector<std::vector<T>> A_ops;      // 当前区域的 A_i 矩阵组
+    std::vector<std::vector<T>> A_inv_ops;  // 当前区域的 A_i 逆矩阵组
+    std::vector<std::vector<double>> nu_samples; // 该区域分配到的所有 nu 采样点
+    int nimax_idx;
+    int nb;                     // 通解编号 (通常为 1)
+};
+
+// 辅助：递归生成所有 |index| <= max_sum 的多重指标
+inline void generateAllIndices(int dim, int max_sum, std::vector<int>& current, std::vector<std::vector<int>>& result, bool allow_neg) {
+    if (current.size() == dim) {
+        result.push_back(current);
+        return;
+    }
+    for (int i = (allow_neg ? -max_sum : 0); i <= max_sum; ++i) {
+        current.push_back(i);
+        int current_sum = 0;
+        for (int x : current) current_sum += abs(x);
+        if (current_sum <= max_sum) {
+            generateAllIndices(dim, max_sum, current, result, allow_neg);
+        }
+        current.pop_back();
+    }
+}
+
+template<typename T>
+class RelationSolver {
+private:
+    int nb;      // 矩阵大小 (nb x nb)
+    int ne;      // 变量数 (多重指标维度)
+    int k_max;   // g 的最大幂次 (来自 seriesCoefficient 的 kmax), f1 的最大幂次
+    int lev;     // max |alpha|
+    int deg;     // max |beta|
+    
+    // 存储器
+    IndexStorage<T>* p_store;
+    IndexStorage<T>* g_store;
+    DualIndexStorage<T>* f1_store;
+    DualIndexStorage<T>* f2_store;
+
+    // 外部系数引用
+    seriesCoefficient<T>& C;
+
+public:
+    RelationSolver(int basis, int vars, int k_dim, int max_lev, int max_deg, seriesCoefficient<T>& coeff_h) 
+        : nb(basis), ne(vars), k_max(k_dim), lev(max_lev), deg(max_deg), C(coeff_h) {
+        
+        initBinomial();
+
+        // 初始化存储
+        p_store = new IndexStorage<T>(ne, nb * nb);
+        g_store = new IndexStorage<T>(ne, nb * (k_max + 1)); 
+        f1_store = new DualIndexStorage<T>(ne, k_max + 1);
+        f2_store = new DualIndexStorage<T>(ne, nb * (k_max + 1));
+    }
+
+    ~RelationSolver() {
+        delete p_store; delete g_store;
+        delete f1_store; delete f2_store;
+    }
+
+    /**
+     * @brief 动态重设 Solver 的 nb 指标并重新分配存储空间
+     * @param new_nb 新的矩阵块大小
+     */
+    void resetNB(int new_nb) {
+        if (this->nb == new_nb) return; // 大小未变，无需处理
+
+        this->nb = new_nb;
+
+        // 1. 删除旧存储
+        delete p_store;
+        delete g_store;
+        delete f1_store;
+        delete f2_store;
+
+        // 2. 根据新的 nb 重新分配 (保持 ne, k_max, f1_pow, lev, deg 不变)
+        // 注意：这里的内存分配逻辑必须与构造函数保持严格一致
+        p_store = new IndexStorage<T>(ne, nb * nb);
+        g_store = new IndexStorage<T>(ne, nb * (k_max + 1)); 
+        f1_store = new DualIndexStorage<T>(ne, k_max + 1);
+        f2_store = new DualIndexStorage<T>(ne, nb * (k_max + 1));
+
+        // 3. 清空缓存（可选，重新分配后通常已是干净状态）
+        // p_store 依赖 A，如果 A 也变了，这里正好重新开始计算
+    }
+
+    // --- 辅助：计算多重指标幂次 (\nu - \alpha)^\gamma ---
+    T multiPower(const std::vector<T>& nu, const std::vector<int>& alpha, const std::vector<int>& gamma) {
+        T res = 1;
+        for (int m = 0; m < ne; ++m) {
+            if constexpr (std::is_same_v<T, firefly::FFInt>) {
+                res = res * firefly::pow(nu[m] - T(alpha[m]), gamma[m]);
+            } else {
+                res = res * std::pow(nu[m] - static_cast<T>(alpha[m]), gamma[m]);
+            }
+        }
+        return res;
+    }
+
+    // ==========================================
+    // Step 1: 计算 p(alpha) = A^{-alpha}
+    // ==========================================
+    void step1_computeP(const std::vector<int>& alpha, const std::vector<std::vector<T>>& A_ops, const std::vector<std::vector<T>>& A_inv_ops) {
+        // --- 1. 检查缓存：如果已经计算过，直接退出 ---
+        if (p_store->retrieve(alpha) != nullptr) {
+            return;
+        }
+
+        // --- 2. Base Case: alpha = 0 -> Identity Matrix ---
+        bool is_zero = true;
+        for (int x : alpha) if (x != 0) { is_zero = false; break; }
+
+        if (is_zero) {
+            std::vector<T> identity(nb * nb, 0.0);
+            for (int i = 0; i < nb; ++i) identity[i * nb + i] = 1.0;
+            p_store->insert(alpha, identity);
+            return;
+        }
+
+        // --- 3. 递归步骤 ---
+        // 找到第一个非零维度 idx
+        int idx = -1;
+        for (int i = 0; i < ne; ++i) {
+            if (alpha[i] != 0) {
+                idx = i;
+                break;
+            }
+        }
+
+        // 构造前驱指标 prev_alpha
+        std::vector<int> prev_alpha = alpha;
+        const std::vector<T>* op_ptr = nullptr;
+    
+        if (alpha[idx] > 0) {
+            // alpha_i 为正，说明包含 A_i^{-1}，降级需向 0 靠拢
+            prev_alpha[idx]--;
+            op_ptr = &A_inv_ops[idx]; 
+        } else {
+            // alpha_i 为负，说明包含 A_i (因为 A^{-(-1)} = A)，降级需向 0 靠拢
+            prev_alpha[idx]++;
+            op_ptr = &A_ops[idx];
+        }
+
+        // 递归调用：确保 prev_alpha 已经存在于 p_store 中
+        step1_computeP(prev_alpha, A_ops, A_inv_ops);
+
+        // 获取递归结果
+        T* prev_data = p_store->retrieve(prev_alpha);
+        if (!prev_data) {
+            // 理论上不会走到这里，因为上面已经递归计算了
+            return;
+        }
+
+
+        // --- 4. 矩阵乘法：res = Op * Prev_data ---
+        std::vector<T> res(nb * nb, 0.0);
+        const std::vector<T>& op = *op_ptr;
+
+        for (int r = 0; r < nb; ++r) {
+            for (int c = 0; c < nb; ++c) {
+                T sum = 0.0;
+                for (int k = 0; k < nb; ++k) {
+                    // 标准矩阵乘法：Row of Op * Col of Prev
+                    sum += op[r * nb + k] * prev_data[k * nb + c];
+                }
+                res[r * nb + c] = sum;
+            }
+        }
+
+        // --- 5. 结果存入缓存 ---
+        p_store->insert(alpha, res);
+    }
+
+    // ==========================================
+    // Step 2: 修改版 - 计算 g(alpha)
+    // 逻辑：先根据 C 计算 h(alpha)，再计算 g = p * h
+    // ==========================================
+    void step2_computeG(const std::vector<int>& alpha, const std::vector<T>& nu_val, seriesCoefficient<T>& targetC,  int nimax_idx) {
+        T* p_ptr = p_store->retrieve(alpha);
+        if (!p_ptr) return;
+
+        // g 的系数：nb 行，k_max + 1 列
+        std::vector<T> g_val(nb * (k_max + 1), 0.0);
+
+        for (int k = 0; k <= k_max; ++k) {
+            // 1. 计算当前 alpha 下的 h_{j}^{(k)}
+            // h_j = \sum_{\gamma} c_{\gamma,j}^{(k)} (\nu-\alpha)^{\gamma}
+            std::vector<T> h_jk(nb, 0.0);
+            
+            // 遍历 C 中的 l 层 (对应 |gamma|)
+            // 假设 incre=1, l 从 0 到 k
+            for (int l = 0; l <= k; ++l) { 
+                int states = BINOM[l + ne - 1][ne - 1];
+                for (int cid = 0; cid < states; ++cid) {
+                    // 解码 cid 得到 gamma 向量 (需要实现 decodeIndex)
+                    std::vector<int> gamma = readIndex(cid, l, ne); 
+                    T weight = multiPower(nu_val, alpha, gamma);
+
+                    for (int j = 0; j < nb; ++j) {
+                        // 使用你定义的 C 访问算子: C(k, l, cid, j, nimax_idx)
+                        h_jk[j] += targetC(k, l, cid, j, nimax_idx) * weight;
+                    }
+                }
+            }
+
+            // 2. 矩阵乘法：g_i = \sum_j p_{ij} * h_j
+            for (int i = 0; i < nb; ++i) {
+                for (int j = 0; j < nb; ++j) {
+                    g_val[i * (k_max + 1) + k] += p_ptr[i * nb + j] * h_jk[j];
+                }
+            }
+        }
+        g_store->insert(alpha, g_val);
+    }
+
+    // ==========================================
+    // Step 3: 计算 f1(beta)
+    // Formula: f1_l based on expansion of (\theta + \nu/n)^\beta
+    // 逻辑同前：计算 (\theta + \nu/n)^\beta 的多项式系数
+    // ==========================================
+    void step3_computeF1(const std::vector<int>& alpha, const std::vector<int>& beta, 
+                         const std::vector<int>& theta, const std::vector<T>& nu) {
+        
+        // f1 储存的是多项式系数 c_0 + c_1 n^{-1} + ... 
+        // 这是一个标量多项式
+        std::vector<T> poly(k_max + 1, 0.0);
+        
+        // 计算 (\theta + \nu x)^\beta 的展开系数
+        // 对于 beta 的每一维 i: term_i = (theta_i + nu_i * x)^{beta_i}
+        // 总结果是所有 term_i 的多项式乘积
+        
+        poly[0] = 1.0; // 初始化为 1
+        
+        for(int i = 0; i < ne; ++i) {
+            int b = beta[i];
+            if(b == 0) continue;
+            
+            // 构建单项 (theta + nu*x)^b
+            std::vector<T> term_poly(b + 1, 0.0);
+            T th = static_cast<T>(theta[i]);
+            T n_val = nu[i];
+            
+            // 二项式展开 (theta + nu*x)^b = sum C(b,m) theta^{b-m} (nu*x)^m
+            for(int m=0; m<=b; ++m) {
+                T coef = BINOM[b][m] * std::pow(th, b-m) * std::pow(n_val, m);
+                term_poly[m] = coef;
+            }
+            
+            // 多项式乘法: poly = poly * term_poly
+            std::vector<T> new_poly(k_max + 1, 0.0);
+            for(int p1=0; p1 <= k_max; ++p1) {
+                if(poly[p1] == 0) continue;
+                for(int p2=0; p2 <= b; ++p2) {
+                    if(p1 + p2 <= k_max) {
+                        new_poly[p1 + p2] += poly[p1] * term_poly[p2];
+                    }
+                }
+            }
+            poly = new_poly;
+        }
+
+        // 存入 DualIndexStorage
+        f1_store->insert(alpha, poly, beta); 
+        // 注意：alpha 其实不影响 f1 的值，但数据结构要求存 (alpha, beta)。
+        // 如果 f1 只依赖 beta，可以优化，但题目要求按 (alpha, beta) 结构。
+    }
+
+    // ==========================================
+    // Step 4: 计算 f2 = f1 * g (多项式卷积)
+    // Formula: f2_{i, k'} = \sum_{l+k = k'} f1_l * g_{i, k}
+    // 逻辑同前：f1_l 和 g_{i,k} 的卷积 -> f2_{i, k_total}
+    // ==========================================
+    void step4_computeF2(const std::vector<int>& alpha, const std::vector<int>& beta) {
+        T* g_ptr = g_store->retrieve(alpha);
+        T* f1_ptr = f1_store->retrieve(alpha, beta);
+        
+        if(!g_ptr || !f1_ptr) return;
+
+        int f2_len = k_max + 1; // 卷积后长度扩展
+        // f2 也是 nb 行，每行是一个长度为 f2_len 的多项式
+        // 存储布局: index = i * f2_len + p
+        std::vector<T> f2_val(nb * f2_len, 0.0);
+
+        for(int i = 0; i < nb; ++i) {
+            // 对每一行 i
+            
+            // 遍历 f1 的幂次 l
+            for(int l = 0; l <= k_max; ++l) {
+                T f1_val = f1_ptr[l];
+                if(f1_val == 0) continue;
+
+                // 遍历 g 的幂次 k
+                for(int k = 0; k <= k_max-l; ++k) {
+                    T g_val = g_ptr[i * k_max + k];
+                    
+                    // 卷积: 幂次相加
+                    int target_pow = l + k;
+                    if(target_pow < f2_len) {
+                        f2_val[i * f2_len + target_pow] += f1_val * g_val;
+                    }
+                }
+            }
+        }
+        f2_store->insert(alpha, f2_val, beta);
+    }
+
+    // ==========================================
+    // Step 5: 新增 - 构造最终线性方程组矩阵
+    // 将 (i, k_total) 映射为行，(alpha, beta) 映射为列
+    // ==========================================
+    std::vector<std::vector<T>> buildFinalMatrix(const std::vector<std::vector<int>>& alphas, 
+                                            const std::vector<std::vector<int>>& betas) {
+        int total_k = k_max + 1;
+        int rows = nb * total_k;
+        int cols = alphas.size() * betas.size();
+        
+        std::vector<std::vector<T>> mat(rows, std::vector<T>(cols, 0.0));
+
+        for (size_t a_idx = 0; a_idx < alphas.size(); ++a_idx) {
+            for (size_t b_idx = 0; b_idx < betas.size(); ++b_idx) {
+                T* f2_ptr = f2_store->retrieve(alphas[a_idx], betas[b_idx]);
+                if (!f2_ptr) continue;
+
+                int col_idx = a_idx * betas.size() + b_idx;
+                
+                for (int i = 0; i < nb; ++i) {
+                    for (int kt = 0; kt < total_k; ++kt) {
+                        int row_idx = i * total_k + kt;
+                        mat[row_idx][col_idx] = f2_ptr[i * total_k + kt];
+                    }
+                }
+            }
+        }
+        return mat;
+    }
+
+    std::vector<std::vector<T>> buildAllEquation(const std::vector<RegimeData<T>>& regimes) {
+        std::vector<std::vector<T>> global_matrix;
+
+        for (const auto& reg : regimes) {
+            // 每一个 regime 可能会贡献多行方程
+            // 调用之前定义的 solveAll 逻辑（内部遍历 reg.nu_samples）
+            auto sub_mat = this->buildRegimeEquation(reg);
+            
+            // 垂直堆叠：将子矩阵追加到总矩阵末尾
+            global_matrix.insert(global_matrix.end(), sub_mat.begin(), sub_mat.end());
+        }
+        return global_matrix;
+    }
+
+private:
+    // 处理单个 regime 的函数
+    std::vector<std::vector<T>> buildRegimeEquation(const RegimeData<T>& reg) {
+        // 关键：在处理不同 regime 前，必须根据其对应的 A 重新计算 P(alpha)
+        resetNB(reg.nb);
+        p_store->clear(); 
+        nb = reg.nb;
+        cout << "nb : "<< nb << endl;
+        
+        // 生成 alphas, betas (列定义)
+        std::vector<std::vector<int>> alphas, betas;
+        std::vector<int> temp;
+        generateAllIndices(ne, lev, temp, alphas, false); 
+        temp.clear();
+        generateAllIndices(ne, deg, temp, betas, false);
+
+        // 预计算当前 regime 的 p(alpha)
+        for (const auto& a : alphas) {
+            step1_computeP(a, reg.A_ops, reg.A_inv_ops);
+        }
+
+        std::vector<std::vector<T>> regime_mat;
+
+        // 遍历该 regime 下的所有 nu 采样点
+        for (const auto& nu : reg.nu_samples) {
+            g_store->clear();
+            f1_store->clear();
+            f2_store->clear();
+
+            for (const auto& a : alphas) {
+                // 注意：这里的 step2 需要访问 reg.C 指向的系数
+                this->step2_computeG(a, nu, *(reg.C), reg.nimax_idx); 
+                
+                for (const auto& b : betas) {
+                    step3_computeF1(a, b, reg.theta, nu);
+                    step4_computeF2(a, b);
+                                
+                    //cout << "p("; printVec("a ",a); printVec("b ",b); cout << "): " << endl;
+                    //printMat(f2_store->retrieve(a,b),reg.nb,k_max+1,"");
+                    //cout << endl;
+                }
+            }
+            auto nu_mat = buildFinalMatrix(alphas, betas);
+            regime_mat.insert(regime_mat.end(), nu_mat.begin(), nu_mat.end());
+        }
+        cout << "#eqn:  " << regime_mat.size() << endl;
+        return regime_mat;
+    }
+};
+
+template<typename T>
+std::vector<RegimeData<T>> buildAllRegimes(std::vector<std::vector<seriesCoefficient<T>>>& CTable, 
+        std::vector<std::vector<int>> sector, std::vector<std::vector<std::vector<T>>> A_list, 
+        std::vector<std::vector<std::vector<T>>> Ainv_list, int ne, int nu_per_regime) {
+    std::vector<RegimeData<T>> all_regimes;
+
+    for (int r = 0; r < CTable.size(); ++r) {
+        for(int s = 0; s < CTable[r].size(); ++s) {
+            RegimeData<T> regime;
+        
+            // 指向 std::vector 中的元素（注意：确保 C_list 在 Solver 执行期间不发生扩容/移动，否则指针失效）
+            regime.C = &CTable[r][s]; 
+            
+            // 设置该区域特有的 theta (例如维度为 ne)
+            regime.theta = sector[r]; 
+            
+            // 设置该区域的矩阵 A 和 A_inv (每个维度一个矩阵)
+            regime.A_ops = A_list[r]; // { matA1, matA2, ... };
+            regime.A_inv_ops = Ainv_list[r]; //{ matA1_inv, matA2_inv, ... };
+            regime.nb = (regime.C)->basis_size();
+            
+            // 为该区域分配采样点 nu (这些点通常是在该区域对应的定义域内随机生成的)
+            regime.nu_samples = generateRandomNu<T>(ne, nu_per_regime, 0.0, 1.0);
+            
+            regime.nimax_idx = 0; // 默认使用第一组通解系数
+
+            all_regimes.push_back(regime);
+        }
+    }
+    return all_regimes;
+}
+
+#endif // RELATION_RECON_HPP

@@ -1,0 +1,807 @@
+#include <vector>
+#include <unordered_map>
+#include <map>
+#include <algorithm>
+#include <numeric>
+#include <cmath>
+#include <iostream>
+#include <iomanip>
+#include <tuple>
+#include <cstring> // for memcpy
+
+#include <stdint.h>
+
+using namespace std;
+
+#include "LinearSolver_Eigen.hpp"
+
+// ==========================================
+// 1. 基础工具：组合数与多重指标映射
+// ==========================================
+
+const int MAX_VAL = 30;
+long long BINOM[MAX_VAL][MAX_VAL];
+
+void initBinomial() {
+    for (int i = 0; i < MAX_VAL; i++) {
+        BINOM[i][0] = 1;
+        for (int j = 1; j <= i; j++) {
+            BINOM[i][j] = BINOM[i - 1][j - 1] + BINOM[i - 1][j];
+        }
+    }
+}
+
+// 获取组合数 C(n, k)
+long long getCapacity(int n_vars, int sum_val) {
+    if (n_vars == 0) return 1;
+    if (sum_val < 0) return 0;
+    int n = sum_val + n_vars - 1;
+    int k = n_vars - 1;
+    if (n >= MAX_VAL || k >= MAX_VAL) return -1;
+    return BINOM[n][k];
+}
+
+// 降序索引函数
+int getIndex(const vector<int>& v, int current_level) {
+    int n = v.size();
+    int index = 0;
+    int remaining_sum = current_level;
+    for (int i = 0; i < n - 1; ++i) {
+        if (remaining_sum > v[i]) {
+            int slots = n - i;
+            index += BINOM[remaining_sum - v[i] + slots - 2][slots - 1];
+        }
+        remaining_sum -= v[i];
+    }
+    return index;
+}
+
+vector<int> readIndex(int idx, int level, int ne) {
+    vector<int> seed(ne, 0);
+    int current_sum = level;
+
+    // 逐位还原（除了最后一位，最后一位由剩余和决定）
+    for (int i = 0; i < ne - 1; ++i) {
+        // 尝试在该位置放置数值 x (从 0 到 current_sum)
+        // 我们利用组合数判断 idx 落在哪一个区间
+        for (int x = current_sum; x >= 0; --x) {
+            // 计算如果当前位置为 x，后面剩余位能产生的状态总数
+            // 剩余位置数 = (ne - 1) - i
+            // 剩余总和 = current_sum - x
+            // 状态数 = BINOM[(current_sum - x) + (ne - i - 2)][ne - i - 2]
+            
+            long long count = BINOM[(current_sum - x) + (ne - i - 2)][ne - i - 2];
+            
+            if (idx < count) {
+                // 如果 idx 在当前 x 覆盖的范围内，确定该位为 x
+                seed[i] = x;
+                current_sum -= x;
+                break;
+            } else {
+                // 否则，减去当前区间的数量，尝试更大的 x（或下一个分支）
+                idx -= count;
+            }
+        }
+    }
+
+    // 最后一位填入剩余的总和
+    seed[ne - 1] = current_sum;
+    
+    return seed;
+}
+
+// ==========================================
+// 2. 地址结构定义
+// ==========================================
+
+struct TensorAddress {
+    uint32_t secNo;
+    int dot, rank;
+    long long dotNo, rankNo;
+    int pd_dim, isp_dim;
+};
+
+TensorAddress rawToAddress(const vector<int>& indices) {
+    TensorAddress addr;
+    addr.secNo = 0;
+    vector<int> pdSet, ispSet;
+    int n = indices.size();
+
+    for (int i = 0; i < n; ++i) {
+        if (indices[i] > 0) {
+            addr.secNo |= (1 << i);
+            pdSet.push_back(indices[i]);
+        } else {
+            ispSet.push_back(-indices[i]);
+        }
+    }
+
+    addr.dot = accumulate(pdSet.begin(), pdSet.end(), 0);
+    addr.rank = accumulate(ispSet.begin(), ispSet.end(), 0);
+    addr.pd_dim = pdSet.size();
+    addr.isp_dim = ispSet.size();
+    addr.dotNo = getIndex(pdSet, addr.dot);
+    
+    // 保持与原逻辑一致，ispSet 逆序计算 rankNo
+    vector<int> revIspSet = ispSet;
+    std::reverse(revIspSet.begin(), revIspSet.end());
+    addr.rankNo = getIndex(revIspSet, addr.rank); 
+
+    return addr;
+}
+
+// ==========================================
+// 3. 核心存储结构：GenericStorage
+// ==========================================
+
+struct BlockKey {
+    uint32_t secNo;
+    int dot, rank;
+    // 用于 DualIndexStorage 的额外维度 (Level), IndexStorage 时设为 -1
+    int level; 
+
+    bool operator<(const BlockKey& o) const {
+        return std::tie(secNo, dot, rank, level) < std::tie(o.secNo, o.dot, o.rank, o.level);
+    }
+};
+
+/**
+ * @brief 通用数据块
+ * 统一管理 IndexStorage 和 DualIndexStorage 的内存
+ */
+class GenericBlock {
+public:
+    long long dot_cap, rank_cap, exp_cap;
+    int element_size; // 每个格点储存的数据大小 (Matrix: N*N, Vector: K)
+    std::vector<double> data;
+
+    // 构造函数
+    GenericBlock(int pd_dim, int isp_dim, int dot, int rank, 
+                 int exp_dim, int level, int elem_size) 
+        : element_size(elem_size) {
+        
+        dot_cap = getCapacity(pd_dim, dot);
+        rank_cap = getCapacity(isp_dim, rank);
+        
+        // 如果 exp_dim <= 0，说明是 IndexStorage模式，exp_cap 视为 1
+        exp_cap = (exp_dim > 0) ? getCapacity(exp_dim, level) : 1;
+
+        long long total_items = dot_cap * rank_cap * exp_cap;
+        data.resize(total_items * element_size, 0.0);
+    }
+
+    // 通用 Setter (通过指针写入，避免拷贝)
+    void set(long long dNo, long long rNo, long long eNo, const std::vector<double>& val) {
+        // Index = ( (d * R_cap + r) * E_cap + e ) * Size
+        long long idx = ((dNo * rank_cap + rNo) * exp_cap + eNo) * element_size;
+        for(int i=0; i<element_size; ++i) data[idx + i] = val[i];
+    }
+    
+    // 获取数据指针
+    double* getPtr(long long dNo, long long rNo, long long eNo = 0) {
+        long long idx = ((dNo * rank_cap + rNo) * exp_cap + eNo) * element_size;
+        return &data[idx];
+    }
+};
+
+/**
+ * @brief 模板化存储管理类
+ * Mode 0: IndexStorage (Key: alpha)
+ * Mode 1: DualIndexStorage (Key: alpha, beta)
+ */
+template <int Mode>
+class UnifiedStorage {
+private:
+    std::map<BlockKey, GenericBlock> table;
+    int total_vars; // 对应 ne
+    int default_elem_size; // 默认元素大小
+
+public:
+    UnifiedStorage(int ne, int elem_size) : total_vars(ne), default_elem_size(elem_size) {}
+
+    // 获取或创建块 (Index 模式)
+    GenericBlock& getBlock(const TensorAddress& addr, int level = -1) {
+        int l_key = (Mode == 0) ? -1 : level;
+        BlockKey key = {addr.secNo, addr.dot, addr.rank, l_key};
+        
+        if (table.find(key) == table.end()) {
+            // Index模式下 exp_dim=0, Dual模式下 exp_dim=total_vars
+            int e_dim = (Mode == 0) ? 0 : total_vars;
+            table.emplace(std::piecewise_construct,
+                std::forward_as_tuple(key),
+                std::forward_as_tuple(addr.pd_dim, addr.isp_dim, addr.dot, addr.rank, 
+                                      e_dim, l_key, default_elem_size));
+        }
+        return table.at(key);
+    }
+
+    // 写入 (重载：支持 Index 和 Dual Index)
+    void insert(const vector<int>& alpha, const std::vector<double>& val, 
+                const vector<int>& beta = {}) {
+        TensorAddress addr = rawToAddress(alpha);
+        
+        long long expNo = 0;
+        int level = -1;
+
+        if constexpr (Mode == 1) {
+            level = accumulate(beta.begin(), beta.end(), 0);
+            expNo = getIndex(beta, level);
+        }
+
+        GenericBlock& block = getBlock(addr, level);
+        block.set(addr.dotNo, addr.rankNo, expNo, val);
+    }
+
+    // 读取指针
+    double* retrieve(const vector<int>& alpha, const vector<int>& beta = {}) {
+        TensorAddress addr = rawToAddress(alpha);
+        
+        long long expNo = 0;
+        int level = -1;
+        if constexpr (Mode == 1) {
+            level = accumulate(beta.begin(), beta.end(), 0);
+            expNo = getIndex(beta, level);
+        }
+
+        BlockKey key = {addr.secNo, addr.dot, addr.rank, level};
+        if (table.find(key) == table.end()) return nullptr;
+        
+        return table.at(key).getPtr(addr.dotNo, addr.rankNo, expNo);
+    }
+
+    // 检查是否存在 (用于递归基)
+    bool exists(const vector<int>& alpha) {
+        TensorAddress addr = rawToAddress(alpha);
+        BlockKey key = {addr.secNo, addr.dot, addr.rank, -1};
+        // 注意：这里只检查 Block 是否存在，不检查具体 slot 是否填入
+        // 实际应用需配合 computed flag 使用
+        return table.find(key) != table.end();
+    }
+
+    // 将存储的所有 b_{alpha, beta} 对应的系数导出为一个巨大的矩阵
+    // 行索引：(i, k_total)，列索引：(alpha_idx, beta_idx)
+    std::vector<std::vector<double>> toFinalMatrix(
+        const std::vector<std::vector<int>>& all_alphas,
+        const std::vector<std::vector<int>>& all_betas,
+        int nb, int total_k_max) {
+        
+        int row_count = nb * total_k_max;
+        int col_count = all_alphas.size() * all_betas.size();
+        std::vector<std::vector<double>> matrix(row_count, std::vector<double>(col_count, 0.0));
+
+        for (size_t a_idx = 0; a_idx < all_alphas.size(); ++a_idx) {
+            for (size_t b_idx = 0; b_idx < all_betas.size(); ++b_idx) {
+                double* data_ptr = this->retrieve(all_alphas[a_idx], all_betas[b_idx]);
+                if (!data_ptr) continue;
+
+                int col = a_idx * all_betas.size() + b_idx;
+                // data_ptr 存储的是 f2_{i, k_total}
+                for (int i = 0; i < nb; ++i) {
+                    for (int kt = 0; kt < total_k_max; ++kt) {
+                        int row = i * total_k_max + kt;
+                        matrix[row][col] = data_ptr[i * total_k_max + kt];
+                    }
+                }
+            }
+        }
+        return matrix;
+    }
+};
+
+// 类型别名定义
+using IndexStorage = UnifiedStorage<0>;      // 储存 Matrix (p, g)
+using DualIndexStorage = UnifiedStorage<1>;  // 储存 Vector/Matrix (f1, f2)
+
+
+// ==========================================
+// 4. 辅助打印工具
+// ==========================================
+void printVec(const char* name, const vector<int>& v) {
+    cout << name << ": {";
+    for(size_t i=0; i<v.size(); ++i) cout << v[i] << (i<v.size()-1?",":"");
+    cout << "} ";
+}
+
+void printMatrix(double* data, int rows, int cols, const string& prefix) {
+    for(int i=0; i<rows; ++i) {
+        cout << prefix << "[ ";
+        for(int j=0; j<cols; ++j) cout << setw(5) << data[i*cols+j] << " ";
+        cout << "]" << endl;
+    }
+}
+
+
+// ==========================================
+// 5. 展开系数储存 
+// ==========================================
+
+template<typename T>
+class seriesCoefficient {
+private:
+    std::vector<T> data;
+    // offsets[k][l] 存储逻辑层 (k, l) 在一维 data 中的起始下标
+    std::vector<std::vector<size_t>> offsets;
+    
+    int ne;    // 向量指标维数
+    int nb;    // 矩阵 block 维度 (nb*nb，针对 nb=1 优化)
+    int nimax; // 通解个数
+
+public:
+    seriesCoefficient()  : ne(0), nb(0), nimax(0) {}
+    /**
+     * @param kmax  最大 Order
+     * @param incre 每级 Order 对应的 Level 增量 (lmax = incre * k)
+     * @param ne    对应组合数公式中的参数 (BINOM[l+ne-1][ne-1])
+     * @param nb    对应维度 nb
+     * @param nimax 对应通解个数
+     * @param BINOM 外部传入的组合数预计算表 (二维数组)
+     */
+    seriesCoefficient(int kmax, int incre, int ne, int nb, int nimax, long long (&BINOM)[MAX_VAL][MAX_VAL]) 
+        : ne(ne), nb(nb), nimax(nimax) {
+
+        offsets.resize(kmax + 1);
+        size_t total_elements = 0;
+
+        // --- 1. 预计算偏移量表 (一次性完成) ---
+        for (int k = 0; k <= kmax; ++k) {
+            int lmax = incre * k;
+            offsets[k].resize(lmax + 1);
+            
+            for (int l = 0; l <= lmax; ++l) {
+                // 记录当前 (k, l) 组合在 data 数组中的绝对起始位置
+                offsets[k][l] = total_elements;
+                
+                // 计算当前层级的 Seed (cid) 数量
+                long long states = BINOM[l + ne - 1][ne - 1];
+                
+                // 累加总大小：当前层 seeds 数 * nb * (nimax + 1)
+                // 使用 nimax + 1 是为了兼容索引从 0 到 nimax 的访问
+                total_elements += (size_t)states * nb * (nimax + 1);
+            }
+        }
+
+        // --- 2. 物理内存分配 ---
+        // 使用 assign 确保内存被分配并初始化为 0
+        data.assign(total_elements, T(0));
+
+        // 打印内存预警（可选）
+        // std::cout << "[Storage] Allocated " << (total_elements * sizeof(T)) / (1024.0 * 1024.0) << " MB." << std::endl;
+    }
+
+    /**
+     * 5维索引访问：C(k, l, cid, j, i)
+     * 时间复杂度：O(1)，仅包含 1 次向量查表和 3 次乘法
+     */
+    inline T& operator()(int k, int l, int cid, int j, int i) {
+        // 核心公式：层起始偏移 + cid偏移 + j偏移 + i偏移
+        return data[offsets[k][l] + (size_t)cid * nb * (nimax + 1) + j * (nimax + 1) + i];
+    }
+
+    /**
+     * 4维层级指针访问：C(k, l, cid, j)
+     * 返回指向连续 i 维数据的指针，方便进行批量计算或 memcpy
+     */
+    inline T* operator()(int k, int l, int cid, int j) {
+        return &data[offsets[k][l] + (size_t)cid * nb * (nimax + 1) + j * (nimax + 1)];
+    }
+
+    /**
+     * 3维层级指针访问：C(k, l, cid)
+     * 返回指向该 seed 下所有 j 和 i 数据的起始指针
+     */
+    inline T* operator()(int k, int l, int cid) {
+        return &data[offsets[k][l] + (size_t)cid * nb * (nimax + 1)];
+    }
+
+    // 获取底层一维数组的引用，方便整体操作
+    std::vector<T>& raw_data() { return data; }
+
+    // 重置所有系数为 0
+    void clear() {
+        std::fill(data.begin(), data.end(), T(0));
+    }
+
+    // 获取总元素个数
+    size_t total_size() const { return data.size(); }
+};
+
+// ==========================================
+// 6. 业务逻辑求解器
+// ==========================================
+
+// 辅助：递归生成所有 |index| <= max_sum 的多重指标
+void generateAllIndices(int dim, int max_sum, vector<int>& current, vector<vector<int>>& result, bool allow_neg) {
+    if (current.size() == dim) {
+        result.push_back(current);
+        return;
+    }
+    for (int i = (allow_neg ? -max_sum : 0); i <= max_sum; ++i) {
+        current.push_back(i);
+        int current_sum = 0;
+        for (int x : current) current_sum += abs(x);
+        if (current_sum <= max_sum) {
+            generateAllIndices(dim, max_sum, current, result, allow_neg);
+        }
+        current.pop_back();
+    }
+}
+
+class Solver {
+private:
+    int nb;      // 矩阵大小 (nb x nb)
+    int ne;      // 变量数 (多重指标维度)
+    int k_max;   // g 的最大幂次 (来自 seriesCoefficient 的 kmax), f1 的最大幂次
+    int lev;     // max |alpha|
+    int deg;     // max |beta|
+    
+    // 存储器
+    IndexStorage* p_store;
+    IndexStorage* g_store;
+    DualIndexStorage* f1_store;
+    DualIndexStorage* f2_store;
+
+    // 外部系数引用
+    seriesCoefficient<double>& C;
+
+public:
+    Solver(int basis, int vars, int k_dim, int max_lev, int max_deg, seriesCoefficient<double>& coeff_h) 
+        : nb(basis), ne(vars), k_max(k_dim), lev(max_lev), deg(max_deg), C(coeff_h) {
+        
+        initBinomial();
+
+        // 初始化存储
+        p_store = new IndexStorage(ne, nb * nb);
+        g_store = new IndexStorage(ne, nb * (k_max + 1)); 
+        f1_store = new DualIndexStorage(ne, k_max + 1);
+        f2_store = new DualIndexStorage(ne, nb * (k_max + 1));
+    }
+
+    ~Solver() {
+        delete p_store; delete g_store;
+        delete f1_store; delete f2_store;
+    }
+
+    // --- 辅助：计算多重指标幂次 (\nu - \alpha)^\gamma ---
+    double multiPower(const vector<double>& nu, const vector<int>& alpha, const vector<int>& gamma) {
+        double res = 1.0;
+        for (int m = 0; m < ne; ++m) {
+            res *= pow(nu[m] - (double)alpha[m], gamma[m]);
+        }
+        return res;
+    }
+
+    // ==========================================
+    // Step 1: 计算 p(alpha) = A^{-alpha}
+    // ==========================================
+void step1_computeP(const vector<int>& alpha, const vector<vector<double>>& A_ops, const vector<vector<double>>& A_inv_ops) {
+        // --- 1. 检查缓存：如果已经计算过，直接退出 ---
+        if (p_store->retrieve(alpha) != nullptr) {
+            return;
+        }
+
+        // --- 2. Base Case: alpha = 0 -> Identity Matrix ---
+        bool is_zero = true;
+        for (int x : alpha) if (x != 0) { is_zero = false; break; }
+
+        if (is_zero) {
+            vector<double> identity(nb * nb, 0.0);
+            for (int i = 0; i < nb; ++i) identity[i * nb + i] = 1.0;
+            p_store->insert(alpha, identity);
+            return;
+        }
+
+        // --- 3. 递归步骤 ---
+        // 找到第一个非零维度 idx
+        int idx = -1;
+        for (int i = 0; i < ne; ++i) {
+            if (alpha[i] != 0) {
+                idx = i;
+                break;
+            }
+        }
+
+        // 构造前驱指标 prev_alpha
+        vector<int> prev_alpha = alpha;
+        const vector<double>* op_ptr = nullptr;
+
+        if (alpha[idx] > 0) {
+            // alpha_i 为正，说明包含 A_i^{-1}，降级需向 0 靠拢
+            prev_alpha[idx]--;
+            op_ptr = &A_inv_ops[idx]; 
+        } else {
+            // alpha_i 为负，说明包含 A_i (因为 A^{-(-1)} = A)，降级需向 0 靠拢
+            prev_alpha[idx]++;
+            op_ptr = &A_ops[idx];
+        }
+
+        // 递归调用：确保 prev_alpha 已经存在于 p_store 中
+        step1_computeP(prev_alpha, A_ops, A_inv_ops);
+
+        // 获取递归结果
+        double* prev_data = p_store->retrieve(prev_alpha);
+        if (!prev_data) {
+            // 理论上不会走到这里，因为上面已经递归计算了
+            return;
+        }
+
+        // --- 4. 矩阵乘法：res = Op * Prev_data ---
+        vector<double> res(nb * nb, 0.0);
+        const vector<double>& op = *op_ptr;
+
+        for (int r = 0; r < nb; ++r) {
+            for (int c = 0; c < nb; ++c) {
+                double sum = 0.0;
+                for (int k = 0; k < nb; ++k) {
+                    // 标准矩阵乘法：Row of Op * Col of Prev
+                    sum += op[r * nb + k] * prev_data[k * nb + c];
+                }
+                res[r * nb + c] = sum;
+            }
+        }
+
+        // --- 5. 结果存入缓存 ---
+        p_store->insert(alpha, res);
+    }
+
+    // ==========================================
+    // Step 2: 修改版 - 计算 g(alpha)
+    // 逻辑：先根据 C 计算 h(alpha)，再计算 g = p * h
+    // ==========================================
+    void step2_computeG(const vector<int>& alpha, const vector<double>& nu_val, int nimax_idx) {
+        double* p_ptr = p_store->retrieve(alpha);
+        if (!p_ptr) return;
+
+        // g 的系数：nb 行，k_max + 1 列
+        vector<double> g_val(nb * (k_max + 1), 0.0);
+
+        for (int k = 0; k <= k_max; ++k) {
+            // 1. 计算当前 alpha 下的 h_{j}^{(k)}
+            // h_j = \sum_{\gamma} c_{\gamma,j}^{(k)} (\nu-\alpha)^{\gamma}
+            vector<double> h_jk(nb, 0.0);
+            
+            // 遍历 C 中的 l 层 (对应 |gamma|)
+            // 假设 incre=1, l 从 0 到 k
+            for (int l = 0; l <= k; ++l) { 
+                int states = BINOM[l + ne - 1][ne - 1];
+                for (int cid = 0; cid < states; ++cid) {
+                    // 解码 cid 得到 gamma 向量 (需要实现 decodeIndex)
+                    vector<int> gamma = readIndex(cid, l, ne); 
+                    double weight = multiPower(nu_val, alpha, gamma);
+
+                    for (int j = 0; j < nb; ++j) {
+                        // 使用你定义的 C 访问算子: C(k, l, cid, j, nimax_idx)
+                        h_jk[j] += C(k, l, cid, j, nimax_idx) * weight;
+                    }
+                }
+            }
+
+            // 2. 矩阵乘法：g_i = \sum_j p_{ij} * h_j
+            for (int i = 0; i < nb; ++i) {
+                for (int j = 0; j < nb; ++j) {
+                    g_val[i * (k_max + 1) + k] += p_ptr[i * nb + j] * h_jk[j];
+                }
+            }
+        }
+        g_store->insert(alpha, g_val);
+    }
+
+    // ==========================================
+    // Step 3: 计算 f1(beta)
+    // Formula: f1_l based on expansion of (\theta + \nu/n)^\beta
+    // 逻辑同前：计算 (\theta + \nu/n)^\beta 的多项式系数
+    // ==========================================
+    void step3_computeF1(const vector<int>& alpha, const vector<int>& beta, 
+                         const vector<double>& theta, const vector<double>& nu) {
+        
+        // f1 储存的是多项式系数 c_0 + c_1 n^{-1} + ... 
+        // 这是一个标量多项式
+        vector<double> poly(k_max + 1, 0.0);
+        
+        // 计算 (\theta + \nu x)^\beta 的展开系数
+        // 对于 beta 的每一维 i: term_i = (theta_i + nu_i * x)^{beta_i}
+        // 总结果是所有 term_i 的多项式乘积
+        
+        poly[0] = 1.0; // 初始化为 1
+        
+        for(int i = 0; i < ne; ++i) {
+            int b = beta[i];
+            if(b == 0) continue;
+            
+            // 构建单项 (theta + nu*x)^b
+            vector<double> term_poly(b + 1, 0.0);
+            double th = theta[i];
+            double n_val = nu[i];
+            
+            // 二项式展开 (theta + nu*x)^b = sum C(b,m) theta^{b-m} (nu*x)^m
+            for(int m=0; m<=b; ++m) {
+                double coef = BINOM[b][m] * std::pow(th, b-m) * std::pow(n_val, m);
+                term_poly[m] = coef;
+            }
+            
+            // 多项式乘法: poly = poly * term_poly
+            vector<double> new_poly(k_max + 1, 0.0);
+            for(int p1=0; p1 <= k_max; ++p1) {
+                if(poly[p1] == 0) continue;
+                for(int p2=0; p2 <= b; ++p2) {
+                    if(p1 + p2 <= k_max) {
+                        new_poly[p1 + p2] += poly[p1] * term_poly[p2];
+                    }
+                }
+            }
+            poly = new_poly;
+        }
+
+        // 存入 DualIndexStorage
+        f1_store->insert(alpha, poly, beta); 
+        // 注意：alpha 其实不影响 f1 的值，但数据结构要求存 (alpha, beta)。
+        // 如果 f1 只依赖 beta，可以优化，但题目要求按 (alpha, beta) 结构。
+    }
+
+    // ==========================================
+    // Step 4: 计算 f2 = f1 * g (多项式卷积)
+    // Formula: f2_{i, k'} = \sum_{l+k = k'} f1_l * g_{i, k}
+    // 逻辑同前：f1_l 和 g_{i,k} 的卷积 -> f2_{i, k_total}
+    // ==========================================
+    void step4_computeF2(const vector<int>& alpha, const vector<int>& beta) {
+        double* g_ptr = g_store->retrieve(alpha);
+        double* f1_ptr = f1_store->retrieve(alpha, beta);
+        
+        if(!g_ptr || !f1_ptr) return;
+
+        int f2_len = k_max + 1; // 卷积后长度扩展
+        // f2 也是 nb 行，每行是一个长度为 f2_len 的多项式
+        // 存储布局: index = i * f2_len + p
+        vector<double> f2_val(nb * f2_len, 0.0);
+
+        for(int i = 0; i < nb; ++i) {
+            // 对每一行 i
+            
+            // 遍历 f1 的幂次 l
+            for(int l = 0; l <= k_max; ++l) {
+                double f1_val = f1_ptr[l];
+                if(f1_val == 0) continue;
+
+                // 遍历 g 的幂次 k
+                for(int k = 0; k <= k_max-l; ++k) {
+                    double g_val = g_ptr[i * k_max + k];
+                    
+                    // 卷积: 幂次相加
+                    int target_pow = l + k;
+                    if(target_pow < f2_len) {
+                        f2_val[i * f2_len + target_pow] += f1_val * g_val;
+                    }
+                }
+            }
+        }
+        f2_store->insert(alpha, f2_val, beta);
+    }
+
+    // ==========================================
+    // Step 5: 新增 - 构造最终线性方程组矩阵
+    // 将 (i, k_total) 映射为行，(alpha, beta) 映射为列
+    // ==========================================
+    vector<vector<double>> buildFinalMatrix(const vector<vector<int>>& alphas, 
+                                            const vector<vector<int>>& betas) {
+        int total_k = k_max + 1;
+        int rows = nb * total_k;
+        int cols = alphas.size() * betas.size();
+        
+        vector<vector<double>> mat(rows, vector<double>(cols, 0.0));
+
+        for (size_t a_idx = 0; a_idx < alphas.size(); ++a_idx) {
+            for (size_t b_idx = 0; b_idx < betas.size(); ++b_idx) {
+                double* f2_ptr = f2_store->retrieve(alphas[a_idx], betas[b_idx]);
+                if (!f2_ptr) continue;
+
+                int col_idx = a_idx * betas.size() + b_idx;
+                
+                for (int i = 0; i < nb; ++i) {
+                    for (int kt = 0; kt < total_k; ++kt) {
+                        int row_idx = i * total_k + kt;
+                        mat[row_idx][col_idx] = f2_ptr[i * total_k + kt];
+                    }
+                }
+            }
+        }
+        return mat;
+    }
+
+    vector<vector<double>> solveAll(
+        const vector<double>& nu_val, 
+        const vector<double>& theta, 
+        const vector<vector<double>>& A_ops,
+        const vector<vector<double>>& A_inv_ops,
+        int nimax_idx
+    ) {
+        // 1. 生成指标集
+        vector<vector<int>> alphas, betas;
+        vector<int> temp;
+        generateAllIndices(ne, lev, temp, alphas, false); // |alpha| <= lev (不含负数)
+        temp.clear();
+        generateAllIndices(ne, deg, temp, betas, false); // |beta| <= deg (非负)
+
+        // 2. 依次计算
+        for (const auto& alpha : alphas) {
+            // Step 1: P = A^-alpha (这里简化为 A_inv 的幂次模拟)
+            //printVec("alpha ",alpha); cout << endl;
+            step1_computeP(alpha, A_ops, A_inv_ops);
+            //cout << "p(alpha): " << endl;
+            //if(p_store->exists(alpha)) printMatrix(p_store->retrieve(alpha),nb,nb,"");
+            //cout << endl;
+
+            // Step 2: G = P * H
+            step2_computeG(alpha, nu_val, nimax_idx);
+            //cout <<  "g(alpha): " << endl;
+            //if(g_store->exists(alpha)) printMatrix(g_store->retrieve(alpha),nb,k_max+1,"");
+            //cout << endl;
+
+            // Step 3 & 4: F1, F2
+            for (const auto& beta : betas) {
+                // Step 3: F1 (展开 (theta + nu*x)^beta)
+                //printVec("beta ",beta); cout << endl;
+                step3_computeF1(alpha, beta, theta, nu_val);
+                //printMatrix(f1_store->retrieve(alpha, beta),1,k_max+1,"f1");
+                //cout << endl;
+
+
+                // Step 4: F2 = F1 * G
+                step4_computeF2(alpha, beta);
+                //cout << "f2("; printVec("a",alpha);printVec("b",beta); cout <<")" <<endl;
+                //printMatrix(f2_store->retrieve(alpha, beta),nb,k_max+1,"");
+                //cout << endl;
+            }
+        }
+
+        // 3. 构造最终矩阵 (Step 5)
+        auto final_mat = buildFinalMatrix(alphas, betas);
+
+        return final_mat;
+    }
+};
+
+
+// ==========================================
+// 3. 测试主逻辑
+// ==========================================
+
+
+int main() {
+    initBinomial();
+    
+    int ne = 2, nb = 2, kmax = 1, deg = 1, lev = 1;
+    int nimax = 1;
+
+    // 1. 初始化系数 C
+    seriesCoefficient<double> C_test(kmax, 1, ne, nb, nimax, BINOM);
+    // 随便填一些测试数据：当 k=1, l=0, j=0 时系数为 0.5
+    C_test(1, 0, 0, 0, 0) = 0.5; 
+    C_test(0, 0, 0, 0, 0) = 1.0;
+
+    // 2. 初始化 Solver
+    Solver solver(nb, ne, kmax, lev, deg, C_test);
+
+    // 3. 随机设置测试参数
+    vector<double> nu = {0.5, 0.2};
+    vector<double> theta = {1.0, 1.0};
+    vector<vector<double>> A_inv = {{0.5, 0, 0, 0.5}, {0.2, 0, 0, 0.2}};
+    vector<vector<double>> A = {{2, 0, 0, 2}, {5, 0, 0, 5}};
+
+    // 4. 运行打包函数
+    cout << "Running solveAll..." << endl;
+    auto result_matrix = solver.solveAll(nu, theta, A, A_inv, 0);
+
+    // 5. 打印结果矩阵的维度和部分值
+    cout << "Result Matrix Size: " << result_matrix.size() << "x" << result_matrix[0].size() << endl;
+    cout << "Sample values (Top-left 5x5 if exists):" << endl;
+    for(int i=0; i<min((int)result_matrix.size(), 20); ++i) {
+        for(int j=0; j<min((int)result_matrix[0].size(), 15); ++j) {
+            cout << setw(10) << result_matrix[i][j] << " ";
+        }
+        cout << endl;
+    }
+
+    auto res = solveLinearSystem(result_matrix);
+    printResult(res);
+
+    return 0;
+}

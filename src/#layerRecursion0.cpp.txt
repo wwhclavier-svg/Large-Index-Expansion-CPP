@@ -1,0 +1,1421 @@
+#include <iostream>
+#include <iomanip>
+#include <chrono>
+#include <thread>
+
+#include <fstream>
+#include <string>
+#include <regex>
+#include <sstream>
+
+#include <cmath>
+#include <set>
+#include <vector>
+#include <array>
+#include <unordered_map>
+#include <algorithm>
+#include <Eigen/Dense>
+
+/* 1. Input data structure  */ 
+using namespace std;
+double threshold = 1e-30;
+
+template<typename T>
+void printMatrix(vector<vector<vector<T>>> Mat){
+    for(int i = 0; i < Mat.size(); ++i) {
+        for(int j = 0; j < Mat[0].size(); ++j) {
+            cout << Mat[i][j][0];
+            if(j < Mat[0].size()-1) cout << "\t";
+        }
+        cout << endl;
+    }
+}
+
+template<typename T>
+void printMatrix(vector<vector<T>> Mat){
+    for(int i = 0; i < Mat.size(); ++i) {
+        for(int j = 0; j < Mat[0].size(); ++j) {
+            cout << Mat[i][j];
+            if(j < Mat[0].size()-1) cout << "\t";
+        }
+        cout << endl;
+    }
+}
+
+#include "IBPMatrixLoader.hpp"
+#include "LinearSolver_Eigen.hpp"
+#include "RelationRecon.hpp"
+#include "RingDataLoader.hpp"
+
+// --- 2.1 解析辅助函数定义 ---
+
+/* 2. Functions */
+/* 2.1  lastNonZero */
+int lastNonZero(const vector<int>& list) {
+    int i = static_cast<int>(list.size()) - 1;
+    // 逻辑：索引不越界 且 当前值为 0，就继续往前找
+    while (i >= 0 && list[i] == 0) {
+        --i;
+    }
+    return i;
+}
+
+/* 2.2 seedGenerator */
+// 内部使用的辅助递归函数
+void findPartitions(int level, int n, int current_index, vector<int>& buffer, vector<vector<int>>& current_level_results) {
+    // 递归终止：填满了所有位置
+    if (current_index == n) {
+        if (level == 0) {
+            current_level_results.push_back(buffer);
+        }
+        return;
+    }
+
+    // 字典序遍历：i 从 0 到当前剩余的 level
+    for (int i = level; i >= 0; --i) {
+        buffer[current_index] = i;
+        findPartitions(level - i, n, current_index + 1, buffer, current_level_results);
+    }
+}
+
+/**
+ * 生成从 level 0 到 maxlevel 的所有整数分割
+ * 返回格式：[level][index][array_element]
+ */
+vector<vector<vector<int>>> seedGenerator(int maxlevel, int n) {
+    // 初始化外层容器，大小为 maxlevel + 1 (包含 level 0 到 maxlevel)
+    vector<vector<vector<int>>> all_results(maxlevel + 1);
+    
+    // 路径缓冲区，所有 level 复用这一个 buffer
+    vector<int> buffer(n);
+
+    for (int L = 0; L <= maxlevel; ++L) {
+        // 直接针对结果集中的某一层进行填充，避免中间拷贝
+        findPartitions(L, n, 0, buffer, all_results[L]);
+    }
+
+    return all_results;
+}
+
+
+
+/* 2.3 take expansion coefficient with offset */
+
+
+inline int getIndexOffSet(int old_level, vector<int> &seed, int k, int i) {
+    
+    // 1. 原地修改：seed + k*unitVec(i)
+    seed[i] += k;
+
+    // 2. O(1) 计算新 level
+    int new_level = old_level + k;
+
+    // 3. 边界安全检查（可选）：确保新 level 不为负且不越界
+    // if (new_level < 0 || new_level >= C[order].size()) { ... }
+
+    // 4. 降序索引查找并取值
+    int idx = getIndex(seed, new_level);
+
+    // 5. 回溯恢复原状
+    seed[i] -= k;
+
+    return idx;
+}
+
+/**
+ * 2.4 取值函数与赋值函数
+ */
+template <typename containerT>
+inline const containerT& getValueOffSet(const vector<vector<vector<containerT>>>& C, int order, int old_level, vector<int>& seed, 
+                 int k, int i, int l, int j) {
+    
+    // 1. 原地修改
+    seed[i] += k;
+    seed[j] += l;
+
+    // 2. O(1) 计算新 level
+    int new_level = old_level + k + l;
+
+    // 3. 降序索引查找
+    int idx = getIndex(seed, new_level);
+    //for(int ii=0; ii < seed.size(); ++ii) {cout << seed[ii] << " "; }
+    //cout << "\nidx:  " << idx << endl;
+    
+    // 4. 取值并回溯
+    const containerT& result = C[order][new_level][idx];
+    
+    seed[i] -= k;
+    seed[j] -= l;
+
+    return result;
+}
+
+template <typename containerT>
+inline const containerT& getValueOffSet(const vector<vector<vector<containerT>>>& C, int order, int old_level, vector<int>& seed, 
+                 int k, int i) {
+    
+    // 1. 原地修改：seed + k*unitVec(i)
+    seed[i] += k;
+
+    // 2. O(1) 计算新 level
+    int new_level = old_level + k;
+
+    // 3. 边界安全检查（可选）：确保新 level 不为负且不越界
+    // if (new_level < 0 || new_level >= C[order].size()) { ... }
+
+    // 4. 降序索引查找并取值
+    int idx = getIndex(seed, new_level);
+    const containerT& result = C[order][new_level][idx];
+
+    // 5. 回溯恢复原状
+    seed[i] -= k;
+
+    return result;
+}
+/**
+ * 重载版本：无指标变化
+ * 逻辑：直接获取当前 seed 对应的值
+ */
+template <typename containerT>
+inline const containerT& getValueOffSet(const vector<vector<vector<containerT>>>& C, int order, int old_level, const vector<int>& seed)
+{
+    
+    // 1. 直接计算当前 seed 的降序索引
+    // 注意：这里 seed 是 const 引用，因为不需要修改和回溯
+    int idx = getIndex(seed, old_level);
+
+    // 2. 直接取值
+    return C[order][old_level][idx];
+}
+
+template <typename T>
+inline T* getValuePtrOffSet(seriesCoefficient<T>& C, int order, int old_level, vector<int>& seed, 
+                             int k, int di, int l, int dj) {
+    
+    seed[di] += k;
+    seed[dj] += l;
+    int new_level = old_level + k + l;
+
+    int cid = getIndex(seed, new_level);
+    
+    // 返回指向 i = 0 位置的指针
+    T* result_ptr = C(order, new_level, cid);
+    
+    seed[di] -= k;
+    seed[dj] -= l;
+
+    return result_ptr; 
+}
+
+template <typename T>
+inline T* getValuePtrOffSet(seriesCoefficient<T>& C, int order, int old_level, vector<int>& seed, 
+                             int k, int di) {
+    
+    seed[di] += k;
+    int new_level = old_level + k;
+
+    int cid = getIndex(seed, new_level);
+    
+    // 返回指向 i = 0 位置的指针
+    T* result_ptr = C(order, new_level, cid);
+    
+    seed[di] -= k;
+
+    return result_ptr; 
+}
+
+template <typename T>
+inline T* getValuePtrOffSet(seriesCoefficient<T>& C, int order, int old_level, vector<int>& seed) {
+
+    int cid = getIndex(seed, old_level);
+    
+    // 返回指向 i = 0 位置的指针
+    T* result_ptr = C(order, old_level, cid);
+
+    return result_ptr; 
+}
+
+template <typename containerT>
+void setValueOffSet(vector<vector<vector<containerT>>>& C, int order, int old_level, 
+                    vector<int>& seed, int k, int i, const containerT& val) {
+    
+    // 1. 原地修改：seed + k*unitVec(i)
+    seed[i] += k;
+
+    // 2. O(1) 计算新 level
+    int new_level = old_level + k;
+
+    // 3. 计算降序索引并填充数值
+    int idx = getIndex(seed, new_level);
+    C[order][new_level][idx] = val;
+
+    // 4. 回溯恢复 seed 原状
+    seed[i] -= k;
+}
+
+template <typename containerT>
+void setValueOffSet(vector<vector<vector<containerT>>>& C, int order, int level, 
+                    vector<int>& seed, const containerT& val) {
+
+    int idx = getIndex(seed, level);
+    C[order][level][idx] = val;
+
+}
+
+
+/* 2.6 vector operation */
+
+
+bool notin(const std::vector<int>& list, int a) {
+    // std::find 如果找不到，会返回 list.end()
+    return std::find(list.begin(), list.end(), a) == list.end();
+}
+
+template<typename T>
+T sgn(int l) { return static_cast<T>(l % 2 == 0 ? 1 : -1); }
+
+template<typename T>
+void addTo(T &A, const T &B) { A += B; }
+
+template<typename T>
+void addTo(vector<T> &A, const vector<T> &B)
+{
+    for(size_t i = 0; i < min(A.size(),B.size()); ++i) { A[i] += B[i]; }
+}
+
+template<typename T>
+void addTo(vector<vector<T>> &A, const vector<vector<T>> &B)
+{
+    for(size_t i = 0; i < min(A.size(),B.size()); ++i) { addTo(A[i], B[i]); }
+}
+
+template<typename T>
+void multiplyTo(T &A, const T &c) { A *= c; }
+
+template<typename T>
+void multiplyTo(vector<T> &A, const T &c)
+{
+    for(size_t i = 0; i < A.size(); ++i) { A[i] *= c; }
+}
+
+template<typename T>
+vector<T> multiplyBy(const vector<T> &A, const T &c)
+{
+    vector<T> res(A.size());
+    for(size_t i = 0; i < A.size(); ++i) { res[i] = A[i] * c; }
+    return res;
+}
+
+
+template<typename T>
+void multiplyTo(vector<vector<T>> &A, const T &c)
+{
+    for(size_t i = 0; i < A.size(); ++i) { multiplyTo(A[i], c); }
+}
+
+template<typename T>
+vector<T> dot(const vector<T> &A, const vector<T> &B, int ncol, int nrow)
+{
+    vector<T> res(nrow,0);
+    for(int i = 0; i < nrow; ++i) {
+        for(int j = 0; j < ncol; ++j) {
+            res[i] += A[ncol*i+j]*B[j];
+        }
+    }
+    return res;
+}
+
+template<typename T>
+vector<vector<T>> dot(const vector<T> &A, const vector<vector<T>> &B, int ncol, int nrow)
+{
+    vector<vector<T>> res(nrow);
+    for(int i = 0; i < nrow; ++i) {
+        res[i].assign(B[0].size(),0);
+        for(int j = 0; j < ncol; ++j) {
+            addTo(res[i], multiplyBy(B[j], A[ncol*i+j]));
+        }
+    }
+    return res;
+} // ncol = nb, nrow = nb
+
+
+/* 2.6 打印 */
+
+void printCoefKey(std::array<int,4> idx, int ne)
+{
+    vector<int> multiIndex = readIndex(idx[2],idx[1],ne);
+    cout << "["<<idx[0]<<",["; 
+    for(int j1 = 0; j1 < ne; ++j1) { 
+        cout << multiIndex[j1]; 
+        if(j1 < ne - 1) { cout << ","; }
+    } 
+    cout << "]("<< idx[2] <<")]" << endl;
+}
+
+template<typename T>
+void printLinearResult(const LinearSystemResult<T> res, const vector<std::array<int,4>>& eqnvar, int ne) {
+    cout << "solved" <<endl;
+    for(int i = 0; i < res.Mext.size(); ++i) {
+        for(int  j = 0 ; j < res.Mext[i].size(); ++j) {
+            cout << res.Mext[i][j] << "\t";
+        }
+        cout << endl;
+    }
+
+    cout << "indep var: " << endl;
+    for(int i = 0; i < res.S.size(); ++i) { 
+        auto idx = eqnvar[res.S[i]];
+        printCoefKey(idx, ne);
+    }
+}
+
+template<typename T>
+void printCoefValue(vector<vector<vector<vector<vector<T>>>>> &CoefValue, std::array<int,4> idx, int nindep, int ne)
+{
+    vector<int> multiIndex = readIndex(idx[2],idx[1],ne);
+    cout << "["<<idx[0]<<",["; 
+    for(int j1 = 0; j1 < ne; ++j1) { 
+        cout << multiIndex[j1]; 
+        if(j1 < ne - 1) { cout << ","; }
+    } 
+    cout << "]("<< idx[2] <<")]  -> "  << CoefValue[idx[0]][idx[1]][idx[2]][idx[3]][0] << " + [";
+    for(int j1 = 0; j1 < nindep; ++j1) { 
+        cout << CoefValue[idx[0]][idx[1]][idx[2]][idx[3]][j1+1]; 
+        if(j1 < nindep - 1) { cout << ","; }
+    } 
+    cout << "]" << endl;
+}
+
+/**
+ * 打印指定 seed 及其级数系数
+ * @param C      系数容器
+ * @param idx    包含 {k, l, cid, j} 的索引数组
+ * @param nS     当前独立变量的数量 (对应 res.S.size())
+ * @param ne     用于辅助输出的标识
+ */
+template <typename T>
+void printSeriesCoef(seriesCoefficient<T>& C, const std::array<int, 4>& idx, int nS, int ne) {
+    int k   = idx[0];
+    int l   = idx[1];
+    int cid = idx[2];
+    int j   = idx[3];
+
+    // 1. 获取指向该 seed, 该 j 块起始位置的指针
+    T* coef_ptr = C(k, l, cid, j);
+
+    // 2. 打印头部信息
+    cout << "c[" << k << "][";
+    vector<int> cvec = readIndex(cid,l,ne);
+    for(int i = 0; i < ne; ++i) { 
+        cout <<  cvec[i]; if(i < ne-1) cout << ",";
+    }
+    cout << "]["<< j << "] = ";
+    
+    // 3. 打印系数
+    // 索引 0 是特解项/常数项，1 到 nS 是独立变量的系数
+    cout << coef_ptr[0];
+    bool has_indep = false;
+    for (int i = 1; i <= nS; ++i) {
+        if (coef_ptr[i] != 0) { // 只打印非零系数，减少干扰
+            cout << " + " << coef_ptr[i] << " * S"<<i;
+            has_indep = true;
+        }
+    }
+    
+    //if (!has_indep && nS > 0) {
+    //    std::cout << " + 0 ";
+    //}
+    std::cout << "\n" << std::string(40, '-') << std::endl;
+}
+
+
+
+
+/* 3. Main Function: expansion generation  */
+
+template <typename T> 
+class inhomogTerms {
+private:
+    std::vector<T> data;
+    
+    // 基础参数
+    int nibp, nb, ne, nimax_p1, incre;
+    int nplus_max, mplus_max;
+
+    // 偏移量
+    size_t off_NMinus, off_NZero, off_NPluMi, off_M1, off_Total;
+    size_t off_NPlusBase, off_MPlusBase;
+
+    // 每一个 (nibp * nb) 块的物理长度
+    size_t block_len;
+
+    // --- 专用的矩阵计算缓冲区 ---
+    // 使用一维 vector 模拟 nb * nb 矩阵
+    std::vector<T> mat_buf1; 
+    std::vector<T> mat_buf2; 
+    std::vector<T> sum_buf;
+
+    /**
+     * 矩阵-向量级数点积并累加： Y += M * X
+     * @param dest_ptr   指向 inhomogTerms 中目标块的起始指针 (size: nb * (nimax+1))
+     * @param mat        nb*nb 的系数矩阵 (一维平铺存储)
+     * @param src_ptr    指向 seriesCoefficient 中源块的起始指针 (size: nb * (nimax+1))
+     * @param nb         矩阵维度
+     * @param nimax_p1   物理阶数 (nimax + 1)
+     * @param nindep_p1  当前逻辑处理的阶数 (nindep + 1)
+     */
+    inline void addProductTo(T* dest_ptr, const std::vector<T>& mat, T* src_ptr, int nindep_p1) {
+        for (int r = 0; r < nb; ++r) {
+            T* row_dest = dest_ptr + (size_t)r * nimax_p1;
+            for (int c = 0; c < nb; ++c) {
+                T scalar = mat[r * nb + c];
+                if (scalar == 0) continue; 
+                T* col_src = src_ptr + (size_t)c * nimax_p1;
+                for (int i = 0; i < nindep_p1; ++i) row_dest[i] += scalar * col_src[i];
+            }
+        }
+    }
+
+    inline void addScaledProductTo(T* dest, const vector<T>& mat, T factor, T* src, int nindep_p1) {
+        if (factor == 0) return;
+        for (int r = 0; r < nb; ++r) {
+            T* row_d = dest + (size_t)r * nimax_p1;
+            for (int c = 0; c < nb; ++c) {
+                T scalar = mat[r * nb + c] * factor; // 在这里完成乘法
+                if (scalar == 0) continue;
+                T* col_s = src + (size_t)c * nimax_p1;
+                for (int i = 0; i < nindep_p1; ++i) row_d[i] += scalar * col_s[i];
+            }
+        }
+    }
+
+    void add_NMinus_contribution(const IBPMatrixE<T>& ibpmat, seriesCoefficient<T>& C, 
+                                vector<int>& seed, int k, int l, int nindep_p1) {
+        // 边界条件：只有 l 足够小时，k-1 阶才有贡献
+        if (l > incre * (k - 1) + 1) return;
+
+        for (int m = 0; m < nibp; ++m) {
+            T* dest = get_NMinus(m);
+            for (int j = 0; j < ne; ++j) {
+                if (seed[j] > 0) {
+                    // 直接利用 addProductTo 累加： N1[m][j] * C(k-1, l, seed-unit(j))
+                    T* src = getValuePtrOffSet(C, k - 1, l, seed, -1, j);
+                    addProductTo(dest, ibpmat.N1[m][j], src, nindep_p1);
+                }
+            }
+        }
+    }
+
+    // N(0)
+    void add_NZero_contribution(const IBPMatrixE<T>& ibpmat, seriesCoefficient<T>& C, 
+                                vector<int>& seed, int k, int l, int nindep_p1) {
+        if (l > incre * (k - 1)) return;
+
+        for (int m = 0; m < nibp; ++m) {
+            // 利用 mat_buf1 构造临时算子矩阵: F0 + sum(seed[j] * K1[j])
+            std::copy(ibpmat.F0[m].begin(), ibpmat.F0[m].end(), mat_buf1.begin());
+            
+            for (int j = 0; j < ne; ++j) {
+                if (seed[j] >= 1) {
+                    T s_val = static_cast<T>(seed[j]);
+                    const vector<T>& K1_mj = ibpmat.K1[m][j];
+                    for (int idx = 0; idx < nb * nb; ++idx) {
+                        mat_buf1[idx] += K1_mj[idx] * s_val;
+                    }
+                }
+            }
+
+            T* src = getValuePtrOffSet(C, k - 1, l, seed);
+            addProductTo(get_NZero(m), mat_buf1, src, nindep_p1);
+        }
+    }
+
+    void add_NPluMi_contribution(const IBPMatrixE<T>& ibpmat, seriesCoefficient<T>& C, 
+                             vector<int>& seed, int k, int l, int nindep_p1) {
+        if (l > incre * (k - 1)) return;
+
+        for (int m = 0; m < nibp; ++m) {
+            T* dest = get_NPluMi(m);
+            for (int i = 0; i < ne; ++i) {
+                for (int j = 0; j < ne; ++j) {
+                    if (seed[j] > 0) {
+                        // 因子：-(seed[i] + 1)  注意：如果 i==j, seed[i] 还是原来的值
+                        T factor = -static_cast<T>(seed[i] + 1);
+                        
+                        // 获取偏移后的源指针：seed + unit(i) - unit(j)
+                        T* src = getValuePtrOffSet(C, k - 1, l, seed, 1, i, -1, j);
+                        
+                        // 使用 addScaledProductTo 避免矩阵拷贝
+                        addScaledProductTo(dest, ibpmat.F2[m][i][j], factor, src, nindep_p1);
+                    }
+                }
+            }
+        }
+    }
+
+    void add_M1_contribution(const IBPMatrixE<T>& ibpmat, seriesCoefficient<T>& C, 
+                         vector<int>& seed, int k, int l, int nindep_p1, int ncurr) {
+        // M1 贡献通常针对当前 Order k
+        for (int m = 0; m < nibp; ++m) {
+            T* dest = get_M1(m);
+            // 只遍历到 ncurr (当前 seed 的活跃维度)
+            for (int i = 0; i < ncurr; ++i) {
+                T factor = static_cast<T>(seed[i] + 1);
+                
+                // 获取当前阶 k 的高层级系数：seed + unit(i)
+                T* src = getValuePtrOffSet(C, k, l, seed, 1, i);
+                
+                addScaledProductTo(dest, ibpmat.M1[m][i], factor, src, nindep_p1);
+            }
+        }
+    }
+
+    void add_NPlus_contribution(const IBPMatrixE<T>& ibpmat, seriesCoefficient<T>& C, 
+        vector<int>& seed, int k, int l, int nindep_p1, long long (&BINOM)[MAX_VAL][MAX_VAL]) 
+    {
+        int lennplus = incre * (k - 1) - l;
+        if (lennplus < 1) return;
+
+        for (int l1 = 1; l1 <= lennplus; ++l1) {
+            T l1_sign = sgn<T>(l1);
+            for (int m = 0; m < nibp; ++m) {
+                T* dest_ptr = get_NPlus(l1, m);
+
+                // --- 第一部分：处理涉及 K1 和 F2 的单指标 i 贡献 ---
+                for (int i = 0; i < ne; ++i) {
+                    // 重置缓冲区 mat_buf1 用于计算 matNP1
+                    std::fill(mat_buf1.begin(), mat_buf1.end(), T(0));
+
+                    // 1.1 K1 贡献: seed[i] * BINOM[seed[i]+l1][l1+1]
+                    if (seed[i] >= 1) {
+                        T k_factor = static_cast<T>(BINOM[seed[i] + l1][l1 + 1]);
+                        const vector<T>& K1_mi = ibpmat.K1[m][i];
+                        for (int idx = 0; idx < nb * nb; ++idx) {
+                            mat_buf1[idx] += K1_mi[idx] * k_factor;
+                        }
+                    }
+
+                    // 1.2 F2 累加贡献: sum_j(F2[m][i][j] * seed[j] * BINOM[seed[i]+l1][l1])
+                    for (int j = 0; j < ne; ++j) {
+                        if (seed[j] >= 1) {
+                            T f_factor = l1_sign * static_cast<T>(seed[j] * BINOM[seed[i] + l1][l1]);
+                            const vector<T>& F2_mij = ibpmat.F2[m][i][j];
+                            for (int idx = 0; idx < nb * nb; ++idx) {
+                                mat_buf1[idx] += F2_mij[idx] * f_factor;
+                            }
+                        }
+                    }
+
+                    // 1.3 执行点积并累加到目标块
+                    // getValuePtrOffSet 内部会处理 seed[i] += l1 的逻辑
+                    T* src_ptr = getValuePtrOffSet(C, k - 1, l, seed, l1, i);
+                    addProductTo(dest_ptr, mat_buf1, src_ptr, nindep_p1);
+                }
+
+                // --- 第二部分：处理涉及 F2 的双指标 i, j 耦合项 (l2 循环) ---
+                for (int l2 = 1; l2 <= l1 + 1; ++l2) {
+                    if (l2 == l1) continue; // 排除 l2 == l1 的特殊情况
+                    T l2_sign = sgn<T>(l2);
+                    for (int i = 0; i < ne; ++i) {
+                        for (int j = 0; j < ne; ++j) {
+                            if (seed[j] >= 1) {
+                                // 计算耦合因子: sgn(l2) * BINOM[seed[i]+l2][l2] * BINOM[seed[j]+l1-l2][l1-l2+1]
+                                T coupling_factor = l2_sign * static_cast<T>(BINOM[seed[i] + l2][l2]) * static_cast<T>(BINOM[seed[j] + l1 - l2][l1 - l2 + 1]);
+
+                                // 直接利用 ibpmat.F2[m][i][j] 和增量 seed 指针进行点积
+                                // getValuePtrOffSet 内部处理 seed[i]+=l2, seed[j]+=l1-l2
+                                T* src_ptr_coupling = getValuePtrOffSet(C, k - 1, l, seed, l2, i, l1 - l2, j);
+                                
+                                // 这里可以写一个专用的简洁版 addProductTo，直接传入 factor 避免拷贝矩阵
+                                addScaledProductTo(dest_ptr, ibpmat.F2[m][i][j], coupling_factor, src_ptr_coupling, nindep_p1);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    void add_MPlus_contribution(const IBPMatrixE<T>& ibpmat, seriesCoefficient<T>& C, 
+                            vector<int>& seed, int k, int l, int nindep_p1, long long (&BINOM)[MAX_VAL][MAX_VAL]) {
+        int lenmplus = incre * k - l - 1;
+        if (lenmplus < 1) return;
+
+        for (int l1 = 2; l1 <= incre * k - l; ++l1) {
+            T sign_l1 = sgn<T>(l1);
+            for (int m = 0; m < nibp; ++m) {
+                T* dest = get_MPlus(l1, m);
+                
+                // 1. K1s, K2s 项
+                for (int i = 0; i < ne; ++i) {
+                    T factor = static_cast<T>(BINOM[seed[i] + l1][l1]);
+                    
+                    // 构造临时矩阵：K1s + sign(l1)*K2s
+                    for (int idx = 0; idx < nb * nb; ++idx) {
+                        mat_buf1[idx] = (ibpmat.K1s[m][i][idx] + ibpmat.K2s[m][i][idx] * sign_l1) * factor;
+                    }
+                    T* src = getValuePtrOffSet(C, k, l, seed, l1, i);
+                    addProductTo(dest, mat_buf1, src, nindep_p1);
+                }
+
+                // 2. F2s 耦合项
+                for (int l2 = 1; l2 <= l1 - 1; ++l2) {
+                    T l2_sign = sgn<T>(l2);
+                    for (int i = 0; i < ne; ++i) {
+                        for (int j = 0; j < ne; ++j) {
+                            T factor = l2_sign * static_cast<T>(BINOM[seed[i] + l2][l2] * BINOM[seed[j] + l1 - l2][l1 - l2]);
+                            T* src = getValuePtrOffSet(C, k, l, seed, l2, i, l1 - l2, j);
+                            addScaledProductTo(dest, ibpmat.F2s[m][i][j], factor, src, nindep_p1);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * 将所有非齐次项分量汇总到 Total 缓冲区
+     * @param k 当前 Order
+     * @param l 当前 Level
+     */
+    void finalizeTotal(int k, int l) {
+        // 1. 获取 Total 缓冲区的起始指针
+        T* total_ptr = &data[off_Total];
+        
+        // 2. 计算每个方程块的逻辑总长度 (nibp * nb * nimax_p1)
+        // 注意：物理上我们必须遍历整个 nimax_p1，以保证内存对齐和后续索引正确
+        size_t total_elements = (size_t)nibp * nb * nimax_p1;
+
+        // 辅助 Lambda 函数：将指定偏移量处的块累加到 Total
+        auto aggregate_block = [&](size_t source_offset) {
+            T* src_ptr = &data[source_offset];
+            // 编译器通常会将此循环优化为 AVX2/AVX-512 指令
+            for (size_t i = 0; i < total_elements; ++i) {
+                total_ptr[i] += src_ptr[i];
+            }
+        };
+
+        // --- A. 汇总基础项 ---
+        aggregate_block(off_NMinus);
+        aggregate_block(off_NZero);
+        aggregate_block(off_NPluMi);
+        aggregate_block(off_M1);
+
+        // --- B. 汇总动态层数项 NPlus ---
+        // 对应原代码中的 lennplus = incre*(k-1) - l
+        int nplus_limit = incre * (k - 1) - l;
+        for (int l1 = 1; l1 <= nplus_limit; ++l1) {
+            // block_len 是类成员，代表 nibp * nb * nimax_p1
+            size_t offset = off_NPlusBase + (size_t)(l1 - 1) * block_len;
+            aggregate_block(offset);
+        }
+
+        // --- C. 汇总动态层数项 MPlus ---
+        // 对应原代码中的 lenmplus = incre*k - l - 1
+        int mplus_limit = incre * k - l; // MPlus 从 l1=2 开始到 incre*k-l
+        for (int l1 = 2; l1 <= mplus_limit; ++l1) {
+            size_t offset = off_MPlusBase + (size_t)(l1 - 2) * block_len;
+            aggregate_block(offset);
+        }
+    }
+
+public:
+    inhomogTerms(int kmax, int incre, int nibp, int nb, int nimax, int ne) 
+        : nibp(nibp), nb(nb), nimax_p1(nimax + 1), incre(incre), ne(ne) {
+        
+        // 1. 确定各个算子的最大层数
+        nplus_max = incre * (kmax - 1); // 对应原代码中的 lennplus
+        mplus_max = incre * kmax - 1;   // 对应原代码中的 lenmplus
+        block_len = (size_t)nibp * nb * nimax_p1;
+
+        // 2. 计算各个算子的起始位置 (手动平铺逻辑)
+        size_t current_ptr = 0;
+        off_NMinus = current_ptr; current_ptr += block_len;
+        off_NZero  = current_ptr; current_ptr += block_len;
+        off_NPluMi = current_ptr; current_ptr += block_len;
+        off_M1     = current_ptr; current_ptr += block_len;
+        off_Total  = current_ptr; current_ptr += block_len;
+
+        // 对应 NPlus[l1-1] 和 MPlus[l1-2]
+        off_NPlusBase = current_ptr; 
+        current_ptr += (nplus_max > 0 ? nplus_max : 0) * block_len;
+
+        off_MPlusBase = current_ptr;
+        current_ptr += (mplus_max > 0 ? mplus_max : 0) * block_len;
+
+        // 3. 一次性物理内存分配
+        data.assign(current_ptr, T(0));
+
+        // 初始化缓冲区大小
+        mat_buf1.assign(nb * nb, T(0));
+        mat_buf2.assign(nb * nb, T(0));
+        sum_buf.assign(nb * nb, T(0));
+    }
+
+    // 重置所有缓冲区为 0 (非常快，因为内存连续)
+    void reset() {
+        std::fill(data.begin(), data.end(), T(0));
+    }
+
+    // --- 核心接口：获取算子块起始指针 ---
+    // 通过指针操作，你可以直接执行：dest[i] += src[i] * scalar;
+
+    inline T* get_NMinus(int m) { return &data[off_NMinus + (size_t)m * nb * nimax_p1]; }
+    inline T* get_NZero(int m)  { return &data[off_NZero  + (size_t)m * nb * nimax_p1]; }
+    inline T* get_NPluMi(int m) { return &data[off_NPluMi + (size_t)m * nb * nimax_p1]; }
+    inline T* get_M1(int m)     { return &data[off_M1     + (size_t)m * nb * nimax_p1]; }
+    inline T* get_Total(int m)  { return &data[off_Total  + (size_t)m * nb * nimax_p1]; }
+
+    // l1 对应原代码中的 1-based index (l1-1)
+    inline T* get_NPlus(int l1, int m) {
+        return &data[off_NPlusBase + (size_t)(l1 - 1) * block_len + (size_t)m * nb * nimax_p1];
+    }
+
+    // l1 对应原代码中的 2-based index (l1-2)
+    inline T* get_MPlus(int l1, int m) {
+        return &data[off_MPlusBase + (size_t)(l1 - 2) * block_len + (size_t)m * nb * nimax_p1];
+    }
+
+    // 获取一行 Total 的引用，用于 linearSolve 之前的 eqnvec 构造
+    inline T* get_Total_row(int m, int j) {
+        return &data[off_Total + ((size_t)m * nb + j) * nimax_p1];
+    }
+    
+    void buildAll(const IBPMatrixE<T>& ibpmat, seriesCoefficient<T>& C, int k, int l, vector<int> &seed, int nindep, int ncurr, long long (&BINOM)[MAX_VAL][MAX_VAL]) {
+        this->reset();
+        int nindep_p1 = nindep + 1;
+
+        add_NMinus_contribution(ibpmat, C, seed, k, l, nindep_p1);
+        add_NZero_contribution(ibpmat, C, seed, k, l, nindep_p1);
+        add_NPluMi_contribution(ibpmat, C, seed, k, l, nindep_p1);
+        add_NPlus_contribution(ibpmat, C, seed, k, l, nindep_p1, BINOM); // 执行上述逻辑
+        add_M1_contribution(ibpmat, C, seed, k, l, nindep_p1, ncurr);
+        add_MPlus_contribution(ibpmat, C, seed, k, l, nindep_p1, BINOM);
+
+        finalizeTotal(k, l);
+    }
+};
+
+/* B. Assemble the Linear System */
+
+template <typename T>
+pair<vector<vector<T>>, vector<T>> assembleLinearSystem(
+    const IBPMatrixE<T> &ibpmat,
+    inhomogTerms<T> &terms,
+    const vector<int> &seed,
+    int ncurr, int ne, int nb, int nindep, int nimax_p1) 
+{
+    int nibp = ibpmat.M1.size();
+    int num_eqns = nibp * nb;
+    int n_active_vars = ne - max(ncurr, 0);
+    int num_vars = n_active_vars * nb + nindep;
+
+    // 1. 初始化矩阵和向量
+    vector<vector<T>> eqnmat(num_eqns, vector<T>(num_vars, 0));
+    vector<T> eqnvec(num_eqns, 0); // 注意：返回时通常是一维，此处先处理
+
+    for (int m = 0; m < nibp; ++m) {
+        for (int i = 0; i < nb; ++i) {
+            int row_idx = m * nb + i;
+            
+            // --- A. 填充未知系数的矩阵部分 (M1 贡献) ---
+            // 对应 c[seed + unit(j)] 的系数
+            for (int j1 = 0; j1 < n_active_vars; ++j1) {
+                int target_seed_idx = j1 + std::max(ncurr, 0);
+                T factor = static_cast<T>(seed[target_seed_idx] + 1);
+                
+                for (int j2 = 0; j2 < nb; ++j2) {
+                    // M1[m][target_seed_idx] 是一个 nb*nb 的矩阵
+                    // 我们取其第 i 行第 j2 列
+                    eqnmat[row_idx][j1 * nb + j2] = ibpmat.M1[m][target_seed_idx][i * nb + j2] * factor;
+                }
+            }
+
+            // --- B. 填充非齐次项部分 (来自 inhomogTerms) ---
+            T* total_row = terms.get_Total_row(m, i);
+            
+            // 1. 常数项偏移 (Index 0) -> 移到方程右侧需取负号
+            eqnvec[row_idx] = -total_row[0];
+
+            // 2. 独立变量的系数 (Index 1 to nindep) -> 填充到矩阵后部
+            for (int j_indep = 0; j_indep < nindep; ++j_indep) {
+                // 注意：total_row 的物理步长是 nimax_p1
+                eqnmat[row_idx][n_active_vars * nb + j_indep] = total_row[j_indep + 1];
+            }
+        }
+    }
+
+    // printOut
+    /*cout << "mat: " << endl;
+    for(int j1 = 0; j1 < eqnmat.size(); ++j1) {
+        for(int j2 = 0; j2 < eqnmat[j1].size(); ++j2) {
+            cout << eqnmat[j1][j2] << "\t";
+        }
+        cout << endl;
+    }
+    cout << "vec: [";
+    for(int j2 = 0; j2 < eqnvec.size(); ++j2) {
+        cout << eqnvec[j2] << "  ";
+    }
+    cout << "]" << endl;*/
+
+    return {eqnmat, eqnvec};
+}
+
+void equationVariable(vector<std::array<int,4>>& eqnvar, int order, int level, vector<int> seed, int nb, int ne, vector<std::array<int,4>>& indepSet) 
+{ 
+    eqnvar.clear();
+    int ncurr = lastNonZero(seed);
+    for(int j = max(ncurr,0); j < ne; ++j) { 
+        for(int i = 0; i < nb; ++i) {
+            eqnvar.push_back({order, level+1, getIndexOffSet(level,seed,1,j),i});
+            /*cout << "c[";
+            for(int ii = 0; ii < ne; ++ii) { 
+                cout << ((ii==j) ? seed[ii]+1 : seed[ii]);
+                if(ii<ne-1) { cout <<" ";}
+            } 
+            cout << "] -> idx["<< eqnvar.back()[0] <<" "<< eqnvar.back()[1] <<" "<< eqnvar.back()[2] << "]";
+            cout << endl; */
+        }
+    }
+    for(auto &indep : indepSet) { eqnvar.push_back(indep); }
+
+    // printOut
+    /*cout << "var: " << endl;
+    for(auto var : eqnvar) { 
+        printCoefKey(var, ne);
+    }*/
+}
+
+/**
+ * @brief 消除冗余：通过追加恒等方程 (1*x = 0) 强制指定变量为零
+ * * @tparam T 数据类型 (double, complex等)
+ * @param eqnmat 线性方程组左侧矩阵 (将被修改，追加新行)
+ * @param eqnvec 线性方程组右侧向量 (将被修改，追加新元素)
+ * @param eqnvar 变量映射表，用于查找列索引
+ * @param pivot  需要取零的约束列表 {{l, cid}, ...}
+ */
+template<typename T>
+void removeRedundancy(vector<vector<T>>& eqnmat, 
+                      vector<T>& eqnvec, 
+                      const vector<std::array<int, 4>>& eqnvar, 
+                      const vector<std::array<int, 2>>& pivot) 
+{
+    if (pivot.empty() || eqnmat.empty()) return;
+
+    // 1. 优化查找：将 pivot 转换为 set，查找复杂度降为 O(log M) 或 O(1)
+    // 使用 set 存储 {l, cid} 对，方便快速判定
+    std::set<std::pair<int, int>> pivot_set;
+    for (const auto& p : pivot) {
+        pivot_set.insert({p[0], p[1]});
+    }
+
+    int num_cols = eqnmat[0].size();
+    
+    // 2. 一次性收集所有目标列，避免多次 resize
+    vector<int> target_cols;
+    target_cols.reserve(eqnvar.size()); // 预估最大容量
+
+    for (size_t col = 0; col < eqnvar.size(); ++col) {
+        // 构建当前变量的 key
+        std::pair<int, int> current_key = {eqnvar[col][1], eqnvar[col][2]};
+        
+        // 快速查找
+        if (pivot_set.count(current_key)) {
+            target_cols.push_back(col);
+        }
+    }
+
+    if (target_cols.empty()) return;
+
+    // 3. 内存优化：一次性分配所有需要的行，避免循环 push_back 导致的反复拷贝
+    int old_rows = eqnmat.size();
+    int add_rows = target_cols.size();
+    
+    // 扩展 eqnmat
+    eqnmat.resize(old_rows + add_rows);
+    // 扩展 eqnvec
+    eqnvec.resize(old_rows + add_rows, static_cast<T>(0));
+
+    // 4. 填充新行 (使用移动语义或直接构建)
+    // 注意：vector<vector> 的 resize 可能会用默认构造填充，我们需要确保新行大小正确
+    for (int i = 0; i < add_rows; ++i) {
+        // 直接初始化该行，避免先构造再赋值
+        eqnmat[old_rows + i].assign(num_cols, static_cast<T>(0));
+        
+        // 设置约束位为 1
+        int target_col = target_cols[i];
+        eqnmat[old_rows + i][target_col] = static_cast<T>(1);
+    }
+}
+
+
+
+template <typename T>
+void performBackSubstitution(
+    seriesCoefficient<T>& C, int k, int l_start, int l_end, int idxcurr,
+    int nindep, int nS, const vector<vector<T>>& Mext, 
+    int row_offset, int ne, int nb, long long (&BINOM)[MAX_VAL][MAX_VAL]
+) {
+    // --- 1. 单位矩阵检测 (Identity Check) ---
+    bool is_identity = (nindep == nS);
+    if (is_identity) {
+        for (int i = 0; i < nindep; ++i) {
+            const vector<T>& row = Mext[row_offset + i];
+            // 检查常数项是否为 0
+            if (abs(row[0]) > 1e-15) { is_identity = false; break; }
+            // 检查对应对角线位置 (i+1) 是否为 1，其他位置是否为 0
+            for (int j = 0; j < nS; ++j) {
+                T expected = (i == j) ? 1.0 : 0.0;
+                if (abs(row[j + 1] - expected) > 1e-15) {
+                    is_identity = false;
+                    break;
+                }
+            }
+            if (!is_identity) break;
+        }
+    }
+
+    // --- 2. 如果是单位阵变换，且没有缩减，直接跳过全量回代 ---
+    if (is_identity && nS == nindep) {
+        return; 
+    }
+
+    // --- 3. 执行回代逻辑 ---
+    for (int l1 = l_end; l1 >= l_start; --l1) {
+        int max_cid = (l1 == l_start) ? idxcurr : (int)BINOM[l1 + ne - 1][ne - 1];
+        
+        for (int cid = 0; cid < max_cid; ++cid) {
+            for (int j = 0; j < nb; ++j) {
+                T* sol0_ptr = C(k, l1, cid, j);
+                if (!sol0_ptr) continue;
+
+                // 特殊情况优化：如果是单位阵但发生了缩减 (nS < nindep)
+                // 此时系数数值不变，只需要抹除末尾
+                if (is_identity) {
+                    if (nS < nindep) {
+                        std::fill(sol0_ptr + nS + 1, sol0_ptr + nindep + 1, T(0));
+                    }
+                    continue; 
+                }
+
+                // 普通情况：执行全量投影计算
+                static vector<T> sol1;
+                sol1.assign(nS + 1, T(0));
+                sol1[0] = sol0_ptr[0];
+
+                for (int i1 = 0; i1 < nindep; ++i1) {
+                    T old_val = sol0_ptr[i1 + 1];
+                    if (abs(old_val) < 1e-18) continue;
+
+                    const vector<T>& trans_row = Mext[row_offset + i1];
+                    sol1[0] += old_val * trans_row[0];
+                    for (int i2 = 0; i2 < nS; ++i2) {
+                        sol1[i2 + 1] += old_val * trans_row[i2 + 1];
+                    }
+                }
+
+                std::copy(sol1.begin(), sol1.end(), sol0_ptr);
+                if (nS < nindep) {
+                    std::fill(sol0_ptr + nS + 1, sol0_ptr + nindep + 1, T(0));
+                }
+            }
+        }
+    }
+}
+
+template <typename T>
+void updateSeriesCoefficient(
+    seriesCoefficient<T>& C,
+    const LinearSystemResult<T>& res,
+    const vector<std::array<int, 4>>& current_eqnvar, // 瞬时映射表
+    vector<std::array<int, 4>>& indepSet,              // 独立集
+    int k, int l, int incre, int idxcurr, int ne, int nb
+) {
+    if (res.Mext.empty()) return;
+
+    int old_nindep = indepSet.size();
+    int new_nindep = res.S.size();
+    // 活跃变量占据的列数 = (总列数 - 旧独立元列数)
+    int n_active_cols = current_eqnvar.size() - old_nindep;
+
+    // --- 1. 执行 Back Substitution (回代更新) ---
+    // 逻辑：更新那些已经存在于 C 中、但基于旧 indepSet 表达的系数
+    // 范围：从 l+1 到 incre*k
+    if (old_nindep > 0) {
+        performBackSubstitution(
+            C, k, l + 1, incre * k, idxcurr, 
+            old_nindep, new_nindep, res.Mext, n_active_cols, ne, nb, BINOM);
+    }
+
+    // --- 2. 写入当前活跃变量的定义 (Injection) ---
+    // 这些变量是刚刚通过线性方程组解出来的，其定义直接来自 Mext 的前 n_active_cols 行
+    for (int i = 0; i < n_active_cols; ++i) {
+        const auto& phys = current_eqnvar[i]; // {k, l+1, cid, j}
+        T* ptr = C(phys[0], phys[1], phys[2], phys[3]);
+        
+        // 写入 [1个特解 + new_nindep 个基础解系数]
+        std::copy(res.Mext[i].begin(), res.Mext[i].begin() + new_nindep + 1, ptr);
+        // printSeriesCoef(C,phys,res.S.size(),ne);
+        
+        // 内存深度清理
+        if (new_nindep < old_nindep) {
+            std::fill(ptr + new_nindep + 1, ptr + old_nindep + 1, T(0));
+        }
+    }
+
+    // --- 3. 更新 indepSet (基底替换) ---
+    indepSet.clear();
+    for (int i = 0; i < new_nindep; ++i) {
+        int col_idx = res.S[i];
+        // 将 eqnvar 中的标识符覆盖到 indepSet 的前部
+        indepSet.push_back(current_eqnvar[col_idx]);
+    }
+}
+
+template<typename T>
+void migrateAllTables(
+    seriesCoefficient<T>& C,               // 当前 Order 的主容器
+    vector<seriesCoefficient<T>>& CNew,    // 固化存储容器序列
+    const vector<std::array<int, 4>>& indepSet, // 当前的独立元集合
+    int k, int order, int incre, int ne, int nb, int nimax,
+    long long (&BINOM)[MAX_VAL][MAX_VAL]
+) {
+    int nindep = static_cast<int>(indepSet.size());
+    size_t old_size = CNew.size();
+    
+    // 1. 扩容 CNew。每个新独立元都将获得一个完整的、
+    // 以其为基准的 seriesCoefficient 容器，外加一个常数项容器 (i=0)
+    CNew.resize(old_size + nindep + 1);
+
+    int nimax_p1 = nimax + 1;
+
+    // 2. 遍历每一个新的分量 (0 到 nindep)
+    for (int i = 0; i < nindep + 1; ++i) {
+        // 初始化新容器
+        CNew[old_size + i] = seriesCoefficient<T>(order, incre, ne, nb, nimax, BINOM);
+        seriesCoefficient<T>& target_C = CNew[old_size + i];
+
+        // --- 逻辑 A: 迁移历史阶级 (prev_k < k) ---
+        // 只有常数分量 (i=0) 需要承载历史 Order 的完整级数信息
+        if (i == 0) {
+            for (int prev_k = 0; prev_k < k; ++prev_k) {
+                for (int l = 0; l <= incre * prev_k; ++l) {
+                    int states = (int)BINOM[l + ne - 1][ne - 1];
+                    for (int cid = 0; cid < states; ++cid) {
+                        for (int j = 0; j < nb; ++j) {
+                            T* src = C(prev_k, l, cid, j);
+                            T* dest = target_C(prev_k, l, cid, j);
+                            // 历史数据是完整迁移 (包含之前所有的独立元系数)
+                            std::copy(src, src + nimax_p1, dest);
+                        }
+                    }
+                }
+            }
+        }
+
+        // --- 逻辑 B: 处理当前阶级 (order k) ---
+        // 将旧容器中第 i 个独立元的系数，提取出来作为新容器的常数项 (index 0)
+        for (int l = 0; l <= incre * k; ++l) {
+            int states = (int)BINOM[l + ne - 1][ne - 1];
+            for (int cid = 0; cid < states; ++cid) {
+                for (int j = 0; j < nb; ++j) {
+                    T* src = C(k, l, cid, j);
+                    T* dest = target_C(k, l, cid, j);
+                    
+                    // 核心转换：C(k)[i] -> CNew_i(k)[0]
+                    dest[0] = src[i];
+                    
+                    // 此时 dest[1...nimax] 保持为 0，因为在 target_C 
+                    // 构造时已初始化。这代表当前 Order k 的结果已被
+                    // 固化为常数，不再依赖本层的其他变量。
+                }
+            }
+        }
+    }
+}
+
+
+
+
+
+/* main body */
+
+template<typename T>
+auto layerRecursion(const struct IBPMatrixE<T> &ibpmat, int ne, int nb, int nibp, int order, int incre)
+{
+    // initialize coefficient: C[order][level][index][symb][nsol]
+    int nimax=4; // max. number of indep var.
+    seriesCoefficient<T> C0(order,incre,ne,nb,nimax,BINOM);
+    vector<seriesCoefficient<T>> CTable(1,C0);
+    vector<seriesCoefficient<T>> CNew(0);
+
+    vector<vector<vector<int>>> seedlist = seedGenerator(incre*order-1,ne);
+    vector<std::array<int,4>> indepSet;
+    vector<std::array<int,4>> eqnvar; 
+    vector<std::array<int,2>> pivots = {{0,0}}, new_pivots;
+    int ncurr, idxcurr, nindep=0, nsol;
+
+    // initialize equations
+    inhomogTerms<T> terms(order, incre, nibp, nb, nimax, ne);
+    auto start = chrono::high_resolution_clock::now();
+
+    // loop
+    CTable[0](0,0,0,0)[0] = T(1);
+    for(int k = 1; k <= order; ++k)
+    {
+        cout << "   ======   order: " << k << "   ======"<< endl; 
+        auto start = chrono::high_resolution_clock::now();
+        CNew.clear();nsol=CTable.size();
+        //cout << "#sol:  " << nsol << endl;
+        new_pivots.clear();
+        for(auto &C : CTable) {
+            indepSet.clear();
+            for(int l = incre*k - 1; l >= 0; --l)
+            {
+                //cout << "   =======   level: " << l << "   ======" << endl;
+                //cout << "#seeds: " << seedlist[l].size() << endl; 
+                for(auto seed : seedlist[l])
+                {
+                    nindep = static_cast<int>(indepSet.size());
+                    ncurr = lastNonZero(seed); // -1 if seed=[0...0]
+                    idxcurr = getIndexOffSet(l,seed,1,max(ncurr,0)); 
+                    //cout << "   ++++++   seed: ";
+                    //for(auto sd : seed) { cout << sd <<" ";}
+                    //cout << "   ("<< idxcurr <<")++++++  " << endl;
+
+                    // 在 Seed 循环内部
+                    terms.buildAll(ibpmat, C, k, l, seed, nindep, ncurr, BINOM);
+
+                    // 组装方程组
+                    auto [eqnmat, eqnvec] = assembleLinearSystem(ibpmat, terms, seed, ncurr, ne, nb, nindep, nimax + 1);
+                    equationVariable(eqnvar, k, l, seed, nb, ne, indepSet);
+                    removeRedundancy(eqnmat, eqnvec, eqnvar, pivots);
+                    
+                    // 2. [求解]
+                    auto res = solveLinearSystem(eqnmat, eqnvec); 
+                    //printLinearResult(res,eqnvar,ne);
+
+                    // 3. [更新]
+                    if (res.hasSolution) {
+                        // 调用集成更新函数
+                        updateSeriesCoefficient(C, res, eqnvar, indepSet, k, l, incre, idxcurr, ne, nb);
+                        
+                        // 此时 indepSet 已经内部更新，C 已经完成回代和写入
+                        nindep = indepSet.size(); 
+                    }
+
+                } // Seed-loop Over!.
+            } // Level-loop Over!
+
+            if(!indepSet.empty()) {
+                // 情况 1：产生了新分支 (n 个新解)
+                // migrateAllTables 会根据 indepSet 把 C 拆分成多个新对象放入 CNew
+                migrateAllTables(C, CNew, indepSet, k, order, incre, ne, nb, nimax, BINOM);
+                
+                // 记录新的 pivots
+                for(const auto& item : indepSet) {
+                    new_pivots.push_back({item[1], item[2]});
+                }
+            } 
+            else {
+                // 情况 2：没有产生新分支 (唯一解)
+                // 我们需要把这个已经原地更新好的 C 移动到 CNew 中，保持容器同步
+                // 使用 std::move 避免大数据拷贝
+                CNew.push_back(std::move(C)); 
+            }
+
+        }
+        // 修正 1: 安全地合并 pivots
+        if(!new_pivots.empty()) {
+            pivots.insert(pivots.end(), new_pivots.begin(), new_pivots.end());
+            // 建议：去重以提升后续 removeRedundancy 的效率
+            sort(pivots.begin(), pivots.end());
+            pivots.erase(unique(pivots.begin(), pivots.end()), pivots.end());
+        }
+
+        // 修正 2: 使用 move 优化，并基于正确的标志判断
+        CTable = std::move(CNew); 
+
+        auto end = chrono::high_resolution_clock::now();
+        chrono::duration<double> diff = end - start;
+        cout << "order "<< k << "  ......  " << fixed << setprecision(4) << diff.count() << " s. " << endl;
+    }
+    cout << "#sol = "<< CTable.size() << endl;
+    return CTable;
+}
+
+
+/**
+ * 批量执行 IBP 递归计算
+ * @param allMatrices 从 JSON 读取的矩阵列表
+ * @param order 递归阶数
+ * @param incre 增量参数
+ * @return 嵌套向量，外层对应每个输入矩阵，内层是计算出的系数对象
+ */
+template<typename T>
+vector<vector<seriesCoefficient<T>>> batchProcessRecursion(
+    const vector<IBPMatrixE<T>>& allMatrices, 
+    int order, 
+    int incre) 
+{
+    vector<vector<seriesCoefficient<T>>> allResults;
+    allResults.reserve(allMatrices.size()); // 提前分配空间
+
+    std::cout << "开始批量计算，总计: " << allMatrices.size() << " 组数据..." << std::endl;
+
+    for (size_t i = 0; i < allMatrices.size(); ++i) {
+        const auto& myMat = allMatrices[i];
+
+        // 调用你提供的核心计算函数
+        // 注意：这里假设 layerRecursion 返回 vector<seriesCoefficient>
+        cout << "   ......   Reg. " << i+1 << "/"<< allMatrices.size() << "   nb = " << myMat.nb << "    ......  " << endl;   
+        auto result = layerRecursion<T>(
+            myMat, 
+            myMat.ne, 
+            myMat.nb, 
+            myMat.nibp, 
+            order, 
+            incre
+        );
+
+        allResults.push_back(std::move(result));
+
+        if ((i + 1) % 10 == 0) {
+            std::cout << "已完成: " << (i + 1) << "/" << allMatrices.size() << std::endl;
+        }
+    }
+
+    return allResults;
+}
+
+
+
+
+
+
+int main() {
+    // 1. 初始化组合数表（必须首先调用）
+    initBinomial();
+
+    // 2. 设置测试参数
+    // ne: 变量数量 (通常 3-7)
+    // nb: 内部自由度/矩阵大小 (通常 1-4)
+    // order: 递归阶数
+    // incre: 每阶增加的 level
+ 
+    int incre = 2;
+    int nibp = 8; 
+    int ne = 7;      
+    int nb = 1;      
+
+    const int order = 6;
+  
+    
+    using Scalar = double; // 测试双精度浮点数
+    IBPMatrixE<Scalar> ibpmat;
+
+    // 4. 计时开始
+    auto start = chrono::high_resolution_clock::now();
+
+    IBPMatrixE<double> myMat;
+    string filename = "IBPMatAll_DB.json";
+
+    try {
+        cout << "--- 正在读取 IBPMatrixE from " + filename + "---" << endl;
+        auto ibpmatlist = loadAllIBPMatrices<double>(filename);
+        cout << "Parameters: ne=" << ibpmatlist[0].ne << ", nibp=" << ibpmatlist[0].nibp << ", order=" << order << endl;
+        cout << "--- 数据加载成功，开始递归计算 ---" << endl;
+        ne = ibpmatlist[0].ne;
+        nibp = ibpmatlist[0].nibp;
+
+        auto allResults = batchProcessRecursion(ibpmatlist, order, incre);
+
+        auto end = chrono::high_resolution_clock::now();
+        chrono::duration<double> diff = end - start;
+        
+        /*myMat = std::move(ibpmatlist[2]);
+
+        cout << "--- IBP Layer Recursion Efficiency Test ---" << endl;
+        cout << "Parameters: ne=" << myMat.ne << ", nb=" << myMat.nb << ", order=" << order << ", nibp=" << myMat.nibp << endl;
+
+        cout << "M1:  " << endl;
+        printMatrix(myMat.M1);
+
+        cout << "N1:  " << endl;
+        printMatrix(myMat.N1);
+
+        auto result = layerRecursion<Scalar>(myMat, myMat.ne, myMat.nb, myMat.nibp, order, incre);*/
+
+        // 5. 输出结果
+        cout << "Execution Time: " << fixed << setprecision(4) << diff.count() << " seconds." << endl;
+
+        /*vector<vector<int>> sector ={{1,1,1,1,1,1,1,0,0},{1,1,1,1,1,1,1,0,0},{1,1,1,1,1,1,1,0,0}};
+        vector<vector<vector<double>>> A_list = {{{-4.66667, -13.0667, 8.66667, 18.6667}, {-2.8, 0., 
+            0., -2.8}, {18.6667, 
+            13.0667, -8.66667, -4.66667}, {-4.66667, -13.0667, 8.66667, 
+            18.6667}, {-2.8, 0., 0., -2.8}, {18.6667, 
+            13.0667, -8.66667, -4.66667}, {7.46667, 0., 0., 7.46667}, {5.49772,
+                3.57991, -2.37443, -0.894977}, {0., -1.50769, 1., 
+            2.69231}}, {{12.4444, 8.71111, -5.77778, -1.94444}, {7.46667, 
+            13.0667, -8.66667, -14.1167}, {12.4444, 
+            8.71111, -5.77778, -1.94444}, {-1.94444, -8.71111, 5.77778, 
+            12.4444}, {-14.1167, -13.0667, 8.66667, 
+            7.46667}, {-1.94444, -8.71111, 5.77778, 12.4444}, {-7.46667, 0., 
+            0., -7.46667}, {-2.86606, -5.96651, 3.95738, 
+            6.98935}, {0., -1.50769, 1., 
+            2.49038}}, {{5.6}, {-2.24}, {5.6}, {5.6}, {-2.24}, {5.6}, {-4.48}, \
+            {1.80645}, {1.24444}}};
+        vector<vector<vector<double>>> Ainv_list = {{{0.714286, 0.5, -0.331633, -0.178571}, {-0.357143, 0., 
+            0., -0.357143}, {-0.178571, -0.5, 0.331633, 0.714286}, {0.714286, 
+            0.5, -0.331633, -0.178571}, {-0.357143, 0., 
+            0., -0.357143}, {-0.178571, -0.5, 0.331633, 0.714286}, {0.133929, 
+            0., 0., 0.133929}, {-0.25, -1., 0.663265, 1.53571}, {1.78571, 
+            1., -0.663265, 0.}}, {{-0.0744048, -0.333333, 0.221088, 
+            0.47619}, {-1.8006, -1.66667, 1.10544, 
+            0.952381}, {-0.0744048, -0.333333, 0.221088, 0.47619}, {0.47619, 
+            0.333333, -0.221088, -0.0744048}, {0.952381, 
+            1.66667, -1.10544, -1.8006}, {0.47619, 
+            0.333333, -0.221088, -0.0744048}, {-0.133929, 0., 
+            0., -0.133929}, {1.95238, 1.66667, -1.10544, -0.800595}, {1.65179, 
+            1., -0.663265, 
+            0.}}, {{0.178571}, {-0.446429}, {0.178571}, {0.178571}, \
+            {-0.446429}, {0.178571}, {-0.223214}, {0.553571}, {0.803571}}};*/
+
+        auto ringData = AlgebraData::RingDataLoader::LoadBinary("IBPRingData_DB.bin");
+        int nreg = ringData.size(); 
+        vector<vector<int>> sector(nreg); 
+        vector<vector<vector<double>>> A_list(nreg), Ainv_list(nreg);
+        for(int i=0; i < ringData.size(); ++i) {
+            sector[i] = ringData[i].limitSector;
+            A_list[i] = ringData[i].A_list;
+            Ainv_list[i] = ringData[i].Ainv_list;
+        }
+
+        int nu_per_regime = 80;
+        int lev=3, deg=1;
+
+        auto all_regimes = buildAllRegimes(allResults, sector, A_list, Ainv_list, ne, nu_per_regime);
+        cout << "(1)" << endl;
+        /*for(int i = 0; i < 3; ++i) {
+            cout << "reg("<<i<<")  nb = "<<all_regimes[i].nb << endl;
+            cout << "B: " <<endl; printMatrix(all_regimes[i].A_inv_ops);
+            cout << "A: " <<endl; printMatrix(all_regimes[i].A_ops);
+        }*/
+
+        Solver solver(nb, ne, order, lev, deg, allResults[0][0]);
+        cout << "(2)" << endl;
+        
+        auto global_matrix = solver.buildAllEquation(all_regimes); 
+        cout << "size:  " <<global_matrix.size() << "x" << global_matrix[0].size() << endl;
+        cout << "(3)" << endl;
+
+        auto res = solveLinearSystem(global_matrix);
+        cout << "#rel = " << res.S.size();
+
+    } catch (const std::exception& e) {
+        cerr << "Error during recursion: " << e.what() << endl;
+    }
+
+    return 0;
+}
