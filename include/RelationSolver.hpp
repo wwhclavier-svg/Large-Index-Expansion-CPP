@@ -1637,18 +1637,15 @@ static std::pair<LinearSystemResult<T>, RelationCoefficient<T>> reconstructReduc
     LinearSystemResult<T> lsr_result;
     lsr_result.hasSolution = result.converged || result.nullspace.is_valid;
     
-    // 构建 Mext 格式 [cols] x [nullity]
+    // 构建 Mext 格式 [cols] x [1 + nullity]，第一列为特解（齐次问题为0），后续为零空间基
     size_t num_vars = alphas.size() * betas.size();
     int nullity = result.nullspace.nullity;
     
-    if (nullity > 0) {
-        // 转置基向量：basis[nullity][num_vars] -> Mext[num_vars][nullity]
-        lsr_result.Mext.resize(num_vars);
-        for (size_t i = 0; i < num_vars; ++i) {
-            lsr_result.Mext[i].resize(nullity);
-            for (int j = 0; j < nullity; ++j) {
-                lsr_result.Mext[i][j] = result.nullspace.basis[j][i];
-            }
+    lsr_result.Mext.resize(num_vars);
+    for (size_t i = 0; i < num_vars; ++i) {
+        lsr_result.Mext[i].resize(1 + nullity, T(0));
+        for (int j = 0; j < nullity; ++j) {
+            lsr_result.Mext[i][j + 1] = result.nullspace.basis[j][i];
         }
     }
     
