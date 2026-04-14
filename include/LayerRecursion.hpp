@@ -29,7 +29,14 @@ template<typename T>
 auto layerRecursion(const struct IBPMatrixE<T> &ibpmat, int ne, int nb, int nibp, int order, int incre=2)
 {
     // initialize coefficient: C[order][level][index][symb][nsol]
+    // Dynamically compute nimax to avoid buffer overruns in large problems.
     int nimax = 4;
+    for (int k = 0; k <= order; ++k) {
+        int lmax = incre * k;
+        for (int l = 1; l <= lmax; ++l) {
+            nimax = std::max(nimax, static_cast<int>(BINOM[l + ne - 1][ne - 1]) * nb);
+        }
+    }
 
     // 1. 初始化系数容器
     seriesCoefficient<T> C0(order,incre,ne,nb,nimax,BINOM);

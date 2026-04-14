@@ -1,0 +1,33 @@
+cmake_minimum_required(VERSION 3.10)
+project(IBP_FF_Test)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# 查找 Eigen3（必需）
+find_package(Eigen3 REQUIRED)
+
+# 查找 GMP
+find_library(GMP_LIBRARY NAMES gmp)
+
+# 使用本地 FireFly 存根
+set(FIREFLY_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/include)
+
+# 包含目录
+include_directories(
+    include          # 项目自身的头文件（包含 FireFly 存根）
+    ${EIGEN3_INCLUDE_DIR}
+)
+
+# 源文件：只包含非模板的实现文件
+set(COMMON_SOURCES src/LayerRecursionCore.cpp)
+
+# 测试可执行文件
+add_executable(test_expandFF tests/test_expandFF.cpp ${COMMON_SOURCES})
+target_link_libraries(test_expandFF ${GMP_LIBRARY} Eigen3::Eigen)
+
+add_executable(test_RelationFF tests/test_RelationFF.cpp ${COMMON_SOURCES})
+target_link_libraries(test_RelationFF ${GMP_LIBRARY} Eigen3::Eigen)
+
+add_executable(test_RelationNew tests/test_RelationNew.cpp ${COMMON_SOURCES})
+target_link_libraries(test_RelationNew ${GMP_LIBRARY} Eigen3::Eigen)

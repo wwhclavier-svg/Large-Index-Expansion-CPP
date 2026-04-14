@@ -2,27 +2,29 @@
 
 ## Project Overview
 
-This is a **C++17 scientific computing project** focused on **IBP (Integration By Parts) matrix expansion** and **finite field operations**. The codebase implements algorithms for:
+本项目是一个**C++17科学计算项目**，专注于**IBP（Integration By Parts）矩阵的级数展开**和**有限域运算**。该代码库实现了用于计算IBP矩阵展开系数和重建线性约化关系的算法。
 
-- **Layer Recursion**: Computing series expansion coefficients for IBP matrices
-- **Finite Field Arithmetic**: Computing over finite fields using the FireFly library
-- **Linear Relation Reconstruction**: Solving for linear relations between expansion coefficients
+### 核心功能
 
-The project uses heavy template metaprogramming to support both `double` (floating-point) and `firefly::FFInt` (finite field integer) data types.
+- **层递归（Layer Recursion）**：逐阶计算IBP矩阵的级数展开系数
+- **有限域运算（Finite Field Arithmetic）**：使用FireFly库在有限域上进行计算
+- **线性关系重建（Linear Relation Reconstruction）**：求解展开系数之间的线性关系
+
+项目使用重度模板元编程来同时支持 `double`（浮点数）和 `firefly::FFInt`（有限域整数）两种数据类型。
 
 ---
 
 ## Technology Stack
 
-| Component | Purpose | Required |
-|-----------|---------|----------|
-| C++17 | Core language | Yes |
-| CMake 3.10+ | Build system | Yes |
-| Eigen3 | Linear algebra (floating-point) | Yes |
-| FireFly | Finite field arithmetic | Yes |
-| GMP | Multiple precision arithmetic (FireFly dependency) | Yes |
-| nlohmann/json | JSON parsing (bundled in `include/json.hpp`) | Bundled |
-| MATLAB | Data generation scripts (`.m` files) | Optional |
+| 组件 | 用途 | 必需性 |
+|------|------|--------|
+| C++17 | 核心语言 | 必需 |
+| CMake 3.10+ | 构建系统 | 必需 |
+| Eigen3 | 线性代数（浮点运算） | 必需 |
+| FireFly | 有限域运算 | 必需 |
+| GMP | 多精度算术（FireFly依赖） | 必需 |
+| nlohmann/json | JSON解析（内置于`include/json.hpp`） | 内置 |
+| Mathematica | 数据生成脚本（`.wl`文件） | 可选 |
 
 ---
 
@@ -30,194 +32,219 @@ The project uses heavy template metaprogramming to support both `double` (floati
 
 ```
 .
-├── CMakeLists.txt           # Main build configuration
-├── #CMakeLists_full.txt     # Extended build config (backup/reference)
-├── include/                 # Header files (templates + interfaces)
-│   ├── LayerRecursion.hpp       # Main recursion algorithm wrapper
-│   ├── LayerRecursionCore.hpp   # Core recursion functions
-│   ├── LayerRecursionCore.tpp   # Template implementations
-│   ├── IBPMatrixLoader_Binary.hpp  # Binary IBP matrix loader
-│   ├── SeriesCoefficient.hpp     # Coefficient storage class
-│   ├── SeriesCoefficientIO.hpp   # Binary serialization for coefficients
-│   ├── LinearSolver.hpp          # Unified solver dispatcher
-│   ├── LinearSolver_Eigen.hpp    # Eigen-based floating-point solver
-│   ├── LinearSolver_FF.hpp       # FireFly finite field solver
-│   ├── RelationSolver.hpp        # Linear relation reconstruction
-│   ├── RingDataLoader.hpp        # Ring/algebraic data loader
-│   ├── Combinatorics.hpp         # Index utilities & seed generation
-│   ├── binomial.hpp              # Precomputed binomial coefficients
-│   ├── UnifiedStorage.hpp        # Memory management utilities
-│   ├── Utilities.hpp             # General utilities
-│   └── json.hpp                  # Third-party JSON library
-├── src/                     # Source files (non-template implementations)
-│   ├── LayerRecursionCore.cpp   # Core function implementations
-│   ├── layerRecursion.cpp       # Legacy implementations
-│   └── main.cpp                 # Legacy driver (not actively used)
-├── tests/                   # Test executables (each with main())
-│   ├── test_expandFF.cpp        # Finite field expansion test
-│   ├── test_RelationFF.cpp      # Finite field relation solving test
-│   ├── test_expand.cpp          # Double-precision expansion test
-│   ├── test_recons.cpp          # Reconstruction test
-│   └── *_Test.cpp               # Component-specific tests
-├── build/                   # Build output directory (generated)
-├── .vscode/                 # VS Code configuration
-│   ├── tasks.json           # Build tasks
-│   └── c_cpp_properties.json # IntelliSense config
-└── .github/
-    └── copilot-instructions.md  # Additional coding guidelines
+├── CMakeLists.txt           # 主构建配置
+├── CMakeLists_full.txt      # 扩展构建配置（参考/备份）
+├── include/                 # 头文件（模板+接口）
+│   ├── LayerRecursion.hpp           # 层递归算法入口封装
+│   ├── LayerRecursionCore.hpp       # 核心递归函数声明
+│   ├── LayerRecursionCore.tpp       # 模板实现
+│   ├── IBPMatrixLoader_Binary.hpp   # 二进制IBP矩阵加载器
+│   ├── IBPMatrixLoader.hpp          # JSON格式IBP矩阵加载器
+│   ├── SeriesCoefficient.hpp        # 系数存储类
+│   ├── SeriesCoefficientIO.hpp      # 系数二进制序列化
+│   ├── LinearSolver.hpp             # 统一求解器调度器
+│   ├── LinearSolver_Eigen.hpp       # 基于Eigen的浮点求解器
+│   ├── LinearSolver_FF.hpp          # 基于FireFly的有限域求解器
+│   ├── RelationSolver.hpp           # 线性关系重建求解器
+│   ├── IncrementalRelationSolver.hpp # 增量式多层级求解器
+│   ├── RingDataLoader.hpp           # 环/代数数据加载器
+│   ├── Combinatorics.hpp            # 索引工具与种子生成
+│   ├── binomial.hpp                 # 预计算组合数表
+│   ├── UnifiedStorage.hpp           # 内存管理工具
+│   ├── Utilities.hpp                # 通用工具函数
+│   └── json.hpp                     # 第三方JSON库
+├── src/                     # 源文件（非模板实现）
+│   ├── LayerRecursionCore.cpp   # 核心函数实现
+│   ├── layerRecursion.cpp       # 遗留实现
+│   └── main.cpp                 # 遗留驱动程序（未活跃使用）
+├── tests/                   # 测试可执行文件（每个含main()）
+│   ├── test_expandFF.cpp        # 有限域展开测试
+│   ├── test_RelationFF.cpp      # 有限域关系求解测试
+│   ├── test_RelationNew.cpp     # 扩展关系求解测试
+│   ├── test_expand.cpp          # 双精度展开测试
+│   ├── test_recons.cpp          # 重建算法测试
+│   ├── IBPMatrixLoader_Test.cpp # 矩阵加载器测试
+│   └── RingDataLoader_test.cpp  # 环数据加载器测试
+├── build/                   # 构建输出目录（自动生成）
+├── docs/                    # 文档目录
+│   ├── RelationSolver_ComponentGuide.md    # RelationSolver组件指南
+│   ├── RelationSolver_QuickReference.md    # 快速参考
+│   └── RelationSolver_Documentation_Hub.md # 文档中心
+├── ReconstructReductionRelation.wl          # Mathematica关系重建包
+└── ReconstructReductionRelation_Documentation.md # Mathematica包文档
 
-# Data files (binary and JSON formats)
-├── IBPMat_*.bin             # IBP matrix binary data files
-├── RingData_*.bin           # Ring data binary files
-├── resCache_*.bin           # Expansion result cache files
-└── *.json                   # Matrix data in JSON format
-
-# MATLAB scripts for data generation
-├── ibpmatSR5m.m
-├── ibpmatDB.m
-├── ibpmatNP.m
-└── ibpmatE.m
+# 数据文件（二进制和JSON格式，工作目录中）
+├── IBPMat_*.bin             # IBP矩阵二进制数据文件
+├── RingData_*.bin           # 环数据二进制文件
+├── resCache_*.bin           # 展开结果缓存文件
+└── *.json                   # JSON格式的矩阵数据
 ```
 
 ---
 
 ## Build Instructions
 
-### Standard CMake Build
+### 标准CMake构建
 
 ```bash
-# 1. Create and enter build directory
+# 1. 创建并进入构建目录
 mkdir -p build && cd build
 
-# 2. Configure (requires Eigen3, FireFly, GMP installed)
+# 2. 配置（需要Eigen3、FireFly、GMP已安装）
 cmake ..
 
-# 3. Build
+# 3. 构建
 cmake --build .
 
-# 4. Run tests
+# 4. 运行测试
 ./test_expandFF
 ./test_RelationFF
 ```
 
-### Build Options
-
-The `CMakeLists.txt` provides:
-- `BUILD_FF_TESTS` (ON by default): Build finite field tests requiring FireFly
-
-### Dependencies Installation
+### 依赖安装
 
 **Ubuntu/Debian:**
 ```bash
 sudo apt-get install libeigen3-dev libgmp-dev
-# FireFly must be built from source: https://github.com/firefly-library/firefly
+# FireFly需从源码构建：https://github.com/firefly-library/firefly
 ```
 
 **macOS:**
 ```bash
 brew install eigen gmp
-# FireFly must be built from source
+# FireFly需从源码构建
 ```
+
+### 构建选项
+
+`CMakeLists.txt` 提供：
+- `BUILD_FF_TESTS`（默认开启）：构建需要FireFly的有限域测试
 
 ---
 
 ## Code Organization & Architecture
 
-### Type System
+### 类型系统
 
-The project uses **template polymorphism** to support multiple numeric types:
+项目使用**模板多态性**支持多种数值类型：
 
-| Type | Use Case | Header |
-|------|----------|--------|
-| `double` | Floating-point testing, numerical validation | Native |
-| `firefly::FFInt` | Finite field computations (prime modulus) | `<firefly/FFInt.hpp>` |
+| 类型 | 用例 | 头文件 |
+|------|------|--------|
+| `double` | 浮点测试、数值验证 | 原生 |
+| `firefly::FFInt` | 有限域计算（素数模） | `<firefly/FFInt.hpp>` |
 
-### Key Data Structures
+类型分发使用C++17的 `if constexpr` 实现：
+```cpp
+if constexpr (std::is_same_v<T, firefly::FFInt>) {
+    // 有限域分支
+} else {
+    // 浮点分支
+}
+```
+
+### 核心数据结构
 
 #### `IBPMatrixE<T>` (IBPMatrixLoader_Binary.hpp)
-Storage for IBP matrix operators:
+IBP矩阵算子存储结构：
 ```cpp
 template<typename T>
 struct IBPMatrixE {
-    vector<vector<vector<T>>> N1, K1, M1, K1s, K2s;  // 3D operators
-    vector<vector<T>> F0;                              // 2D operator
-    vector<vector<vector<vector<T>>>> F2, F2s;        // 4D operators
-    int nibp, ne, nb;  // dimensions
+    vector<vector<vector<T>>> N1, K1, M1, K1s, K2s;  // 3D算子
+    vector<vector<T>> F0;                              // 2D算子
+    vector<vector<vector<vector<T>>>> F2, F2s;        // 4D算子
+    int nibp, ne, nb;  // 维度
 };
 ```
 
 #### `seriesCoefficient<T>` (SeriesCoefficient.hpp)
-5-dimensional coefficient storage indexed by `(k, l, cid, j, i)`:
-- `k`: expansion order
-- `l`: layer level
-- `cid`: seed/composition index
-- `j`: basis index (0 to nb-1)
-- `i`: solution index (0 to nimax)
+5维系数存储，索引为 `(k, l, cid, j, i)`：
+- `k`: 展开阶数
+- `l`: 层级别
+- `cid`: 种子/组合索引
+- `j`: 基索引（0到nb-1）
+- `i`: 解索引（0到nimax）
 
 #### `LinearSystemResult<T>` (LinearSolver_*.hpp)
-Unified result structure for linear solvers:
+统一的线性求解器结果结构：
 ```cpp
 template<typename T>
 struct LinearSystemResult {
     bool hasSolution;
-    vector<vector<T>> Mext;  // Solution matrix (particular + nullspace)
-    vector<int> S;           // Free variable indices
+    vector<vector<T>> Mext;  // 解矩阵（特解+零空间）
+    vector<int> S;           // 自由变量索引
 };
+```
+
+### 模块架构
+
+```
+LayerRecursion.hpp                    RelationSolver.hpp
+       ↓                                      ↓
+LayerRecursionCore.hpp              RegimeData<T>
+       ↓                               RegimeEvaluator<T>
+LayerRecursionCore.tpp              AdaptiveEquationBuilder<T>
+       ↓                                      ↓
+LinearSolver.hpp ←────────────────→ LinearSolver_FF.hpp
+       ↓                               LinearSolver_Eigen.hpp
+       ↓                                      ↓
+SeriesCoefficient.hpp              UnifiedStorage.hpp
+IBPMatrixLoader_Binary.hpp         Combinatorics.hpp
+RingDataLoader.hpp
 ```
 
 ---
 
-## RelationSolver Specification
+## RelationSolver 模块规范
 
-### 📍 Location & Purpose
-- **File**: `include/RelationSolver.hpp`
-- **Namespace**: `RelationSolver`
-- **Role**: Reconstructs linear reduction relations between IBP matrix expansion coefficients
-- **Supported Types**: Template-based on `T` (`double`, `firefly::FFInt`)
+### 位置与用途
+- **文件**: `include/RelationSolver.hpp`
+- **命名空间**: `RelationSolver`
+- **作用**: 重建IBP矩阵展开系数之间的线性约化关系
+- **支持类型**: 模板参数 `T`（`double`、`firefly::FFInt`）
 
-### Key Data Structures
+### 核心数据结构
 
 #### `RegimeData<T>`
-Encapsulates a single sector with its coefficients and A-operators.
+封装单个sector及其系数和A算子。
 ```cpp
 template<typename T>
 struct RegimeData {
-    const seriesCoefficient<T>* C;           // Coefficient reference
-    std::vector<int> theta;                  // Sector identifier
-    std::vector<std::vector<T>> A_ops;       // A_i matrices
-    std::vector<std::vector<T>> A_inv_ops;   // A_i^{-1} matrices
-    int nb;                                  // Basis dimension
+    const seriesCoefficient<T>* C;           // 系数引用
+    std::vector<int> theta;                  // Sector标识符
+    std::vector<std::vector<T>> A_ops;       // A_i矩阵组
+    std::vector<std::vector<T>> A_inv_ops;   // A_i^{-1}矩阵组
+    int nb;                                  // 基维度
 };
 ```
 
 #### `RelationCoefficient<T>`
-Result structure providing indexed access to relation coefficients.
+结果结构，提供关系系数的索引访问。
 ```cpp
 template<typename T>
 class RelationCoefficient {
-    // Access coefficient for given multi-indices
+    // 访问给定多重指标的系数
     const std::vector<T>& operator()(
-        const std::vector<int>& alpha,  // Multi-index constraint
-        const std::vector<int>& beta)   // Multi-index power
+        const std::vector<int>& alpha,  // 多重指标约束
+        const std::vector<int>& beta)   // 多重指标幂次
     const;
 };
 ```
 
 #### `AdaptiveSamplingConfig`
-Configuration for adaptive sampling and convergence checking.
+自适应采样和收敛检测配置。
 ```cpp
 struct AdaptiveSamplingConfig {
-    int min_nu = 3;                    // Minimum sampling points
-    int max_nu = 50;                   // Maximum sampling points
-    int convergence_threshold = 3;     // Nullity stability detection
-    int lev_hint = 0;                  // Current (lev, deg) level hints
+    int min_nu = 3;                    // 最小采样点数
+    int max_nu = 50;                   // 最大采样点数
+    int convergence_threshold = 3;     // 零化度稳定性检测阈值
+    int lev_hint = 0;                  // 当前(lev, deg)级别提示
     int deg_hint = 0;
 };
 ```
 
-### Main API: `reconstructReductionRelation<T>()`
+### 主API：`reconstructReductionRelation<T>()`
 
-**Purpose**: Solves for all linear relations at a specific (lev, deg) level.
+**用途**: 求解特定(lev, deg)级别的所有线性关系。
 
 ```cpp
 template<typename T>
@@ -227,189 +254,189 @@ reconstructReductionRelation(
     const std::vector<std::vector<int>>& sector,
     const std::vector<std::vector<std::vector<T>>>& A_list,
     const std::vector<std::vector<std::vector<T>>>& Ainv_list,
-    int ne,                            // Dimension of multi-indices
-    int lev, int deg,                  // Current level/degree
+    int ne,                            // 多重指标维度
+    int lev, int deg,                  // 当前级别/次数
     const AdaptiveSamplingConfig& config = {});
 ```
 
-### Usage Pattern (From test_RelationFF.cpp)
+### 使用模式（来自test_RelationFF.cpp）
 
 ```cpp
-// For each (lev, deg) pair:
+// 对每个(lev, deg)对：
 auto [linear_result, relation_coeff] = 
     RelationSolver::reconstructReductionRelation<FFInt>(
-        allResults,        // Coefficients from layer recursion
-        sector_list,       // Sector identifiers
-        A_list, Ainv_list, // A-operators
-        ne, lev, deg,      // Dimensions
-        config);           // Adaptive sampling config
+        allResults,        // 层递归的系数
+        sector_list,       // Sector标识符
+        A_list, Ainv_list, // A算子
+        ne, lev, deg,      // 维度
+        config);           // 自适应采样配置
 
-// Check if relations were found
+// 检查是否找到关系
 if (linear_result.hasSolution) {
     int num_relations = linear_result.S.size();
     
-    // Access specific relation coefficients
+    // 访问特定关系系数
     for (const auto& alpha : alphas) {
         for (const auto& beta : betas) {
             const auto& coeff_vec = relation_coeff(alpha, beta);
-            // coeff_vec[0] = particular solution
-            // coeff_vec[1..] = solution space basis
+            // coeff_vec[0] = 特解
+            // coeff_vec[1..] = 解空间基
         }
     }
 }
 ```
 
-### Algorithm: Adaptive Multipoint Sampling
+### 算法：自适应多点采样
 
-1. **Regime Preparation** — Compute P(α) matrices for all multi-indices α at given lev
-2. **Iterative Sampling** — Generate random nu vectors; each produces |regimes| × nb × (k_max+1) equations
-3. **System Solving** — Solve the homogeneous linear system; track nullity dimension
-4. **Convergence Check** — Stop when nullity stabilizes over convergence_threshold iterations
-5. **Solution Extraction** — Package result as RelationCoefficient indexed by (α, β)
-
-### Related Files
-
-For detailed implementation and usage examples, see:
-- [RelationSolver Component Guide](./docs/RelationSolver_ComponentGuide.md)
-- [test_RelationFF.cpp](./tests/test_RelationFF.cpp) — Practical usage example
-- [Incremental Solver](./include/IncrementalRelationSolver.hpp) — Advanced multi-level solver
+1. **Regime准备** — 计算给定lev下所有多重指标alpha的P(alpha)矩阵
+2. **迭代采样** — 生成随机nu向量；每个产生|regimes| × nb × (k_max+1)个方程
+3. **系统求解** — 求解齐次线性系统；追踪零化度维度
+4. **收敛检测** — 当零化度在convergence_threshold次迭代中稳定时停止
+5. **解提取** — 将结果打包为按(alpha, beta)索引的RelationCoefficient
 
 ---
 
-### Algorithm Flow
+## Algorithm Flow
 
-1. **Data Loading**: `loadAllIBPMatricesBinary<T>()` loads IBP matrices from binary files
-2. **Layer Recursion**: `layerRecursion<T>()` computes expansion coefficients order-by-order
-3. **Serialization**: `SeriesIO::saveAllResults()` caches computed coefficients
-4. **Relation Solving** ⭐:
-   - Configure adaptive sampling with (lev, deg) hints
-   - Call `reconstructReductionRelation<T>()` for each (lev, deg)
-   - Get back solutions as `RelationCoefficient<T>` for downstream processing
+```
+1. 数据加载：loadAllIBPMatricesBinary<T>() 从二进制文件加载IBP矩阵
+       ↓
+2. 层递归：layerRecursion<T>() 逐阶计算展开系数
+       ↓
+3. 序列化：SeriesIO::saveAllResults() 缓存计算的系数
+       ↓
+4. 关系求解：
+   - 用(lev, deg)提示配置自适应采样
+   - 对每个(lev, deg)调用reconstructReductionRelation<T>()
+   - 以RelationCoefficient<T>形式返回解供下游处理
+```
 
 ---
 
 ## Testing Strategy
 
-### Test Executables
+### 测试可执行文件
 
-| Test | Purpose | Data Type | Command |
-|------|---------|-----------|---------|
-| `test_expandFF` | Expansion coefficient calculation | `FFInt` | `./build/test_expandFF` |
-| `test_RelationFF` | Linear relation reconstruction | `FFInt` | `./build/test_RelationFF` |
-| `test_expand` | Double-precision expansion | `double` | `./build/test_expand` |
-| `test_recons` | Reconstruction algorithms | `double` | `./build/test_recons` |
+| 测试 | 用途 | 数据类型 | 命令 |
+|------|------|----------|------|
+| `test_expandFF` | 展开系数计算 | `FFInt` | `./build/test_expandFF` |
+| `test_RelationFF` | 线性关系重建 | `FFInt` | `./build/test_RelationFF` |
+| `test_expand` | 双精度展开 | `double` | `./build/test_expand` |
+| `test_recons` | 重建算法 | `double` | `./build/test_recons` |
+| `test_RelationNew` | 扩展多regime测试 | `FFInt` | `./build/test_RelationNew` |
 
-**Note**: This project does not use `ctest` or `add_test()`. Tests are standalone executables.
+**注意**: 本项目不使用`ctest`或`add_test()`。测试是独立的可执行文件。
 
-### Running Tests
+### 运行测试
 
 ```bash
 cd build
 
-# Finite field expansion test (requires IBPMat_DPpart_QuadriScale.bin)
+# 有限域展开测试（需要IBPMat_DPpart_QuadriScale.bin）
 ./test_expandFF
 
-# Relation solving test (requires RingData_DBtop.bin, IBPMat_DBtop.bin)
+# 关系求解测试（需要RingData_*.bin, IBPMat_*.bin）
 ./test_RelationFF
 ```
 
-### Test Data Files
+### 测试数据文件
 
-Tests expect specific binary data files in the working directory:
-- `IBPMat_DBtop.bin`, `IBPMat_DPpart_QuadriScale.bin` - IBP matrices
-- `RingData_DBtop.bin`, `RingData_DPpart_QuadriScale.bin` - Ring data
-- `ExpansionResults_cache.bin` - Coefficient cache (auto-generated)
+测试需要工作目录中的特定二进制数据文件：
+- `IBPMat_DBtop.bin`, `IBPMat_DPpart_QuadriScale.bin` - IBP矩阵
+- `RingData_DBtop.bin`, `RingData_DPpart_QuadriScale.bin` - 环数据
+- `ExpansionResults_cache.bin` - 系数缓存（自动生成）
 
 ---
 
 ## Coding Conventions
 
-### Naming Style
+### 命名风格
 
-| Element | Convention | Example |
-|---------|------------|---------|
-| Files | PascalCase for headers | `LayerRecursion.hpp` |
-| Classes | PascalCase | `class seriesCoefficient` |
-| Functions | camelCase | `layerRecursion()`, `getIndex()` |
-| Variables | snake_case (local), camelCase (members) | `int num_regs;`, `int numRegs;` |
-| Constants | UPPER_CASE | `MAX_VAL`, `BINOM` |
-| Templates | PascalCase | `typename T`, `typename Field` |
+| 元素 | 约定 | 示例 |
+|------|------|------|
+| 文件 | PascalCase（头文件） | `LayerRecursion.hpp` |
+| 类 | PascalCase | `class seriesCoefficient` |
+| 函数 | camelCase | `layerRecursion()`, `getIndex()` |
+| 变量 | snake_case（局部）, camelCase（成员） | `int num_regs;`, `int numRegs;` |
+| 常量 | UPPER_CASE | `MAX_VAL`, `BINOM` |
+| 模板 | PascalCase | `typename T`, `typename Field` |
+| 命名空间 | PascalCase | `namespace LayerRecursionCore` |
 
-### Comment Language
+### 注释语言
 
-- **Primary**: Chinese (简体中文) - for mathematical/algorithmic explanations
-- **Secondary**: English - for API documentation and brief notes
+- **主要**: 中文（简体中文）- 用于数学/算法解释
+- **次要**: 英文 - 用于API文档和简短注释
 
-### File Organization
+### 文件组织
 
-- Templates: Header-only (`.hpp`) or `.tpp` files
-- Implementations: `.cpp` files in `src/`
-- Each header should have include guards: `#ifndef FILENAME_HPP`
+- 模板：头文件（`.hpp`）或`.tpp`文件
+- 实现：`.cpp`文件放在`src/`中
+- 每个头文件应包含包含守卫：`#ifndef FILENAME_HPP`
 
-### Code Patterns
+### 代码模式
 
-1. **Template Specialization** for type dispatch:
+1. **模板特化**用于类型分发：
 ```cpp
 if constexpr (std::is_same_v<T, firefly::FFInt>) {
-    // Finite field path
+    // 有限域路径
 } else {
-    // Floating point path
+    // 浮点路径
 }
 ```
 
-2. **Namespace organization**:
+2. **命名空间组织**：
 ```cpp
-namespace LayerRecursionCore { /* core functions */ }
-namespace AlgebraData { /* data loading */ }
-namespace RelationSolver { /* relation solving */ }
-namespace SeriesIO { /* serialization */ }
+namespace LayerRecursionCore { /* 核心函数 */ }
+namespace AlgebraData { /* 数据加载 */ }
+namespace RelationSolver { /* 关系求解 */ }
+namespace SeriesIO { /* 序列化 */ }
 ```
 
 ---
 
 ## Common Tasks
 
-### Adding a New Test
+### 添加新测试
 
-1. Create `tests/test_MyFeature.cpp` with a `main()` function
-2. Add to `CMakeLists.txt`:
+1. 创建 `tests/test_MyFeature.cpp` 并包含 `main()` 函数
+2. 添加到 `CMakeLists.txt`：
 ```cmake
 add_executable(test_MyFeature tests/test_MyFeature.cpp ${COMMON_SOURCES})
 target_link_libraries(test_MyFeature ${FIREFLY_LIBRARY} ${GMP_LIBRARY} Eigen3::Eigen)
 ```
-3. Rebuild: `cd build && cmake --build .`
+3. 重新构建：`cd build && cmake --build .`
 
-### Adding a New Header
+### 添加新头文件
 
-1. Place in `include/MyHeader.hpp`
-2. Use include guards and namespace
-3. Include from `src/` or other headers as needed
+1. 放置在 `include/MyHeader.hpp`
+2. 使用包含守卫和命名空间
+3. 从 `src/` 或其他头文件按需包含
 
-### Modifying the Core Algorithm
+### 修改核心算法
 
-The layer recursion algorithm has three layers:
-1. **Entry**: `LayerRecursion.hpp` - `layerRecursion<T>()` template
-2. **Core Logic**: `LayerRecursionCore.hpp` - function declarations
-3. **Implementation**: `LayerRecursionCore.cpp` - non-template implementations
-4. **Template Impl**: `LayerRecursionCore.tpp` - template implementations
+层递归算法有三层：
+1. **入口**: `LayerRecursion.hpp` - `layerRecursion<T>()` 模板
+2. **核心逻辑**: `LayerRecursionCore.hpp` - 函数声明
+3. **实现**: `LayerRecursionCore.cpp` - 非模板实现
+4. **模板实现**: `LayerRecursionCore.tpp` - 模板实现
 
-Edit the appropriate layer based on your changes.
+根据修改内容编辑相应的层次。
 
 ---
 
 ## Important Notes
 
-1. **Binary Data Format**: IBP matrix files use a custom binary format (magic number `"IBP1"`). See `IBPMatrixLoader_Binary.hpp` for specification.
+1. **二进制数据格式**: IBP矩阵文件使用自定义二进制格式（魔数 `"IBP1"`）。详见 `IBPMatrixLoader_Binary.hpp`。
 
-2. **Global State**: 
-   - `BINOM[MAX_VAL][MAX_VAL]` - precomputed binomial coefficients (initialized via `initBinomial()`)
-   - `FFInt::p` - finite field modulus (set via `FFInt::set_new_prime()`)
+2. **全局状态**:
+   - `BINOM[MAX_VAL][MAX_VAL]` - 预计算组合数（通过 `initBinomial()` 初始化）
+   - `FFInt::p` - 有限域模数（通过 `FFInt::set_new_prime()` 设置）
 
-3. **Memory Management**: `seriesCoefficient` preallocates large contiguous memory blocks. Be cautious with large `order` values.
+3. **内存管理**: `seriesCoefficient` 预分配大块连续内存。注意大的 `order` 值可能导致的内存问题。
 
-4. **Build Directory**: Do not edit files in `build/` directly. They are generated by CMake.
+4. **构建目录**: 不要直接编辑 `build/` 中的文件。它们由CMake生成。
 
-5. **MATLAB Scripts**: The `.m` files are for data generation in MATLAB/Mathematica. They are not required for C++ builds.
+5. **Mathematica脚本**: `.wl` 文件用于Mathematica/MATLAB中的数据生成。C++构建不需要它们。
 
 ---
 
