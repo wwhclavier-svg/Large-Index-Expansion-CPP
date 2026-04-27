@@ -103,7 +103,13 @@ void printResult(const std::vector<std::vector<seriesCoefficient<T>>>& allResult
     }
 }
 
-int main() {
+int main(int argc, char* argv[]) {
+    // 解析命令行参数：famname
+    std::string famname = "DPpart_QuadriScale";  // 默认值
+    if (argc > 1) {
+        famname = argv[1];
+    }
+
     // 1. 设置有限域素数（例如 1000003）
     FFInt::set_new_prime(1000003);
 
@@ -117,14 +123,17 @@ int main() {
     //const string coeffCacheFile = "resCache_Expansion_DBall.bin";  // 缓存文件
     //const string filename = "IBPMat_DPpart_TriScale.bin";
     //const string coeffCacheFile = "resCache_Expansion_DPpart_TriScale.bin";  // 缓存文件
-    const string filename = "IBPMat_DPpart_QuadriScale.bin";
-    const string coeffCacheFile = "resCache_Expansion_DPpart_QuadriScale.bin";  // 缓存文件
+    const string filename = "IBPMat_" + famname + ".bin";
+    const string coeffCacheFile = "resCache_Expansion_" + famname + ".bin";  // 缓存文件
 
 
 
 
     try {
         cout << "=== Test: Expand Coefficients over Finite Field (FFInt) ===" << endl;
+        cout << "Using famname: " << famname << endl;
+        cout << "Filename: " << filename << endl;
+        cout << "CoeffCacheFile: " << coeffCacheFile << endl;
 
         // 4. 加载 IBP 矩阵数据，模板参数为 FFInt
         //auto ibpmatlist = loadAllIBPMatrices<FFInt>(filename);
