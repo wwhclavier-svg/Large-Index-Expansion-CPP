@@ -1,12 +1,19 @@
 #include <iostream>
+#include <string>
 #include "IBPMatrixLoader_Binary.hpp"
 #include "firefly/FFInt.hpp"
 
-int main() {
+int main(int argc, char* argv[]) {
     try {
-        std::cout << "=== Test Loading IBPMat_bub.bin ===" << std::endl;
+        std::string family = "bub00";
+        if (argc > 1) {
+            family = argv[1];
+        }
         
-        auto ibpmatlist = loadAllIBPMatricesBinary<firefly::FFInt>("IBPMat_bub.bin");
+        std::string filename = "IBPMat_" + family + ".bin";
+        std::cout << "=== Test Loading " << filename << " ===" << std::endl;
+        
+        auto ibpmatlist = loadAllIBPMatricesBinary<firefly::FFInt>(filename);
         std::cout << "Loaded " << ibpmatlist.size() << " matrices" << std::endl;
         
         if (!ibpmatlist.empty()) {

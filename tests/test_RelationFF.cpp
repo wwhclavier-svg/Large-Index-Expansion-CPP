@@ -87,19 +87,10 @@ struct SolutionAtLevel {
 };
 
 int main(int argc, char* argv[]) {
-    if (argc < 2) {
-        cerr << "Usage: " << argv[0] << " <family_name> [order] [lev_max] [deg_max]" << endl;
-        cerr << "  family_name: e.g. bub, bub0, DBtop" << endl;
-        cerr << "  order      : expansion order (default: 4)" << endl;
-        cerr << "  lev_max    : max |alpha| (default: 2)" << endl;
-        cerr << "  deg_max    : max |beta| (default: 2)" << endl;
-        cerr << endl;
-        cerr << "Example: " << argv[0] << " bub" << endl;
-        cerr << "         " << argv[0] << " DBtop 4 2 1" << endl;
-        return 1;
+    string family = "bub00";
+    if (argc > 1) {
+        family = argv[1];
     }
-
-    string family = argv[1];
     int order = (argc > 2) ? stoi(argv[2]) : 4;
     int lev_min = 1;
     int lev_max = (argc > 3) ? stoi(argv[3]) : 2;

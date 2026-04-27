@@ -12,7 +12,7 @@ find_library(GMP_LIBRARY NAMES gmp)
 find_library(GMPXX_LIBRARY NAMES gmpxx)
 
 # FireFly 路径（已构建但未安装）
-set(FIREFLY_ROOT "/root/firefly-2.0.3")
+set(FIREFLY_ROOT "/home/ykm/下载/firefly")
 set(FIREFLY_INCLUDE_DIRS 
     "${FIREFLY_ROOT}/source/include"
     "${FIREFLY_ROOT}/build/include"
