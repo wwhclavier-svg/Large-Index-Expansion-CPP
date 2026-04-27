@@ -105,7 +105,7 @@ void printResult(const std::vector<std::vector<seriesCoefficient<T>>>& allResult
 
 int main(int argc, char* argv[]) {
     // 解析命令行参数：famname
-    std::string famname = "DPpart_QuadriScale";  // 默认值
+    std::string famname = "bub00";  // 默认值
     if (argc > 1) {
         famname = argv[1];
     }
@@ -124,7 +124,7 @@ int main(int argc, char* argv[]) {
     //const string filename = "IBPMat_DPpart_TriScale.bin";
     //const string coeffCacheFile = "resCache_Expansion_DPpart_TriScale.bin";  // 缓存文件
     const string filename = "IBPMat_" + famname + ".bin";
-    const string coeffCacheFile = "resCache_Expansion_" + famname + ".bin";  // 缓存文件
+    const string coeffCacheFile = "ExpansionCache_" + famname + ".bin";  // 缓存文件
 
 
 
