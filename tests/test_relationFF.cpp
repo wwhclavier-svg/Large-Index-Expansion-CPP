@@ -61,6 +61,230 @@ adjustSamplingConfig(
     return config;
 }
 
+// 辅助函数：将关系系数导出为 MMA 多项式格式 Sum c(a,b) v^b j[a]
+template<typename T>
+void exportRelationToMMA_Polynomial(
+    const RelationSolver::RelationCoefficient<T>& rel_coeff,
+    const ::LinearSystemResult<T>& linear_result,
+    int lev, int deg, int ne,
+    const std::string& filename)
+{
+    std::ofstream out(filename);
+    if (!out) throw std::runtime_error("Cannot open file for writing: " + filename);
+
+    const auto& alphas = rel_coeff.getAlphas();
+    const auto& betas = rel_coeff.getBetas();
+    size_t nAlpha = alphas.size();
+    size_t nBeta = betas.size();
+    size_t nSols = rel_coeff.getNumSolutions();
+
+    auto isZero = [](const T& val) -> bool {
+        if constexpr (std::is_same_v<T, firefly::FFInt>) {
+            return val.n == 0;
+        } else {
+            return val == T(0);
+        }
+    };
+
+    auto writeValue = [&out](const T& val) {
+        if constexpr (std::is_same_v<T, firefly::FFInt>) {
+            out << val.n;
+        } else {
+            out << val;
+        }
+    };
+
+    out << "(* C++ Relation Export: Polynomial Form *)\n";
+    out << "$RelationResult = <|\n";
+    out << "  \"Lev\" -> " << lev << ", \"Deg\" -> " << deg << ",\n";
+    out << "  \"HasSolution\" -> " << (linear_result.hasSolution ? "True" : "False") << ",\n";
+    out << "  \"NumVariables\" -> " << (nAlpha * nBeta) << ",\n";
+    out << "  \"NumSolutions\" -> " << nSols << ",\n";
+    out << "  \"Relations\" -> {\n";
+    for (size_t sol = 0; sol <= nSols; ++sol) {
+        out << "    ";
+        bool first_term = true;
+        for (size_t a = 0; a < nAlpha; ++a) {
+            for (size_t b = 0; b < nBeta; ++b) {
+                size_t idx = a * nBeta + b;
+                const T& val = linear_result.Mext[idx][sol];
+                if (isZero(val)) continue;
+
+                if (!first_term) out << " + ";
+                first_term = false;
+
+                writeValue(val);
+
+                for (int i = 0; i < ne; ++i) {
+                    int exp = betas[b][i];
+                    if (exp == 1) out << "*v" << (i + 1);
+                    else if (exp > 1) out << "*v" << (i + 1) << "^" << exp;
+                }
+
+                out << "*j[";
+                for (int i = 0; i < ne; ++i) {
+                    if (i > 0) out << ",";
+                    out << alphas[a][i];
+                }
+                out << "]";
+            }
+        }
+        if (first_term) out << "0";
+        if (sol < nSols) out << ",";
+        out << "\n";
+    }
+    out << "  }\n";
+    out << "|>;\n";
+}
+
+// 统一格式导出函数：包含完整的系数矩阵和元数据
+template<typename T>
+void exportRelationToMMA_Unified(
+    const RelationSolver::RelationCoefficient<T>& rel_coeff,
+    const ::LinearSystemResult<T>& linear_result,
+    int lev, int deg, int ne, int modulus,
+    const std::string& family,
+    const std::string& filename)
+{
+    std::ofstream out(filename);
+    if (!out) throw std::runtime_error("Cannot open file for writing: " + filename);
+
+    const auto& alphas = rel_coeff.getAlphas();
+    const auto& betas = rel_coeff.getBetas();
+    size_t nAlpha = alphas.size();
+    size_t nBeta = betas.size();
+    size_t nSols = rel_coeff.getNumSolutions();
+    size_t numVars = nAlpha * nBeta;
+
+    auto isZero = [](const T& val) -> bool {
+        if constexpr (std::is_same_v<T, firefly::FFInt>) {
+            return val.n == 0;
+        } else {
+            return val == T(0);
+        }
+    };
+
+    auto writeValue = [&out](const T& val) {
+        if constexpr (std::is_same_v<T, firefly::FFInt>) {
+            out << val.n;
+        } else {
+            out << val;
+        }
+    };
+
+    out << "(* C++ Relation Export: Unified Format *)\n";
+    out << "(* Family: " << family << ", Lev=" << lev << ", Deg=" << deg << " *)\n";
+    out << "$RelationResult = <|\n";
+    out << "  \"Family\" -> \"" << family << "\",\n";
+    out << "  \"Lev\" -> " << lev << ",\n";
+    out << "  \"Deg\" -> " << deg << ",\n";
+    out << "  \"NE\" -> " << ne << ",\n";
+    out << "  \"Modulus\" -> " << modulus << ",\n";
+
+    // Alphas list
+    out << "  \"Alphas\" -> {";
+    for (size_t a = 0; a < nAlpha; ++a) {
+        out << "{";
+        for (int i = 0; i < ne; ++i) {
+            if (i > 0) out << ",";
+            out << alphas[a][i];
+        }
+        out << "}";
+        if (a < nAlpha - 1) out << ", ";
+    }
+    out << "},\n";
+
+    // Betas list
+    out << "  \"Betas\" -> {";
+    for (size_t b = 0; b < nBeta; ++b) {
+        out << "{";
+        for (int i = 0; i < ne; ++i) {
+            if (i > 0) out << ",";
+            out << betas[b][i];
+        }
+        out << "}";
+        if (b < nBeta - 1) out << ", ";
+    }
+    out << "},\n";
+
+    // Coefficients matrix [numVars] x [1 + numSolutions]
+    out << "  \"Coefficients\" -> {\n";
+    for (size_t i = 0; i < numVars; ++i) {
+        out << "    {";
+        // Column 0: particular solution (or 0 for homogeneous)
+        if (linear_result.hasSolution && i < linear_result.Mext.size() && 0 < linear_result.Mext[i].size()) {
+            writeValue(linear_result.Mext[i][0]);
+        } else {
+            out << "0";
+        }
+        // Columns 1..nSols: nullspace basis vectors
+        for (size_t s = 1; s <= nSols; ++s) {
+            out << ", ";
+            if (i < linear_result.Mext.size() && s < linear_result.Mext[i].size()) {
+                writeValue(linear_result.Mext[i][s]);
+            } else {
+                out << "0";
+            }
+        }
+        out << "}";
+        if (i < numVars - 1) out << ",";
+        out << "\n";
+    }
+    out << "  },\n";
+
+    // Relations (polynomial form for human readability)
+    out << "  \"Relations\" -> {\n";
+    for (size_t sol = 0; sol <= nSols; ++sol) {
+        out << "    ";
+        if (sol == 0) {
+            out << "\"Particular\" -> ";
+        } else {
+            out << "\"Basis" << sol << "\" -> ";
+        }
+        out << "\"";
+        bool first_term = true;
+        for (size_t a = 0; a < nAlpha; ++a) {
+            for (size_t b = 0; b < nBeta; ++b) {
+                size_t idx = a * nBeta + b;
+                const T& val = (idx < linear_result.Mext.size() && sol < linear_result.Mext[idx].size())
+                    ? linear_result.Mext[idx][sol] : T(0);
+                if (isZero(val)) continue;
+
+                if (!first_term) out << " + ";
+                first_term = false;
+
+                writeValue(val);
+
+                // beta exponents (v variables)
+                for (int i = 0; i < ne; ++i) {
+                    int exp = betas[b][i];
+                    if (exp == 1) out << "*v" << (i + 1);
+                    else if (exp > 1) out << "*v" << (i + 1) << "^" << exp;
+                }
+
+                // alpha index (j[...] notation)
+                out << "*j[";
+                for (int i = 0; i < ne; ++i) {
+                    if (i > 0) out << ",";
+                    out << alphas[a][i];
+                }
+                out << "]";
+            }
+        }
+        if (first_term) out << "0";
+        out << "\"";
+        if (sol < nSols) out << ",";
+        out << "\n";
+    }
+    out << "  },\n";
+
+    // Solution info
+    out << "  \"HasSolution\" -> " << (linear_result.hasSolution ? "True" : "False") << ",\n";
+    out << "  \"NumVariables\" -> " << numVars << ",\n";
+    out << "  \"NumSolutions\" -> " << nSols << "\n";
+    out << "|>;\n";
+}
+
 struct SolutionAtLevel {
     int lev;
     int deg;
@@ -149,6 +373,9 @@ int main(int argc, char* argv[]) {
             cout << "Recursion completed in " << fixed << setprecision(3) << dt << "s" << endl;
             SeriesIO::saveAllResults(allResults, coeffCacheFile);
             cout << "Saved to cache: " << coeffCacheFile << endl;
+            string mmaCacheFile = "ExpansionMMA_" + family + ".m";
+            SeriesIO::exportAllResultsToMMA(allResults, mmaCacheFile);
+            cout << "Exported to MMA format: " << mmaCacheFile << endl;
         }
         cout << "Total branches: " << allResults.size() << " matrices" << endl;
 
@@ -204,6 +431,19 @@ int main(int argc, char* argv[]) {
                         allResults, sector_list, A_list, Ainv_list,
                         ne, current_lev, current_deg, config
                     );
+
+                    if (res.hasSolution) {
+                        // Export polynomial format (legacy)
+                        string relFilename = "Relations_" + family + "_lev" + to_string(current_lev) + "_deg" + to_string(current_deg) + ".m";
+                        exportRelationToMMA_Polynomial(rel_coeff, res, current_lev, current_deg, ne, relFilename);
+                        cout << "  Exported relation to: " << relFilename << endl;
+
+                        // Export unified format (for comparison with MMA)
+                        string unifiedFilename = "Compare-CPPRelation-" + family + ".m";
+                        exportRelationToMMA_Unified(rel_coeff, res, current_lev, current_deg, ne,
+                            static_cast<int>(FFInt::p), family, unifiedFilename);
+                        cout << "  Exported unified format to: " << unifiedFilename << endl;
+                    }
                     
                     auto iter_end = chrono::high_resolution_clock::now();
                     double elapsed = chrono::duration<double>(iter_end - iter_start).count();
