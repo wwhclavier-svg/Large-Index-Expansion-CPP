@@ -325,7 +325,7 @@ int main(int argc, char* argv[]) {
 
     string family = argv[1];
     int order = (argc > 2) ? stoi(argv[2]) : 4;
-    int lev_min = 1;
+    int lev_min = 0;
     int lev_max = (argc > 3) ? stoi(argv[3]) : 2;
     int deg_min = 0;
     int deg_max = (argc > 4) ? stoi(argv[4]) : 2;
@@ -397,7 +397,15 @@ int main(int argc, char* argv[]) {
             Ainv_list.push_back(ring.Ainv_list);
         }
         cout << "Extracted " << sector_list.size() << " sectors." << endl;
-        
+        for (size_t i = 0; i < sector_list.size(); ++i) {
+            cout << "  Sector " << i << ": [";
+            for (size_t j = 0; j < sector_list[i].size(); ++j) {
+                if (j > 0) cout << ", ";
+                cout << sector_list[i][j];
+            }
+            cout << "]" << endl;
+        }
+
         auto start = chrono::high_resolution_clock::now();
         cout << "\n=== Iterative Relation Solving ===" << endl;
         
@@ -407,9 +415,11 @@ int main(int argc, char* argv[]) {
         RelationSolver::AdaptiveSamplingConfig base_config;
         base_config.min_nu = 3;
         base_config.max_nu = 50;
-        base_config.nullity_stable_threshold = 2;
-        base_config.check_interval = 1;
-        base_config.verification_points = 1;
+        base_config.nullity_stable_threshold = 5;
+        base_config.check_interval = 5;
+        base_config.verification_points = 5;
+        base_config.random_min = 0;
+        base_config.random_max = static_cast<double>(FFInt::p - 1);
         
         for (int current_lev = lev_min; current_lev <= lev_max; ++current_lev) {
             cout << "--- Processing lev = " << current_lev << " ---" << endl;
@@ -419,7 +429,7 @@ int main(int argc, char* argv[]) {
                 
                 auto iter_start = chrono::high_resolution_clock::now();
                 
-                int k_max = order - 1;
+                int k_max = order;
                 int num_regimes = ringData.size();
                 auto config = adjustSamplingConfig(
                     base_config, current_lev, current_deg,
@@ -439,12 +449,13 @@ int main(int argc, char* argv[]) {
                         cout << "  Exported relation to: " << relFilename << endl;
 
                         // Export unified format (for comparison with MMA)
-                        string unifiedFilename = "Compare-CPPRelation-" + family + ".m";
+                        string unifiedFilename = "Compare-CPPRelation-" + family + "_lev" + to_string(current_lev) + "_deg" + to_string(current_deg) + ".m";
                         exportRelationToMMA_Unified(rel_coeff, res, current_lev, current_deg, ne,
                             static_cast<int>(FFInt::p), family, unifiedFilename);
                         cout << "  Exported unified format to: " << unifiedFilename << endl;
+
                     }
-                    
+
                     auto iter_end = chrono::high_resolution_clock::now();
                     double elapsed = chrono::duration<double>(iter_end - iter_start).count();
                     

@@ -162,6 +162,113 @@ std::vector<std::vector<seriesCoefficient<T>>> loadAllResults(const std::string&
     return result;
 }
 
+/**
+ * 将 allResults 导出为 Mathematica 可读的 .m 文件格式。
+ * 输出格式：
+ *   (1) 每个 seed={a1,a2,...} 处的系数转为单项式 c*v1^a1*v2^a2*...；
+ *   (2) 同一 k 下不同 l（即不同 seed 长度）的单项式归并相加为多项式；
+ *   (3) 解索引 i 翻到最外层，完全为零的解被剔除。
+ */
+template<typename T>
+void exportAllResultsToMMA(const std::vector<std::vector<seriesCoefficient<T>>>& allResults,
+                           const std::string& filename) {
+    std::ofstream out(filename);
+    if (!out) throw std::runtime_error("Cannot open file for writing: " + filename);
+
+    out << "(* C++ Expansion Cache Export *)\n";
+    out << "$ExpansionResults = {\n";
+
+    for (size_t mi = 0; mi < allResults.size(); ++mi) {
+        out << "  { (* Matrix " << (mi + 1) << " *)\n";
+        for (size_t si = 0; si < allResults[mi].size(); ++si) {
+            const auto& coeff = allResults[mi][si];
+            int kmax = coeff.getKmax();
+            int incre = coeff.getIncre();
+            int ne = coeff.getNe();
+            int nb = coeff.getNb();
+            int nimax = coeff.getNimax();
+
+            out << "    <| \"Kmax\" -> " << kmax << ", \"Incre\" -> " << incre
+                << ", \"NE\" -> " << ne << ", \"NB\" -> " << nb
+                << ", \"Nimax\" -> " << nimax << ",\n";
+            out << "       \"Solutions\" -> {\n";
+
+            // 先收集哪些解 (i) 非全零
+            std::vector<int> active_i;
+            for (int i = 0; i <= nimax; ++i) {
+                bool allZero = true;
+                for (int k = 0; k <= kmax && allZero; ++k) {
+                    int lmax = incre * k;
+                    for (int l = 0; l <= lmax && allZero; ++l) {
+                        long long nSeeds = getCapacity(ne, l);
+                        for (long long cid = 0; cid < nSeeds && allZero; ++cid) {
+                            for (int j = 0; j < nb; ++j) {
+                                if (coeff(k, l, cid, j, i) != T(0)) {
+                                    allZero = false;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+                if (!allZero) active_i.push_back(i);
+            }
+
+            for (size_t ii = 0; ii < active_i.size(); ++ii) {
+                int i = active_i[ii];
+                out << "         <| \"i\" -> " << i << ", \"H\" -> {\n";
+                for (int k = 0; k <= kmax; ++k) {
+                    out << "           ";
+                    int lmax = incre * k;
+                    bool firstTerm = true;
+                    for (int l = 0; l <= lmax; ++l) {
+                        long long nSeeds = getCapacity(ne, l);
+                        for (long long cid = 0; cid < nSeeds; ++cid) {
+                            auto seed = readIndex(cid, l, ne);
+                            for (int j = 0; j < nb; ++j) {
+                                const T& val = coeff(k, l, cid, j, i);
+                                if (val != T(0)) {
+                                    if (!firstTerm) out << " + ";
+                                    firstTerm = false;
+                                    if constexpr (std::is_same_v<T, firefly::FFInt>) {
+                                        out << val.n;
+                                    } else {
+                                        out << val;
+                                    }
+                                    for (int v = 0; v < ne; ++v) {
+                                        if (seed[v] > 0) {
+                                            out << "*v" << (v + 1);
+                                            if (seed[v] > 1) out << "^" << seed[v];
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    if (firstTerm) out << "0";
+                    out << " (* k=" << k << " *)";
+                    if (k < kmax) out << ",";
+                    out << "\n";
+                }
+                out << "         }|>";
+                if (ii < active_i.size() - 1) out << ",";
+                out << "\n";
+            }
+
+            out << "       }\n";
+            out << "    |>";
+            if (si < allResults[mi].size() - 1) out << ",";
+            out << "\n";
+        }
+        out << "  }";
+        if (mi < allResults.size() - 1) out << ",";
+        out << "\n";
+    }
+
+    out << "};\n";
+    out.close();
+}
+
 } // namespace SeriesIO
 
 #endif // SERIES_COEFFICIENT_IO_HPP

@@ -6,11 +6,11 @@
 
 IBP 系数在  $\underline{\tilde{\nu}}=\underline{\nu} + \underline{\theta} n$  处关于 $n$ 的展开：
    
-$$j(\underline{\nu} + \underline{\theta} n) = h(\underline{\nu}; n) = \sum_{k=0}^{\infty} \sum_{\alpha_i \leq 0, |\underline{\alpha}|\leq incre*k} c_{k,\underline{\alpha}} \underline{\nu}^{\underline{\alpha}} n^{-k}$$
+$$j(\underline{\theta} n + \underline{\nu}) = h(\underline{\nu}; n) = \sum_{k=0}^{\infty} \sum_{\alpha_i \leq 0, |\underline{\alpha}|\leq incre*k} c_{k,\underline{\alpha}} \underline{\nu}^{\underline{\alpha}} n^{-k}$$
    
 
 其中：
-- $j(\tilde{\underline{\nu}}) = j(\underline{\nu} + \underline{\theta} n)=h(\underline{\nu};n)$ 是费曼积分在变量替换 $\underline{\nu} \to \underline{\nu} + \underline{\theta} n$ 后对 $n \to \infty$ 的级数展开.
+- $j(\tilde{\underline{\nu}}) = j(\underline{\theta} n + \underline{\nu})=h(\underline{\nu};n)$ 是费曼积分在变量替换 $\underline{\nu} \to \underline{\nu} + \underline{\theta} n$ 后对 $n \to \infty$ 的级数展开.
 - $j(\nu)$ 表示原本定义的费曼积分，$g(\nu;n)$ 表示 $n$ -平移之后的费曼积分，$h(\nu;n)$表示 $g$ 对 $n$ 的渐进展开.
 - $\underline{\nu} = (\nu_1, \nu_2, ..., \nu_e)$  是费曼积分的指标向量
 -  $\underline{\theta} = (\theta_1, \theta_2, ..., \theta_e)$  是 sector 相关的 $\theta$ 向量
@@ -23,13 +23,13 @@ $$j(\underline{\nu} + \underline{\theta} n) = h(\underline{\nu}; n) = \sum_{k=0}
 
 $$
 \sum_{\underline{\alpha},\underline{\beta}} b_{\underline{\alpha},\underline{\beta}} \underline{\tilde{\nu}}^{\underline{\beta}}  j(\underline{\tilde{\nu}} - \underline{\alpha}) = 
-\sum_{\underline{\alpha},\underline{\beta}} b_{\underline{\alpha},\underline{\beta}} (\underline{\nu} + \underline{\theta} n)^{\underline{\beta}}  g(\underline{\nu} - \underline{\alpha};n) = 0 
+\sum_{\underline{\alpha},\underline{\beta}} b_{\underline{\alpha},\underline{\beta}} (\underline{\theta} n + \underline{\nu})^{\underline{\beta}}  g(\underline{\nu} - \underline{\alpha};n) = 0 
 $$
 
 
 其中：
 - $b_{\underline{\alpha},\underline{\beta}}$ 是待求的 relation 系数
-- $(\underline{\nu} + \underline{\theta} n)^{\underline{\beta}} = \prod_i (\nu_i + \theta_i n)^{\beta_i}$ 是带平移的多项式
+- $(\underline{\theta} n + \underline{\nu})^{\underline{\beta}} = \prod_i (\nu_i + \theta_i n)^{\beta_i}$ 是带平移的多项式
 
 ### 1.3 关键变换
 
@@ -42,7 +42,7 @@ $$
 
 因此：
 $$
-\sum_{\underline{\alpha},\underline{\beta},\underline{\gamma},k} b_{\underline{\alpha},\underline{\beta}} \, c_{k,\underline{\gamma}}  (\underline{\nu} + \underline{\theta} n)^{\underline{\beta}}  (\underline{\nu}-\underline{\alpha})^{\underline{\gamma}} / n^k = 0
+\sum_{\underline{\alpha},\underline{\beta},\underline{\gamma},k} b_{\underline{\alpha},\underline{\beta}} \, c_{k,\underline{\gamma}}  (\underline{\theta} n + \underline{\nu})^{\underline{\beta}}  (\underline{\nu}-\underline{\alpha})^{\underline{\gamma}} / n^k = 0
 $$
 
 这是一个关于 $\nu$ 的多项式方程。我们可以从中提取中单项式方程，或直接取 $\nu$ 的不同数值采样得到不同的标量方程，最后解出 $b_{\alpha,\beta}$.
@@ -490,7 +490,7 @@ M(nu)[row] = f2  -- 标量
 
 根据理论框架（1.3节），关系方程为：
 $$
-\sum_{\underline{\alpha},\underline{\beta},\underline{\gamma},k} b_{\underline{\alpha},\underline{\beta}} \, c_{k,\underline{\gamma}}  (\underline{\nu} + \underline{\theta} n)^{\underline{\beta}}  \underline{\nu}^{\underline{\gamma}} / n^k = 0
+\sum_{\underline{\alpha},\underline{\beta},\underline{\gamma},k} b_{\underline{\alpha},\underline{\beta}} \, c_{k,\underline{\gamma}}  (\underline{\theta} n + \underline{\nu})^{\underline{\beta}}  \underline{\nu}^{\underline{\gamma}} / n^k = 0
 $$
 
 **ν 采样验证流程**：

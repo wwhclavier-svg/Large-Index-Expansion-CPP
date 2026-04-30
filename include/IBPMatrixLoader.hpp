@@ -41,7 +41,7 @@ struct IBPMatrixE
     vector<vector<vector<T>>> K1s;
     vector<vector<vector<T>>> K2s;
     vector<vector<vector<vector<T>>>> F2s;
-    int nibp, ne, nb;
+    int nibp, ne, nb, incre;
 };
 //  nb*nb matrix structure is stored in 1-dim vector
 
@@ -402,7 +402,7 @@ std::vector<IBPMatrixE<T>> loadAllIBPMatricesBinary(const std::string& filename)
         mat.nibp = nibp;
         mat.ne = ne;
         mat.nb = nb;
-        // incre 可存储或忽略
+        mat.incre = incre;
 
         // 如果是 FFInt 类型，设置素数
         if constexpr (std::is_same_v<T, firefly::FFInt>) {

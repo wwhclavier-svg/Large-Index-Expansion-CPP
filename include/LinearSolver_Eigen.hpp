@@ -21,6 +21,7 @@ struct LinearSystemResult {
     bool hasSolution;
     vector<vector<T>> Mext; // 拼接矩阵 (v | M)
     vector<int> S;          // 独立变量索引集合
+    vector<int> pivot_cols; // 主元列索引（Mext 第 i 行对应 pivot_cols[i] 列）
 };
 
 /**
@@ -79,7 +80,13 @@ LinearSystemResult<T> solveLinearSystem_Eigen(const vector<vector<T>>& A_in, con
 
     LinearSystemResult<T> res;
     // 验证解的有效性
-    if (!(A * v).isApprox(b, 1e-8)) {
+    bool solution_valid;
+    if constexpr (std::is_floating_point_v<T>) {
+        solution_valid = (A * v).isApprox(b, static_cast<T>(1e-8));
+    } else {
+        solution_valid = (A * v == b).all();
+    }
+    if (!solution_valid) {
         res.hasSolution = false;
         return res;
     }

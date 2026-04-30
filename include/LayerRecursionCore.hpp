@@ -133,7 +133,7 @@ private:
             T* row_dest = dest_ptr + (size_t)r * nimax_p1;
             for (int c = 0; c < nb; ++c) {
                 T scalar = mat[r * nb + c];
-                if (scalar == 0) continue; 
+                if (scalar == 0) continue;
                 T* col_src = src_ptr + (size_t)c * nimax_p1;
                 for (int i = 0; i < nindep_p1; ++i) row_dest[i] += scalar * col_src[i];
             }
@@ -174,7 +174,7 @@ public:
     inline T* get_NPlus(int l1, int m) { return &data[off_NPlusBase + (size_t)(l1 - 1) * block_len + (size_t)m * nb * nimax_p1]; }
     inline T* get_MPlus(int l1, int m) { return &data[off_MPlusBase + (size_t)(l1 - 2) * block_len + (size_t)m * nb * nimax_p1]; }
     inline T* get_Total_row(int m, int j) { return &data[off_Total + ((size_t)m * nb + j) * nimax_p1]; }
-    
+
     void buildAll(const IBPMatrixE<T>& ibpmat, seriesCoefficient<T>& C, int k, int l, vector<int> &seed, int nindep, int ncurr, long long (&BINOM)[MAX_VAL][MAX_VAL]);
 };
 

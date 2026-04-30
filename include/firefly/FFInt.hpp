@@ -50,13 +50,26 @@ public:
 // 内联定义，避免多重定义
 inline uint64_t FFInt::p = 2147483647;  // 默认质数
 
+inline uint64_t modPow(uint64_t base, uint64_t exp, uint64_t mod) {
+    uint64_t result = 1;
+    base %= mod;
+    while (exp > 0) {
+        if (exp & 1) result = (result * base) % mod;
+        base = (base * base) % mod;
+        exp >>= 1;
+    }
+    return result;
+}
+
 inline FFInt FFInt::operator/(const FFInt& other) const {
-    // 简化实现，实际需要模逆
-    return FFInt(n / other.n);
+    // Compute modular inverse using Fermat's little theorem: a^(-1) = a^(p-2) mod p
+    uint64_t inv = modPow(other.n, p - 2, p);
+    return FFInt((n * inv) % p);
 }
 
 inline FFInt& FFInt::operator/=(const FFInt& other) {
-    n = (n / other.n) % p;
+    uint64_t inv = modPow(other.n, p - 2, p);
+    n = (n * inv) % p;
     return *this;
 }
 

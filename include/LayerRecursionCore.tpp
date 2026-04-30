@@ -481,7 +481,9 @@ void inhomogTerms<T>::add_MPlus_contribution(const IBPMatrixE<T>& ibpmat, series
                 T l2_sign = utility::sgn<T>(l2);
                 for (int i = 0; i < ne; ++i) {
                     for (int j = 0; j < ne; ++j) {
-                        T factor = l2_sign * static_cast<T>(BINOM[seed[i] + l2][l2] * BINOM[seed[j] + l1 - l2][l1 - l2]);
+                        long long bin1 = BINOM[seed[i] + l2][l2];
+                        long long bin2 = BINOM[seed[j] + l1 - l2][l1 - l2];
+                        T factor = l2_sign * static_cast<T>(bin1 * bin2);
                         T* src = getValuePtrOffSet(C, k, l, seed, l2, i, l1 - l2, j);
                         addScaledProductTo(dest, ibpmat.F2s[m][i][j], factor, src, nindep_p1);
                     }
