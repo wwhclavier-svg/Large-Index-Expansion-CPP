@@ -342,9 +342,33 @@ j[a__]/;!Or@@({a}/.{b_/;b>0->True,b_/;b<=0->False})->0
 | nu={22708432,96048789} | 10/10 | 0 |
 | nu={94771974,122157045} | 10/10 | 0 |
 
-**结论:** 所有测试点通过，C++ 关系验证成功。
+**结论:** ✅ 所有测试点通过，M(nu) × coeffs = 0 验证成功。
 
-**注意:** C++ 关系是基向量（单分量），不能直接用 Kira 约化验证为零。正确的验证方法是 MatrixBuild。
+---
+
+### 2026-04-30 CPP-KiraVerify Kira 约化验证
+
+**验证方法:** Kira 约化法
+
+**验证原理:** 完整关系代入 Kira 后应约化为 0
+
+**验证结果:**
+
+| 测试点 | Solutions 6,7 通过 | 其他 Solutions 失败 |
+|--------|-------------------|---------------------|
+| nu={3,3}, {3,4}, {4,3}, {5,5}, {10,10} | PASS (0) | FAIL (coeff × j[1,1]) |
+
+**分析:**
+
+1. **C++ 输出的"关系"与 MMA g-form 关系结构不同**
+   - C++: M(nu) 的零空间向量 (nullspace vectors)
+   - MMA: 多项式 g-form 关系 (代入后系数完全抵消)
+
+2. **MatrixBuild 验证通过** — M(nu) × coeffs = 0 对所有解成立，说明 C++ 零空间计算正确
+
+3. **Kira 约化验证部分失败** — 只有 2/10 解完全抵消为 0，因为 C++ 基向量是单项形式，不是 MMA 那种可相互抵消的多项式
+
+4. **正确理解**: C++ 的 nullspace vectors 是 M(nu) × x = 0 的解，与 MMA 的 g-form 关系是不同表示形式
 
 ---
 
@@ -396,11 +420,16 @@ wolframscript -file Compare-Reconstruct-bub00.wl
 # Step 4: Kira 验证 (独立运行)
 wolframscript -file Compare-KiraVerify-bub00.wl
 
-# C++ 对比 (需要先运行 C++ test_relationFF)
+# C++ 展开测试 (需要 .bin 数据文件)
 cd ../Large-Index-Expansion-CPP/build
+./test_expandFF bub00
+
+# C++ 关系重构测试
 ./test_relationFF bub00 4 2 2
-cd ../../Large-Index-Expansion-MMA-Mini
-wolframscript -file Compare-Relation-Results.wl
+
+# C++ Kira 约化验证 (从项目根目录运行)
+cd ..
+wolframscript -file Compare-CPP-KiraVerify-bub00.wl
 ```
 
 ---
