@@ -18,30 +18,52 @@ using namespace firefly;       // 引入 FFInt 命名空间
 template <typename T>
 void printM1(std::vector<IBPMatrixE<T>> ibpmatlist) {
     if (!ibpmatlist.empty()) {
-    const auto& firstMat = ibpmatlist[0];
-    std::cout << "\nFirst M1 matrix: dimensions = ["
-            << firstMat.M1.size() << ", ";
-    if (!firstMat.M1.empty() && !firstMat.M1[0].empty()) {
-        std::cout << firstMat.M1[0].size() << ", "
-                << firstMat.M1[0][0].size() << "]" << std::endl;
+        const auto& firstMat = ibpmatlist[0];
+        std::cout << "\nFirst M1 matrix: dimensions = ["
+                << firstMat.M1.size() << ", ";
+        if (!firstMat.M1.empty() && !firstMat.M1[0].empty()) {
+            std::cout << firstMat.M1[0].size() << ", "
+                    << firstMat.M1[0][0].size() << "]" << std::endl;
 
-        // 打印前 10 个非零元素
-        int count = 0;
-        for (size_t i = 0; i < firstMat.M1.size() && count < 10; ++i) {
-            for (size_t j = 0; j < firstMat.M1[i].size() && count < 10; ++j) {
-                for (size_t k = 0; k < firstMat.M1[i][j].size() && count < 10; ++k) {
-                    const auto& val = firstMat.M1[i][j][k];
-                    if (val != 0 || true) {   // 假设 FFInt 可比较零
-                        std::cout << "  M1[" << i << "][" << j << "][" << k << "] = "
-                                << val << std::endl;
-                        ++count;
+            // 打印前 10 个非零元素
+            int count = 0;
+            for (size_t i = 0; i < firstMat.M1.size() && count < 10; ++i) {
+                for (size_t j = 0; j < firstMat.M1[i].size() && count < 10; ++j) {
+                    for (size_t k = 0; k < firstMat.M1[i][j].size() && count < 10; ++k) {
+                        const auto& val = firstMat.M1[i][j][k];
+                        if (val != 0 || true) {   // 假设 FFInt 可比较零
+                            std::cout << "  M1[" << i << "][" << j << "][" << k << "] = "
+                                    << val << std::endl;
+                            ++count;
+                        }
                     }
                 }
             }
-        }
-        if (count == 0) std::cout << "  M1 has no non-zero elements." << std::endl;
+            if (count == 0) std::cout << "  M1 has no non-zero elements." << std::endl;
         } else {
             std::cout << "M1 is empty or invalid." << std::endl;
+        }
+
+        // Print K1s matrix
+        std::cout << "\nK1s matrix: dimensions = ["
+                << firstMat.K1s.size() << ", " << firstMat.K1s[0].size() << ", " << firstMat.K1s[0][0].size() << "]" << std::endl;
+        for (size_t i = 0; i < firstMat.K1s.size(); ++i) {
+            for (size_t j = 0; j < firstMat.K1s[i].size(); ++j) {
+                for (size_t k = 0; k < firstMat.K1s[i][j].size(); ++k) {
+                    std::cout << "  K1s[" << i << "][" << j << "][" << k << "] = " << firstMat.K1s[i][j][k] << std::endl;
+                }
+            }
+        }
+
+        // Print K2s matrix
+        std::cout << "\nK2s matrix: dimensions = ["
+                << firstMat.K2s.size() << ", " << firstMat.K2s[0].size() << ", " << firstMat.K2s[0][0].size() << "]" << std::endl;
+        for (size_t i = 0; i < firstMat.K2s.size(); ++i) {
+            for (size_t j = 0; j < firstMat.K2s[i].size(); ++j) {
+                for (size_t k = 0; k < firstMat.K2s[i][j].size(); ++k) {
+                    std::cout << "  K2s[" << i << "][" << j << "][" << k << "] = " << firstMat.K2s[i][j][k] << std::endl;
+                }
+            }
         }
     } else {
         std::cout << "No matrices loaded." << std::endl;
@@ -103,25 +125,27 @@ void printResult(const std::vector<std::vector<seriesCoefficient<T>>>& allResult
     }
 }
 
-int main() {
-    // 1. 设置有限域素数（例如 1000003）
-    FFInt::set_new_prime(1000003);
+int main(int argc, char* argv[]) {
+    // 1. 设置有限域素数
+    FFInt::set_new_prime(179424673);
 
-    // 2. 初始化组合数表（与类型无关，仍用 long long）
+    // 2. 初始化组合数表
     initBinomial();
 
-    // 3. 参数设置
+    // 3. 从命令行参数获取 famname（默认 bub00）
+    string famname = "bub00";
+    if (argc > 1) {
+        famname = argv[1];
+    }
+    cout << "Using family: " << famname << endl;
+
     const int order = 4;
     const int incre = 2;
-    //const string filename = "IBPMat_DBall.bin";
-    //const string coeffCacheFile = "resCache_Expansion_DBall.bin";  // 缓存文件
-    //const string filename = "IBPMat_DPpart_TriScale.bin";
-    //const string coeffCacheFile = "resCache_Expansion_DPpart_TriScale.bin";  // 缓存文件
-    const string filename = "IBPMat_DPpart_QuadriScale.bin";
-    const string coeffCacheFile = "resCache_Expansion_DPpart_QuadriScale.bin";  // 缓存文件
+    const string filename = "IBPMat_" + famname + ".bin";
+    const string coeffCacheFile = "resCache_Expansion_" + famname + ".bin";  // 缓存文件
 
-
-
+    FFInt test_div = FFInt(1) / FFInt(2);
+    std::cout << "[SANITY] 1/2 mod p = " << test_div.n << " (expected 89712337 for correct mod inverse)" << std::endl;
 
     try {
         cout << "=== Test: Expand Coefficients over Finite Field (FFInt) ===" << endl;
@@ -156,10 +180,10 @@ int main() {
             cout << "  Matrix " << i+1 << ": " << allResults[i].size() << " solutions" << endl;
         }
 
-        printResult(allResults);        
+        printResult(allResults);
         SeriesIO::saveAllResults(allResults, coeffCacheFile);
+        SeriesIO::exportAllResultsToMMA(allResults, "Compare-CPPResult-" + famname + ".m");
         
-
         cout << "\nTest completed successfully." << endl;
         return 0;
     }

@@ -32,6 +32,7 @@ auto solveLinearSystem(const std::vector<std::vector<T>>& A, const std::vector<T
         res.hasSolution = ff_res.hasSolution;
         res.Mext = std::move(ff_res.Mext);
         res.S = std::move(ff_res.S);
+        res.pivot_cols = std::move(ff_res.pivot_cols);
         return res;
     } else {
         // 调用 Eigen 求解器

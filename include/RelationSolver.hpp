@@ -641,9 +641,6 @@ void RegimeEvaluator<T>::step3_computeF1(const std::vector<T>& nu) {
     // 对所有 (alpha, beta) 组合计算 f1
     for (const auto& alpha : alphas_) {
         for (const auto& beta : betas_) {
-            // 检查缓存是否已有结果
-            if (f1_store_->retrieve(alpha, beta) != nullptr) continue;
-            
             std::vector<T> poly(k_max_ + 1, T(0));
             poly[0] = T(1);
             
@@ -700,11 +697,9 @@ void RegimeEvaluator<T>::step4_computeF2(const std::vector<int>& alpha, const st
     // 获取指针并验证
     T* g_ptr = g_store_->retrieve(alpha);
     T* f1_ptr = f1_store_->retrieve(alpha, beta);
-    
+
     // 如果任一数据缺失，说明前序步骤有问题，记录且返回
     if (!g_ptr || !f1_ptr) {
-        // 可选：在调试模式下输出警告
-        // std::cerr << "Warning: step4_computeF2 missing required data for alpha/beta\n";
         return;
     }
     
@@ -1157,12 +1152,12 @@ T IncrementalNullspaceSolver<T>::verifyBasis(
     if (!info.is_valid || info.basis.empty()) {
         return T(0);
     }
-    
+
     T max_residual = T(0);
-    
+
     for (const auto& row : test_rows) {
         if (row.size() != num_vars_) continue;
-        
+
         // 计算该基向量集是否使行向量为零
         // 实际上我们需要验证：对每个基向量 b，row · b = 0
         for (const auto& basis_vec : info.basis) {
@@ -1184,7 +1179,7 @@ T IncrementalNullspaceSolver<T>::verifyBasis(
             }
         }
     }
-    
+
     return max_residual;
 }
 
@@ -1329,34 +1324,35 @@ AdaptiveEquationBuilder<T>::build(
     while (result.nu_count < config_.max_nu) {
         // 获取下一个采样点
         std::vector<T> nu = sampler.next();
-        
+
         // 在该点评估所有 regime 和 nimax
         auto rows = assembler.evaluateAtNu(nu);
-        
+
         // 添加到求解器
         solver.addRows(rows);
-        
+
         // 记录使用的采样点
         result.nu_used.push_back(nu);
         result.nu_count++;
-        result.equations.insert(result.equations.end(), rows.begin(), rows.end());
-        
+
+        // 每次迭代都调用 update 来跟踪 nullity 稳定性
+        int current_nullity = solver.getNullity();
+        sampler.update(current_nullity);
+
         // 检查是否需要进行收敛检测
         if (sampler.shouldCheck()) {
-            int current_nullity = solver.getNullity();
-            sampler.update(current_nullity);
-            
+
             // 检查是否收敛
             if (sampler.hasConverged()) {
                 // 额外验证
                 auto verify_points = sampler.getVerificationPoints(config_.verification_points);
                 bool verification_passed = true;
-                
+
                 auto current_info = solver.getNullspace();
                 for (const auto& vnu : verify_points) {
                     auto vrows = assembler.evaluateAtNu(vnu);
                     T residual = solver.verifyBasis(vrows, current_info, T(config_.tolerance));
-                    
+
                     if constexpr (std::is_floating_point_v<T>) {
                         if (residual > T(config_.tolerance)) {
                             verification_passed = false;
@@ -1369,14 +1365,39 @@ AdaptiveEquationBuilder<T>::build(
                         }
                     }
                 }
-                
+
                 if (verification_passed) {
                     result.converged = true;
                     result.nullspace = current_info;
                     result.stop_reason = "Converged after " + std::to_string(result.nu_count) + " samples";
                     return result;
                 }
-                // 验证失败，继续采样
+                // 验证失败：将测试失败的方程加入系统
+                // 这样零空间维数会单调递减，确保最终收敛到正确解
+                for (const auto& vnu : verify_points) {
+                    auto vrows = assembler.evaluateAtNu(vnu);
+                    T residual = T(0);
+                    if constexpr (std::is_floating_point_v<T>) {
+                        residual = solver.verifyBasis(vrows, current_info, T(config_.tolerance));
+                    } else {
+                        residual = solver.verifyBasis(vrows, current_info, T(0));
+                    }
+                    // 只有失败的才加入（residual > tolerance for float, or != 0 for FFInt）
+                    bool is_failed = false;
+                    if constexpr (std::is_floating_point_v<T>) {
+                        is_failed = (residual > T(config_.tolerance));
+                    } else {
+                        is_failed = (residual != T(0));
+                    }
+                    if (is_failed) {
+                        solver.addRows(vrows);
+                        result.nu_used.push_back(vnu);
+                        result.equations.insert(result.equations.end(), vrows.begin(), vrows.end());
+                    }
+                }
+                // 更新 sampler 的 nullity 状态
+                int new_nullity = solver.getNullity();
+                sampler.update(new_nullity);
             }
         }
     }
@@ -1555,6 +1576,93 @@ public:
         return basis;
     }
 };
+
+// ==========================================
+// 关系系数导出为 Mathematica .m 格式
+// ==========================================
+template<typename T>
+void exportRelationCoefficientToMMA(
+    const RelationCoefficient<T>& rel_coeff,
+    const LinearSystemResult<T>& linear_result,
+    int lev, int deg,
+    const std::string& filename)
+{
+    std::ofstream out(filename);
+    if (!out) throw std::runtime_error("Cannot open file for writing: " + filename);
+
+    const auto& alphas = rel_coeff.getAlphas();
+    const auto& betas = rel_coeff.getBetas();
+    size_t nAlpha = alphas.size();
+    size_t nBeta = betas.size();
+    size_t nVars = nAlpha * nBeta;
+    size_t nSols = rel_coeff.getNumSolutions();
+
+    out << "(* C++ Relation Export *)\n";
+    out << "$RelationResult = <|\n";
+    out << "  \"Lev\" -> " << lev << ", \"Deg\" -> " << deg << ",\n";
+    out << "  \"HasSolution\" -> " << (linear_result.hasSolution ? "True" : "False") << ",\n";
+    out << "  \"NumVariables\" -> " << nVars << ",\n";
+    out << "  \"NumSolutions\" -> " << nSols << ",\n";
+
+    // Alphas
+    out << "  \"Alphas\" -> {";
+    for (size_t a = 0; a < nAlpha; ++a) {
+        out << "{" << alphas[a][0];
+        for (size_t i = 1; i < alphas[a].size(); ++i) out << "," << alphas[a][i];
+        out << "}";
+        if (a < nAlpha - 1) out << ", ";
+    }
+    out << "},\n";
+
+    // Betas
+    out << "  \"Betas\" -> {";
+    for (size_t b = 0; b < nBeta; ++b) {
+        out << "{" << betas[b][0];
+        for (size_t i = 1; i < betas[b].size(); ++i) out << "," << betas[b][i];
+        out << "}";
+        if (b < nBeta - 1) out << ", ";
+    }
+    out << "},\n";
+
+    // Coefficients: flattened by (alpha, beta), each entry is {particular, basis1, basis2, ...}
+    out << "  \"Coefficients\" -> {\n";
+    for (size_t a = 0; a < nAlpha; ++a) {
+        for (size_t b = 0; b < nBeta; ++b) {
+            size_t idx = a * nBeta + b;
+            out << "    {";
+            for (size_t s = 0; s <= nSols; ++s) {
+                const T& val = linear_result.Mext[idx][s];
+                if constexpr (std::is_same_v<T, firefly::FFInt>) {
+                    out << val.n;
+                } else {
+                    out << val;
+                }
+                if (s < nSols) out << ", ";
+            }
+            out << "}  (* alpha=";
+            out << "{" << alphas[a][0];
+            for (size_t i = 1; i < alphas[a].size(); ++i) out << "," << alphas[a][i];
+            out << "}, beta=";
+            out << "{" << betas[b][0];
+            for (size_t i = 1; i < betas[b].size(); ++i) out << "," << betas[b][i];
+            out << "} *)";
+            if (a < nAlpha - 1 || b < nBeta - 1) out << ",";
+            out << "\n";
+        }
+    }
+    out << "  },\n";
+
+    // Free variables
+    out << "  \"FreeVariables\" -> {";
+    for (size_t i = 0; i < linear_result.S.size(); ++i) {
+        out << linear_result.S[i];
+        if (i < linear_result.S.size() - 1) out << ", ";
+    }
+    out << "}\n";
+
+    out << "|>;\n";
+    out.close();
+}
 
 // ==========================================
 // 新重构函数：使用自适应构建器（推荐）

@@ -21,10 +21,10 @@
 | C++17 | 核心语言 | 必需 |
 | CMake 3.10+ | 构建系统 | 必需 |
 | Eigen3 | 线性代数（浮点运算） | 必需 |
-| FireFly | 有限域运算 | 必需 |
+| FireFly | 有限域运算 | 必需（或可用本地存根替代） |
 | GMP | 多精度算术（FireFly依赖） | 必需 |
 | nlohmann/json | JSON解析（内置于`include/json.hpp`） | 内置 |
-| Mathematica | 数据生成脚本（`.wl`文件） | 可选 |
+| Mathematica | 数据生成脚本（`.wl`、`.m`文件） | 可选 |
 
 ---
 
@@ -32,52 +32,75 @@
 
 ```
 .
-├── CMakeLists.txt           # 主构建配置
-├── CMakeLists_full.txt      # 扩展构建配置（参考/备份）
+├── CMakeLists.txt           # 主构建配置（使用 /root/firefly-2.0.3 的FireFly）
+├── CMakeLists_test.txt      # 备用构建配置（使用本地FireFly存根）
+├── CMakeLists_backup.txt    # 历史备份构建配置
 ├── include/                 # 头文件（模板+接口）
-│   ├── LayerRecursion.hpp           # 层递归算法入口封装
-│   ├── LayerRecursionCore.hpp       # 核心递归函数声明
-│   ├── LayerRecursionCore.tpp       # 模板实现
-│   ├── IBPMatrixLoader_Binary.hpp   # 二进制IBP矩阵加载器
-│   ├── IBPMatrixLoader.hpp          # JSON格式IBP矩阵加载器
-│   ├── SeriesCoefficient.hpp        # 系数存储类
-│   ├── SeriesCoefficientIO.hpp      # 系数二进制序列化
-│   ├── LinearSolver.hpp             # 统一求解器调度器
-│   ├── LinearSolver_Eigen.hpp       # 基于Eigen的浮点求解器
-│   ├── LinearSolver_FF.hpp          # 基于FireFly的有限域求解器
-│   ├── RelationSolver.hpp           # 线性关系重建求解器
+│   ├── firefly/
+│   │   └── FFInt.hpp              # 本地最小化FFInt存根实现
+│   ├── LayerRecursion.hpp         # 层递归算法入口封装
+│   ├── LayerRecursionCore.hpp     # 核心递归函数声明
+│   ├── LayerRecursionCore.tpp     # 模板实现
+│   ├── IBPMatrixLoader_Binary.hpp # 二进制IBP矩阵加载器
+│   ├── IBPMatrixLoader.hpp        # JSON格式IBP矩阵加载器
+│   ├── SeriesCoefficient.hpp      # 系数存储类
+│   ├── SeriesCoefficientIO.hpp    # 系数二进制序列化
+│   ├── LinearSolver.hpp           # 统一求解器调度器
+│   ├── LinearSolver_Eigen.hpp     # 基于Eigen的浮点求解器
+│   ├── LinearSolver_FF.hpp        # 基于FireFly的有限域求解器
+│   ├── RelationSolver.hpp         # 线性关系重建求解器
 │   ├── IncrementalRelationSolver.hpp # 增量式多层级求解器
-│   ├── RingDataLoader.hpp           # 环/代数数据加载器
-│   ├── Combinatorics.hpp            # 索引工具与种子生成
-│   ├── binomial.hpp                 # 预计算组合数表
-│   ├── UnifiedStorage.hpp           # 内存管理工具
-│   ├── Utilities.hpp                # 通用工具函数
-│   └── json.hpp                     # 第三方JSON库
+│   ├── RingDataLoader.hpp         # 环/代数数据加载器
+│   ├── Combinatorics.hpp          # 索引工具与种子生成
+│   ├── binomial.hpp               # 预计算组合数表
+│   ├── binomial2.hpp              # 组合数表变体
+│   ├── UnifiedStorage.hpp         # 内存管理工具
+│   ├── Utilities.hpp              # 通用工具函数
+│   ├── json.hpp                   # 第三方JSON库（nlohmann/json）
+│   ├── RelationRecon.hpp.txt      # 存档：旧版关系重建头文件
+│   └── layerRecursion.hpp.txt     # 存档：旧版层递归头文件
 ├── src/                     # 源文件（非模板实现）
-│   ├── LayerRecursionCore.cpp   # 核心函数实现
-│   ├── layerRecursion.cpp       # 遗留实现
-│   └── main.cpp                 # 遗留驱动程序（未活跃使用）
-├── tests/                   # 测试可执行文件（每个含main()）
-│   ├── test_expandFF.cpp        # 有限域展开测试
-│   ├── test_RelationFF.cpp      # 有限域关系求解测试
-│   ├── test_RelationNew.cpp     # 扩展关系求解测试
-│   ├── test_expand.cpp          # 双精度展开测试
-│   ├── test_recons.cpp          # 重建算法测试
-│   ├── IBPMatrixLoader_Test.cpp # 矩阵加载器测试
-│   └── RingDataLoader_test.cpp  # 环数据加载器测试
+│   ├── LayerRecursionCore.cpp     # 核心非模板函数实现（极小，22行）
+│   ├── layerRecursion.cpp         # 遗留驱动实现
+│   ├── main.cpp                   # 遗留主程序（未活跃使用）
+│   ├── #RelationRecon.cpp.txt     # 存档：旧版关系重建实现
+│   └── #layerRecursion0.cpp.txt   # 存档：旧版层递归实现
+├── tests/                   # 测试可执行文件源码（每个含main()）
+│   ├── test_expandFF.cpp          # 有限域展开测试
+│   ├── test_relationFF.cpp        # 有限域关系求解测试
+│   ├── test_IBPVerification.cpp   # IBP矩阵验证测试
+│   ├── test_expand_family.cpp     # 展开族测试
+│   ├── test_load_bub.cpp          # bub格式矩阵加载测试
+│   ├── IBPVerification.hpp        # IBP验证辅助函数
+│   └── archive/                   # 存档的历史测试文件
+│       ├── test_expand.cpp
+│       ├── test_recons.cpp
+│       ├── test_RelationNew.cpp
+│       ├── IBPMatrixLoader_Test.cpp
+│       └── RingDataLoader_test.cpp
 ├── build/                   # 构建输出目录（自动生成）
 ├── docs/                    # 文档目录
+│   ├── LayerRecursion_Algorithm.md    # 层递归算法详情
 │   ├── RelationSolver_ComponentGuide.md    # RelationSolver组件指南
 │   ├── RelationSolver_QuickReference.md    # 快速参考
 │   └── RelationSolver_Documentation_Hub.md # 文档中心
 ├── ReconstructReductionRelation.wl          # Mathematica关系重建包
 └── ReconstructReductionRelation_Documentation.md # Mathematica包文档
 
-# 数据文件（二进制和JSON格式，工作目录中）
+# 根目录中的独立测试/工具文件（未加入CMake主配置或直接在根目录）
+├── test_ff_verify.cpp       # FireFly库验证测试
+├── test_check_matrix.cpp    # 矩阵检查工具
+├── test_matrix_dump.cpp     # 矩阵转储工具
+├── test_solver.cpp          # 求解器独立测试
+├── test_firefly_simple.cpp  # FireFly简单测试
+├── test_ffint.cpp           # FFInt基本测试
+├── test_ff_div_debug.cpp    # 除法调试工具
+
+# 数据文件（二进制和JSON格式，必须位于工作目录/项目根目录）
 ├── IBPMat_*.bin             # IBP矩阵二进制数据文件
 ├── RingData_*.bin           # 环数据二进制文件
 ├── resCache_*.bin           # 展开结果缓存文件
-└── *.json                   # JSON格式的矩阵数据
+└── ExpansionCache_*.bin     # 展开缓存文件
 ```
 
 ---
@@ -96,9 +119,10 @@ cmake ..
 # 3. 构建
 cmake --build .
 
-# 4. 运行测试
-./test_expandFF
-./test_RelationFF
+# 4. 运行测试（必须从项目根目录运行，而非build/目录）
+cd ..
+./build/test_expandFF
+./build/test_relationFF
 ```
 
 ### 依赖安装
@@ -115,10 +139,24 @@ brew install eigen gmp
 # FireFly需从源码构建
 ```
 
-### 构建选项
+### FireFly配置
 
-`CMakeLists.txt` 提供：
-- `BUILD_FF_TESTS`（默认开启）：构建需要FireFly的有限域测试
+- **主配置** (`CMakeLists.txt`)：FireFly已预构建于 `/root/firefly-2.0.3`，直接链接静态库 `libfirefly.a`
+- **备用配置** (`CMakeLists_test.txt`)：使用 `include/firefly/FFInt.hpp` 中的本地最小化存根，不依赖外部FireFly库，仅用于基础编译测试
+
+### 构建选项与CMake文件说明
+
+| 文件 | 用途 |
+|------|------|
+| `CMakeLists.txt` | **主配置**：使用外部FireFly（`/root/firefly-2.0.3`）+ GMP + Eigen + pthread |
+| `CMakeLists_test.txt` | **备用配置**：使用本地 `include/firefly/FFInt.hpp` 存根，仅依赖Eigen + GMP |
+| `CMakeLists_backup.txt` | **历史备份**：使用 `find_package` 方式查找FireFly |
+
+如需切换配置，可覆盖主文件：
+```bash
+cp CMakeLists_test.txt CMakeLists.txt
+cd build && cmake .. && cmake --build .
+```
 
 ---
 
@@ -131,7 +169,7 @@ brew install eigen gmp
 | 类型 | 用例 | 头文件 |
 |------|------|--------|
 | `double` | 浮点测试、数值验证 | 原生 |
-| `firefly::FFInt` | 有限域计算（素数模） | `<firefly/FFInt.hpp>` |
+| `firefly::FFInt` | 有限域计算（素数模） | `<firefly/FFInt.hpp>`（外部库或本地存根） |
 
 类型分发使用C++17的 `if constexpr` 实现：
 ```cpp
@@ -162,9 +200,9 @@ struct IBPMatrixE {
 - `l`: 层级别
 - `cid`: 种子/组合索引
 - `j`: 基索引（0到nb-1）
-- `i`: 解索引（0到nimax）
+- `i`: 解索引（0到nimax），i=0为特解，i>0为齐次解
 
-#### `LinearSystemResult<T>` (LinearSolver_*.hpp)
+#### `LinearSystemResult<T>` (LinearSolver_Eigen.hpp / LinearSolver_FF.hpp)
 统一的线性求解器结果结构：
 ```cpp
 template<typename T>
@@ -172,6 +210,7 @@ struct LinearSystemResult {
     bool hasSolution;
     vector<vector<T>> Mext;  // 解矩阵（特解+零空间）
     vector<int> S;           // 自由变量索引
+    vector<int> pivot_cols;  // 主元列索引
 };
 ```
 
@@ -191,6 +230,13 @@ SeriesCoefficient.hpp              UnifiedStorage.hpp
 IBPMatrixLoader_Binary.hpp         Combinatorics.hpp
 RingDataLoader.hpp
 ```
+
+### 层递归算法四层结构
+
+1. **入口**: `LayerRecursion.hpp` - `layerRecursion<T>()` 模板封装
+2. **核心逻辑**: `LayerRecursionCore.hpp` - 函数声明
+3. **非模板实现**: `LayerRecursionCore.cpp` - 仅 `equationVariable()` 等少量非模板函数（约22行）
+4. **模板实现**: `LayerRecursionCore.tpp` - 模板实现（`inhomogTerms<T>` 等核心计算）
 
 ---
 
@@ -259,7 +305,7 @@ reconstructReductionRelation(
     const AdaptiveSamplingConfig& config = {});
 ```
 
-### 使用模式（来自test_RelationFF.cpp）
+### 使用模式（来自test_relationFF.cpp）
 
 ```cpp
 // 对每个(lev, deg)对：
@@ -320,31 +366,54 @@ if (linear_result.hasSolution) {
 | 测试 | 用途 | 数据类型 | 命令 |
 |------|------|----------|------|
 | `test_expandFF` | 展开系数计算 | `FFInt` | `./build/test_expandFF` |
-| `test_RelationFF` | 线性关系重建 | `FFInt` | `./build/test_RelationFF` |
-| `test_expand` | 双精度展开 | `double` | `./build/test_expand` |
-| `test_recons` | 重建算法 | `double` | `./build/test_recons` |
-| `test_RelationNew` | 扩展多regime测试 | `FFInt` | `./build/test_RelationNew` |
+| `test_relationFF` | 线性关系重建 | `FFInt` | `./build/test_relationFF` |
+| `test_IBPVerification` | IBP矩阵验证 | `FFInt` | `./build/test_IBPVerification` |
+| `test_expand_family` | 展开族测试 | `FFInt` | `./build/test_expand_family` |
+| `test_load_bub` | bub格式矩阵加载 | `FFInt` | `./build/test_load_bub` |
+| `test_ff_verify` | FireFly库验证 | `FFInt` | `./build/test_ff_verify` |
 
 **注意**: 本项目不使用`ctest`或`add_test()`。测试是独立的可执行文件。
+
+**重要**: 测试必须从**项目根目录**运行（即 `.bin` 数据文件所在的目录），而非 `build/` 目录内。因为测试程序通过相对路径加载二进制数据文件。
 
 ### 运行测试
 
 ```bash
-cd build
-
-# 有限域展开测试（需要IBPMat_DPpart_QuadriScale.bin）
-./test_expandFF
-
-# 关系求解测试（需要RingData_*.bin, IBPMat_*.bin）
-./test_RelationFF
+# 从项目根目录执行
+./build/test_expandFF
+./build/test_relationFF
+./build/test_IBPVerification
+./build/test_load_bub
+./build/test_expand_family
 ```
+
+### 根目录中的独立测试/工具文件
+
+以下文件位于项目根目录，未加入 `CMakeLists.txt` 主配置，需单独编译或作为参考：
+
+| 文件 | 用途 |
+|------|------|
+| `test_ff_verify.cpp` | 验证FireFly库基本功能 |
+| `test_check_matrix.cpp` | 检查矩阵一致性 |
+| `test_matrix_dump.cpp` | 转储矩阵内容用于调试 |
+| `test_solver.cpp` | 线性求解器独立测试 |
+| `test_firefly_simple.cpp` | FireFly最简功能测试 |
+| `test_ffint.cpp` | 本地FFInt存根测试 |
+| `test_ff_div_debug.cpp` | 有限域除法调试 |
+
+### 存档测试文件
+
+以下历史测试文件已移至 `tests/archive/`，不再参与主构建：
+- `test_expand.cpp`、`test_recons.cpp` — 早期双精度测试
+- `test_RelationNew.cpp` — 早期多regime扩展测试
+- `IBPMatrixLoader_Test.cpp`、`RingDataLoader_test.cpp` — 早期数据加载器测试
 
 ### 测试数据文件
 
-测试需要工作目录中的特定二进制数据文件：
-- `IBPMat_DBtop.bin`, `IBPMat_DPpart_QuadriScale.bin` - IBP矩阵
-- `RingData_DBtop.bin`, `RingData_DPpart_QuadriScale.bin` - 环数据
-- `ExpansionResults_cache.bin` - 系数缓存（自动生成）
+测试需要工作目录（项目根目录）中的特定二进制数据文件：
+- `IBPMat_*.bin`（如 `IBPMat_DBtop.bin`、`IBPMat_DPpart_QuadriScale.bin`）- IBP矩阵
+- `RingData_*.bin`（如 `RingData_DBtop.bin`、`RingData_DPpart_QuadriScale.bin`）- 环数据
+- `ExpansionCache_*.bin` / `resCache_*.bin` - 系数缓存（部分自动生成）
 
 ---
 
@@ -356,10 +425,10 @@ cd build
 |------|------|------|
 | 文件 | PascalCase（头文件） | `LayerRecursion.hpp` |
 | 类 | PascalCase | `class seriesCoefficient` |
-| 函数 | camelCase | `layerRecursion()`, `getIndex()` |
-| 变量 | snake_case（局部）, camelCase（成员） | `int num_regs;`, `int numRegs;` |
-| 常量 | UPPER_CASE | `MAX_VAL`, `BINOM` |
-| 模板 | PascalCase | `typename T`, `typename Field` |
+| 函数 | camelCase | `layerRecursion()`、`getIndex()` |
+| 变量 | snake_case（局部）, camelCase（成员） | `int num_regs;`、`int numRegs;` |
+| 常量 | UPPER_CASE | `MAX_VAL`、`BINOM` |
+| 模板 | PascalCase | `typename T`、`typename Field` |
 | 命名空间 | PascalCase | `namespace LayerRecursionCore` |
 
 ### 注释语言
@@ -372,6 +441,7 @@ cd build
 - 模板：头文件（`.hpp`）或`.tpp`文件
 - 实现：`.cpp`文件放在`src/`中
 - 每个头文件应包含包含守卫：`#ifndef FILENAME_HPP`
+- 以 `#` 开头并以 `.txt` 结尾的文件（如 `#RelationRecon.cpp.txt`）为**存档的遗留代码**，不参与当前构建
 
 ### 代码模式
 
@@ -402,7 +472,7 @@ namespace SeriesIO { /* 序列化 */ }
 2. 添加到 `CMakeLists.txt`：
 ```cmake
 add_executable(test_MyFeature tests/test_MyFeature.cpp ${COMMON_SOURCES})
-target_link_libraries(test_MyFeature ${FIREFLY_LIBRARY} ${GMP_LIBRARY} Eigen3::Eigen)
+target_link_libraries(test_MyFeature ${FIREFLY_LIBRARY} ${GMP_LIBRARY} ${GMPXX_LIBRARY} Eigen3::Eigen pthread)
 ```
 3. 重新构建：`cd build && cmake --build .`
 
@@ -414,11 +484,11 @@ target_link_libraries(test_MyFeature ${FIREFLY_LIBRARY} ${GMP_LIBRARY} Eigen3::E
 
 ### 修改核心算法
 
-层递归算法有三层：
+层递归算法有四层：
 1. **入口**: `LayerRecursion.hpp` - `layerRecursion<T>()` 模板
 2. **核心逻辑**: `LayerRecursionCore.hpp` - 函数声明
-3. **实现**: `LayerRecursionCore.cpp` - 非模板实现
-4. **模板实现**: `LayerRecursionCore.tpp` - 模板实现
+3. **非模板实现**: `LayerRecursionCore.cpp` - 非模板实现（极小）
+4. **模板实现**: `LayerRecursionCore.tpp` - 模板实现（主要逻辑）
 
 根据修改内容编辑相应的层次。
 
@@ -436,7 +506,11 @@ target_link_libraries(test_MyFeature ${FIREFLY_LIBRARY} ${GMP_LIBRARY} Eigen3::E
 
 4. **构建目录**: 不要直接编辑 `build/` 中的文件。它们由CMake生成。
 
-5. **Mathematica脚本**: `.wl` 文件用于Mathematica/MATLAB中的数据生成。C++构建不需要它们。
+5. **Mathematica脚本**: `.wl` 文件和 `.m` 文件用于Mathematica中的数据生成与结果比对。C++构建不需要它们，但它们是验证流程的一部分。
+
+6. **测试运行目录**: 必须从项目根目录运行测试可执行文件，因为测试程序通过**相对路径**加载 `IBPMat_*.bin` 和 `RingData_*.bin` 等数据文件。
+
+7. **多CMake配置**: 项目存在多个 `CMakeLists*.txt` 文件。主文件为 `CMakeLists.txt`，使用外部FireFly库；`CMakeLists_test.txt` 为备用配置，使用本地存根。切换前请确认数据类型需求。
 
 ---
 

@@ -81,7 +81,7 @@ struct IBPMatrixE
     vector<vector<vector<T>>> K1s;
     vector<vector<vector<T>>> K2s;
     vector<vector<vector<vector<T>>>> F2s;
-    int nibp, ne, nb;
+    int nibp, ne, nb, incre;
 };
 //  nb*nb matrix structure is stored in 1-dim vector
 
@@ -151,11 +151,6 @@ void insertValue(vector<T>& vec, const vector<int>& coords, V value, const vecto
     // 假设 coords 是 [c_k, c_k+1, ..., c_n]
     // 注意：MMA 导出通常是 1-based，需要 -1
     for (int k = (int)dims.size() - 1; k >= (int)dim_offset; --k) {
-        int coord_val = coords[k - 1]; // coords 索引通常比 dims 少 1 (因为行指针隐含了第0维)
-                                       // 但在此逻辑中，coords 是完整的剩余坐标
-                                       // 让我们修正一下传入的 coords 定义：
-                                       // coords 是 columnIndices 中的一行，例如 [ne_idx, nb_row, nb_col]
-        
         int current_idx = coords[k - dim_offset]; 
         flat_idx += current_idx * stride;
         stride *= dims[k];
@@ -287,7 +282,7 @@ std::vector<IBPMatrixE<T>> loadAllIBPMatricesBinary0(const std::string& filename
         mat.nibp = nibp;
         mat.ne = ne;
         mat.nb = nb;
-        // incre 可存储或忽略
+        mat.incre = incre;
 
         // 如果是 FFInt 类型，设置素数
         if constexpr (std::is_same_v<T, firefly::FFInt>) {
@@ -368,7 +363,7 @@ std::vector<IBPMatrixE<T>> loadAllIBPMatricesBinary(const std::string& filename)
         mat.nibp = nibp;
         mat.ne = ne;
         mat.nb = nb;
-        // incre 可存储或忽略
+        mat.incre = incre;
 
         // 如果是 FFInt 类型，设置素数
         if constexpr (std::is_same_v<T, firefly::FFInt>) {
@@ -479,7 +474,7 @@ std::vector<IBPMatrixE<T>> loadAllIBPMatricesBinary(const std::string& filename)
             cout << op << " <- read" << endl;
         }
         cout << "all read" << endl;
-        //cout << "first: " << mat.M1[0][0][0] << endl;
+        cout << "first M1: " << mat.M1[0][0][0] << endl;
 
         results.push_back(std::move(mat));
     }
