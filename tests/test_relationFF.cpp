@@ -34,7 +34,7 @@ adjustSamplingConfig(
     RelationSolver::generateAllIndices(ne, deg, temp, betas, false);
     
     int num_variables = alphas.size() * betas.size();
-    int equations_per_sample = num_regimes * nb * (k_max + 1);
+    int equations_per_sample = num_regimes * nb * (deg + k_max + 1);
     
     static constexpr double SAFETY_FACTOR = 1.2;
     int min_samples_required = static_cast<int>(
@@ -121,10 +121,17 @@ void exportRelationToMMA_Polynomial(
                     else if (exp > 1) out << "*v" << (i + 1) << "^" << exp;
                 }
 
-                out << "*j[";
+                out << "*g[";
                 for (int i = 0; i < ne; ++i) {
                     if (i > 0) out << ",";
-                    out << alphas[a][i];
+                    int alpha_i = alphas[a][i];
+                    if (alpha_i == 0) {
+                        out << "v" << (i + 1);
+                    } else if (alpha_i == 1) {
+                        out << "v" << (i + 1) << "-1";
+                    } else {
+                        out << "v" << (i + 1) << "-" << alpha_i;
+                    }
                 }
                 out << "]";
             }
@@ -262,11 +269,18 @@ void exportRelationToMMA_Unified(
                     else if (exp > 1) out << "*v" << (i + 1) << "^" << exp;
                 }
 
-                // alpha index (j[...] notation)
-                out << "*j[";
+                // alpha index: g[v1-α1, v2-α2, ...] notation
+                out << "*g[";
                 for (int i = 0; i < ne; ++i) {
                     if (i > 0) out << ",";
-                    out << alphas[a][i];
+                    int alpha_i = alphas[a][i];
+                    if (alpha_i == 0) {
+                        out << "v" << (i + 1);
+                    } else if (alpha_i == 1) {
+                        out << "v" << (i + 1) << "-1";
+                    } else {
+                        out << "v" << (i + 1) << "-" << alpha_i;
+                    }
                 }
                 out << "]";
             }
@@ -299,7 +313,8 @@ struct SolutionAtLevel {
     
     void print(std::ostream& os = std::cout) const {
         double ratio = system_cols > 0 ? static_cast<double>(system_rows) / system_cols : 0.0;
-        std::string status = ratio >= 1.0 ? "✓" : "✗";
+        bool has_nontrivial = solution_dimension > 0;
+        std::string status = has_nontrivial ? "✓" : "✗";
         os << "  " << status << " (lev=" << lev << ", deg=" << deg << "): "
            << "vars=" << num_variables 
            << " sol_dim=" << solution_dimension
@@ -453,6 +468,14 @@ int main(int argc, char* argv[]) {
                         exportRelationToMMA_Unified(rel_coeff, res, current_lev, current_deg, ne,
                             static_cast<int>(FFInt::p), family, unifiedFilename);
                         cout << "  Exported unified format to: " << unifiedFilename << endl;
+
+                        // DIAGNOSTIC: system rank info for deg=0
+                        if (current_deg == 0 && !res.Mext.empty()) {
+                            cout << "    [DIAG] variables=" << res.Mext.size() 
+                                 << ", equations=" << res.Mext[0].size()
+                                 << ", solutions=" << rel_coeff.getNumSolutions()
+                                 << ", pivots=" << res.pivot_cols.size() << endl;
+                        }
 
                     }
 

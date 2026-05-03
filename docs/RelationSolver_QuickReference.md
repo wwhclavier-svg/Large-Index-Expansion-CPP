@@ -25,7 +25,7 @@ int ne = 4;  // dimension
 RelationSolver::AdaptiveSamplingConfig config;
 config.min_nu = 3;
 config.max_nu = 100;
-config.convergence_threshold = 3;
+config.nullity_stable_threshold = 3;
 ```
 
 ### 3️⃣ Solve for (lev, deg)
@@ -72,7 +72,7 @@ const auto& coeff_vec = relation_coeff(alpha, beta);
 
 ## Common Patterns
 
-### Pattern 1: Complete Loop (From test_RelationFF.cpp)
+### Pattern 1: Complete Loop (From test_relationFF.cpp)
 ```cpp
 for (int lev = 0; lev <= 3; ++lev) {
     for (int deg = 0; deg <= 3; ++deg) {
@@ -135,12 +135,12 @@ Output: (LinearSystemResult, RelationCoefficient)
 
 | Goal | Setting |
 |------|---------|
-| Fast (small system) | `max_nu=10`, convergence_threshold=2 |
-| Accurate (large system) | `max_nu=200`, convergence_threshold=5 |
+| Fast (small system) | `max_nu=10`, nullity_stable_threshold=2 |
+| Accurate (large system) | `max_nu=200`, nullity_stable_threshold=5 |
 | Memory-constrained | `max_nu=50`, process one (lev,deg) at a time |
 | Finite field (recommended) | Use `FFInt`, `max_nu=100` |
 
-**Adaptive Adjustment Function** (From test_RelationFF.cpp):
+**Adaptive Adjustment Function** (From test_relationFF.cpp):
 ```cpp
 auto config = adjustSamplingConfig(
     base_config, lev, deg, ne, nb, k_max, num_regimes);
@@ -201,7 +201,7 @@ try {
 
 ## Full Documentation
 
-See [RelationSolver Component Guide](./docs/RelationSolver_ComponentGuide.md) for:
+See [RelationSolver Component Guide](RelationSolver_ComponentGuide.md) for:
 - Complete API reference
 - Algorithm details
 - Performance considerations
@@ -211,6 +211,7 @@ See [RelationSolver Component Guide](./docs/RelationSolver_ComponentGuide.md) fo
 
 ## Example Files
 
-- **Usage**: [tests/test_RelationFF.cpp](../tests/test_RelationFF.cpp)
-- **Config helper**: `adjustSamplingConfig()` in test_RelationFF.cpp
+- **Usage**: [tests/test_relationFF.cpp](../tests/test_relationFF.cpp)
+- **Config helper**: `adjustSamplingConfig()` in test_relationFF.cpp
 - **Advanced**: [include/IncrementalRelationSolver.hpp](../include/IncrementalRelationSolver.hpp)
+- **Algorithm theory**: [Reconstruct_Algorithm.md](Reconstruct_Algorithm.md) — MMA vs C++ comparison, per-point evaluation details

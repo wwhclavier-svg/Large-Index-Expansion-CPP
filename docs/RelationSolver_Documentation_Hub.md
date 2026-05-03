@@ -29,15 +29,16 @@ Comprehensive documentation covering:
 
 **Best for**: In-depth understanding, implementation details, algorithm explanation
 
-### 3. **Workspace Instructions** ([../.github/copilot-instructions.md](../.github/copilot-instructions.md))
-Project-level guidance including:
-- Build and run commands
-- File organization
-- Coding conventions
-- RelationSolver-specific prompts
-- Where to start looking
+### 3. **Algorithm Theory** ([Reconstruct_Algorithm.md](Reconstruct_Algorithm.md))
+Mathematical framework and implementation comparison:
+- Core expansion formula and relation equations
+- MMA symbolic vs C++ numerical approaches
+- Per-point evaluation details (computeG, computeF1, computeF2)
+- ν-sampling verification theory
 
-**Best for**: Project context, conventions, build system
+**Best for**: Understanding the math behind the solver, algorithm correctness
+
+> **Note**: `../.github/copilot-instructions.md` (previously referenced) does not exist.
 
 ### 4. **Architecture Guide** ([../AGENTS.md](../AGENTS.md))
 High-level project overview:
@@ -49,7 +50,7 @@ High-level project overview:
 
 **Best for**: System design, module relationships, overall project context
 
-### 5. **Test Suite** ([../tests/test_RelationFF.cpp](../tests/test_RelationFF.cpp))
+### 5. **Test Suite** ([../tests/test_relationFF.cpp](../tests/test_relationFF.cpp))
 **Living documentation** - practical, working examples:
 - Multi-regime setup
 - Adaptive config tuning (`adjustSamplingConfig`)
@@ -65,8 +66,8 @@ High-level project overview:
 ### For First-Time Users
 1. **Quick Reference** (5 min) → Get basic usage
 2. **Component Guide - Usage Example** (10 min) → See full context
-3. **test_RelationFF.cpp** (15 min) → Study real code
-4. **Architecture Guide** (10 min) → Understand overall design
+3. **Reconstruct_Algorithm.md** (15 min) → Understand the math and algorithm
+4. **test_relationFF.cpp** (15 min) → Study real code
 
 ### For Implementers
 1. **Component Guide - Algorithm Flow** (15 min) → Understand internals
@@ -114,13 +115,13 @@ Solves for linear relations at a single (lev, deg) level.
 
 ### Task 1: Use RelationSolver in Your Code
 📖 **Reference**: Quick Reference → Basic Usage (3 Steps)  
-📝 **Example**: test_RelationFF.cpp lines 215-240  
+📝 **Example**: test_relationFF.cpp — `main()` solver loop at ~line 438, `adjustSamplingConfig()` at ~line 22  
 ⏱️ **Time**: 15 minutes
 
 ### Task 2: Debug Convergence Issues
 📖 **Reference**: Quick Reference → Diagnostic Output  
 📖 **Reference**: Component Guide → Common Pitfalls  
-💻 **Code**: Look for `convergence_threshold` tuning  
+💻 **Code**: Look for `nullity_stable_threshold` tuning  
 ⏱️ **Time**: 10 minutes
 
 ### Task 3: Optimize Performance
@@ -133,7 +134,7 @@ Solves for linear relations at a single (lev, deg) level.
 📖 **Reference**: Component Guide (full)  
 📖 **Reference**: Architecture Guide → Code Organization  
 💻 **Code**: Modify `include/RelationSolver.hpp`  
-🧪 **Test**: Update `test_RelationFF.cpp` or create new test  
+🧪 **Test**: Update `test_relationFF.cpp` or create new test  
 ⏱️ **Time**: 1-2 hours
 
 ### Task 5: Understand the Algorithm
@@ -149,16 +150,15 @@ Solves for linear relations at a single (lev, deg) level.
 ```
 RelationSolver Module Files:
 ├── include/
-│   └── RelationSolver.hpp               (Source code - 1700+ lines)
-├── include/
-│   └── IncrementalRelationSolver.hpp    (Advanced multi-level solver)
+│   ├── RelationSolver.hpp                (Source code - 1700+ lines)
+│   └── IncrementalRelationSolver.hpp     (Advanced multi-level solver)
 ├── tests/
-│   ├── test_RelationFF.cpp              (Main test - uses FFInt)
-│   └── test_RelationNew.cpp             (Extended test)
+│   ├── test_relationFF.cpp               (Main test - uses FFInt)
+│   └── tests/archive/test_RelationNew.cpp (Extended test, archived)
 └── docs/
-    ├── RelationSolver_ComponentGuide.md (THIS DOCUMENTATION)
-    ├── RelationSolver_QuickReference.md (Quick lookup)
-    └── RelationSolver_Documentation.md  (Linked from Component Guide)
+    ├── RelationSolver_ComponentGuide.md  (Comprehensive API + algorithm)
+    ├── RelationSolver_QuickReference.md  (Quick lookup)
+    └── Reconstruct_Algorithm.md          (MMA vs C++ algorithm comparison)
 ```
 
 ---
@@ -170,18 +170,23 @@ RelationSolver Module Files:
 ```cpp
 struct AdaptiveSamplingConfig {
     int min_nu = 3;                    // Minimum sampling points
-    int max_nu = 50;                   // Maximum sampling points  
-    int convergence_threshold = 3;     // Nullity stability count
-    int lev_hint = 0;                  // (lev, deg) hints for
-    int deg_hint = 0;                  // dynamic adjustment
-    // ... additional convergence params
+    int max_nu = 50;                   // Maximum sampling points
+    int check_interval = 1;            // Rank check interval (every N points)
+    int nullity_stable_threshold = 3;  // Nullity stability count
+    int verification_points = 3;       // Extra verification points
+    double tolerance = 1e-10;          // Numerical tolerance
+    bool use_special_points = true;    // Use unit vectors, all-1s, etc.
+    double random_min = 3.0;           // Random point min (avoid 0)
+    double random_max = 100.0;         // Random point max
+    int lev_hint = 2;                  // (lev, deg) hints for
+    int deg_hint = 2;                  // dynamic adjustment
 };
 ```
 
 ### Common Settings
 
-| Use Case | min_nu | max_nu | convergence_threshold |
-|----------|--------|--------|----------------------|
+| Use Case | min_nu | max_nu | nullity_stable_threshold |
+|----------|--------|--------|--------------------------|
 | Small systems (lev ≤ 2) | 3 | 20 | 2 |
 | Medium systems (lev ≤ 4) | 5 | 100 | 3 |
 | Large systems (lev ≥ 5) | 10 | 200+ | 4 |
@@ -195,8 +200,8 @@ struct AdaptiveSamplingConfig {
 ### Run the Tests
 ```bash
 cd build
-./test_RelationFF          # Main finite field test
-./test_RelationNew         # Extended multi-regime test
+./test_relationFF          # Main finite field test (build with CMakeLists.txt)
+# test_RelationNew         -- archived in tests/archive/, not in current build
 ```
 
 ### Expected Output
@@ -269,10 +274,10 @@ IncrementalRelationSolver (for multi-level problems)
 
 ## 📚 Additional Resources
 
-- **Workspace Instructions**: [.github/copilot-instructions.md](../.github/copilot-instructions.md)
+- **Algorithm Theory**: [Reconstruct_Algorithm.md](Reconstruct_Algorithm.md) — MMA vs C++ comparison, per-point evaluation
 - **Project Architecture**: [AGENTS.md](../AGENTS.md)
 - **Build System**: [CMakeLists.txt](../CMakeLists.txt)
-- **Example Code**: [tests/test_RelationFF.cpp](../tests/test_RelationFF.cpp)
+- **Example Code**: [tests/test_relationFF.cpp](../tests/test_relationFF.cpp)
 
 ---
 
@@ -288,6 +293,6 @@ This documentation hub provides multiple perspectives on RelationSolver:
 
 ---
 
-*Last updated: 2026-03-19*  
-*Documentation version: 1.0*  
-*Covers: RelationSolver.hpp, test_RelationFF.cpp*
+*Last updated: 2026-05-01 (previously 2026-03-19)*  
+*Documentation version: 1.1*  
+*Covers: RelationSolver.hpp, test_relationFF.cpp*
