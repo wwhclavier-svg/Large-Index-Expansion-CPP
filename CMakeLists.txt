@@ -46,5 +46,5 @@ add_executable(test_expand_family tests/test_expand_family.cpp ${COMMON_SOURCES}
 target_link_libraries(test_expand_family ${FIREFLY_LIBRARY} ${GMP_LIBRARY} ${GMPXX_LIBRARY} Eigen3::Eigen pthread)
 
 # FireFly 验证测试
-add_executable(test_ff_verify test_ff_verify.cpp)
+add_executable(test_ff_verify tools/test_ff_verify.cpp)
 target_link_libraries(test_ff_verify ${FIREFLY_LIBRARY} ${GMP_LIBRARY} ${GMPXX_LIBRARY} pthread)

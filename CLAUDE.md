@@ -2,6 +2,13 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Behavioral Guidelines
+
+**1. Think Before Coding** — State assumptions explicitly. If uncertain, ask. Present tradeoffs when multiple approaches exist.
+**2. Simplicity First** — Minimum code that solves the problem. No abstractions for single-use code. No speculative features.
+**3. Surgical Changes** — Touch only what the task requires. Don't refactor adjacent code. Match existing style.
+**4. Goal-Driven Execution** — Define verifiable success criteria. Loop until verified. Write tests to confirm correctness.
+
 ## Project Overview
 
 This is a **C++17 scientific computing project** focused on **IBP (Integration By Parts) matrix series expansion** and **finite field arithmetic**. It implements algorithms for computing IBP matrix expansion coefficients and reconstructing linear reduction relations.
@@ -74,25 +81,32 @@ if constexpr (std::is_same_v<T, firefly::FFInt>) {
 | Type | Use Case | Header |
 |------|----------|--------|
 | `double` | Floating-point testing, numerical validation | Native |
-| `firefly::FFInt` | Finite field computation (prime modulus) | `<firefly/FFInt.hpp>` |
+| `firefly::FFInt` | Finite field computation (prime modulus) | `<firefly/FFInt.hpp>` (external FireFly library) |
+
+A local minimal FFInt stub exists at `include/firefly/FFInt.hpp` for quick compile checks when the external FireFly library is unavailable (used by `CMakeLists_test.txt`).
 
 ### Module Hierarchy
 
 ```
 LayerRecursion.hpp                    RelationSolver.hpp
-       ↓                                      ↓
-LayerRecursionCore.hpp              RegimeData<T>
-       ↓                               RegimeEvaluator<T>
-LayerRecursionCore.tpp              AdaptiveEquationBuilder<T>
-       ↓                                      ↓
-LinearSolver.hpp ←────────────────→ LinearSolver_FF.hpp
-       ↓                               LinearSolver_Eigen.hpp
-SeriesCoefficient.hpp              UnifiedStorage.hpp
-IBPMatrixLoader_Binary.hpp         IncrementalRelationSolver.hpp
-IBPMatrixLoader.hpp (JSON)         Combinatorics.hpp
-RingDataLoader.hpp                 Utilities.hpp
-                                   binomial.hpp / binomial2.hpp
+       ↓                              (RegimeData<T>, RegimeEvaluator<T>,
+LayerRecursionCore.hpp                 AdaptiveEquationBuilder<T>,
+       ↓                               RelationCoefficient<T>)
+LayerRecursionCore.tpp                        ↓
+       ↓                              IncrementalRelationSolver.hpp
+LinearSolver.hpp                              ↓
+  (dispatches to ↓)                  UnifiedStorage.hpp
+LinearSolver_FF.hpp                  Combinatorics.hpp
+LinearSolver_Eigen.hpp               Utilities.hpp
+       ↓                              binomial.hpp / binomial2.hpp
+SeriesCoefficient.hpp
+SeriesCoefficientIO.hpp
+IBPMatrixLoader_Binary.hpp
+IBPMatrixLoader.hpp (JSON)
+RingDataLoader.hpp
 ```
+
+**Note**: `RegimeData<T>`, `RegimeEvaluator<T>`, `AdaptiveEquationBuilder<T>`, and `RelationCoefficient<T>` are all defined within `RelationSolver.hpp` — they are not separate files.
 
 ### Core Data Structures
 
@@ -108,6 +122,10 @@ RingDataLoader.hpp                 Utilities.hpp
   - `cid`: seed/combinatorial index
   - `j`: basis index (0 to nb-1)
   - `i`: solution index (0 to nimax), i=0 is particular solution, i>0 are homogeneous solutions
+
+**`SeriesIO`** (`SeriesCoefficientIO.hpp`):
+- Binary serialization of `seriesCoefficient<T>` with magic `"SERCOEF"` and versioning
+- Provides `writeCoefficient()`, `readCoefficient()`, `saveAllResults()`, `loadAllResults()`
 
 **`LinearSystemResult<T>`** (`LinearSolver.hpp`):
 ```cpp
@@ -181,21 +199,33 @@ reconstructReductionRelation(
 | `test_IBPVerification` | IBP matrix verification | `./build/test_IBPVerification` |
 | `test_ff_verify` | FireFly library verification | `./build/test_ff_verify` |
 
-### Root-Level Standalone Tools
+**Note**: No `ctest` or `add_test()` — each test is a standalone executable with its own `main()`. Run from the project root directory where binary data files reside (tests load data files via **relative paths**).
 
-These files reside in the project root and are **not** part of the main `CMakeLists.txt`. Compile them manually when needed:
+Historical test files are archived in `tests/archive/` (`test_expand.cpp`, `test_recons.cpp`, `test_RelationNew.cpp`, etc.) — not part of the current build but useful for reference.
 
-| File | Purpose |
-|------|---------|
-| `test_ff_verify.cpp` | Verify FireFly library basic functionality |
-| `test_check_matrix.cpp` | Check matrix consistency |
-| `test_matrix_dump.cpp` | Dump matrix contents for debugging |
-| `test_solver.cpp` | Linear solver standalone test |
-| `test_firefly_simple.cpp` | Minimal FireFly functionality test |
-| `test_ffint.cpp` | Local FFInt stub test |
-| `test_ff_div_debug.cpp` | Finite field division debugging |
+Additional standalone tools live in `tools/` (e.g., `test_ff_verify.cpp` is in the CMake build) — compile manually for ad-hoc debugging.
 
-**Note**: No `ctest` or `add_test()` — each test is a standalone executable with its own `main()`. Run from the project root directory where binary data files reside.
+## Common Pitfalls
+
+### FFInt Type Safety: Never Cast Negative Integers
+
+`firefly::FFInt` only has a `FFInt(uint64_t)` constructor — no signed integer constructor. This means:
+
+```cpp
+// BROKEN: int(-1) silently converts to uint64_t(2^64-1), then mod p = garbage (~4M for p=179424673)
+FFInt x = static_cast<FFInt>(-1);
+
+// CORRECT: Use operator-() on a positive FFInt
+FFInt x = -FFInt(1);
+```
+
+Any `static_cast<FFInt>(negative_int)` is a bug — C++ silently converts the negative int to a huge uint64_t before the FFInt constructor sees it. No compiler warning is generated.
+
+This affected `sgn()` in `Utilities.hpp` and any code that constructs FFInt from negative literals. If adding a signed constructor, use `int64_t` to avoid ambiguity with the existing `uint64_t` overload for `long long` arguments.
+
+### Self-Consistency Checks Are Not Independent Verification
+
+Tests like EquationVerify (`M1*C + Total == 0`) reuse the same equation-building code that generates the coefficients. If the bug is in the equation construction (e.g., a wrong sign in `sgn()`), both generator AND verifier produce wrong but mutually consistent results. Always pair self-consistency checks with an independent validation method — reference implementation comparison (MMA) or substituting results back into the original (pre-decomposition) IBP equations.
 
 ## Coding Conventions
 
@@ -206,6 +236,8 @@ These files reside in the project root and are **not** part of the main `CMakeLi
 | Files | PascalCase headers | `LayerRecursion.hpp` |
 | Classes | PascalCase | `class seriesCoefficient` |
 | Functions | camelCase | `layerRecursion()`, `getIndex()` |
+| Variables (local) | snake_case | `int num_regs;` |
+| Variables (member) | camelCase | `int numRegs;` |
 | Constants | UPPER_CASE | `MAX_VAL`, `BINOM` |
 | Namespaces | PascalCase | `namespace LayerRecursionCore` |
 
@@ -234,11 +266,21 @@ namespace SeriesIO { /* serialization */ }
 - Implementations: `.cpp` files in `src/`
 - Template implementations in `.tpp` files are included by corresponding `.hpp` files
 - Files prefixed with `#` and ending in `.txt` (e.g., `#RelationRecon.cpp.txt`) are **archived legacy code**, not part of the current build
+- `tools/` — standalone C++ test/utility source files not in main CMake build
+- `mma/` — Mathematica `.wl` scripts (IBP expansion, relation reconstruction, bubble generation)
+- `archive/` — archived CMake configs and retired build files
+- Include guards use `#ifndef FILENAME_HPP` / `#define FILENAME_HPP` pattern
+- Third-party `nlohmann/json` is bundled as `include/json.hpp`
 
 ### Comment Language
 
 - **Chinese (Simplified)**: Used for mathematical and algorithmic explanations
 - **English**: Used for API documentation and brief inline comments
+
+### Extended Documentation
+
+- `AGENTS.md` — Extended bilingual (Chinese/English) guide with exhaustive module specs, testing strategy, and dependency details. Consult for deeper context.
+- `docs/ComprehensiveReport.tex` — Canonical theory write-up of the Large Index Expansion method: asymptotic-solution completeness theorem, block-recursive structure, geometric classification of solution spaces, and C++ finite-field implementation. Consult for theoretical principles.
 
 ### Adding New Tests
 
@@ -272,9 +314,34 @@ Required data files in working directory:
 
 ## Documentation
 
+- `docs/Core_Working.md` — Module index: theory, workflow, and test cross-reference
 - `docs/LayerRecursion_Algorithm.md` — Layer recursion algorithm details
 - `docs/RelationSolver_ComponentGuide.md` — RelationSolver component guide
-- `ReconstructReductionRelation_Documentation.md` — Mathematica package docs
+- `docs/RelationSolver_QuickReference.md` — Quick reference for RelationSolver API
+- `docs/RelationSolver_Documentation_Hub.md` — Documentation hub/index
+- `docs/ReconstructReductionRelation_Documentation.md` — Mathematica package docs
+- `docs/Reconstruct_Algorithm.md` — Reconstruction algorithm: MMA vs C++ implementation comparison, verification methods
+
+### Verification (`verify/`)
+
+The `verify/` directory is a structured cross-validation framework comparing C++ output against Mathematica (MMA) and Kira IBP reduction:
+
+```
+verify/
+├── README.md                    # Full verification workflow with step-by-step commands
+├── FamilyDatabase/
+│   ├── FamilyDatabase.wl        # Unified integral family definitions (1L + 2L + 3L, 19 families, sorted by L then E)
+│   └── README.md
+├── docs/
+│   ├── Test-Expand.md           # Expansion verification results
+│   ├── Test-Relation.md         # Relation reconstruction results
+│   ├── IBPVerification.md       # Three verification methods: CompareVerify, EquationVerify, SeriesVerify
+│   ├── Verify-MMA-KIRA-Guide.md # Kira cross-validation guide
+│   └── CPP-KiraVerify-Debugger.md
+├── scripts/
+│   └── NuVerify-Relations.wl    # ν-sampling Kira verification of C++ relations
+└── results/bub00/               # Verified result snapshots (.m files for MMA consumption)
+```
 
 ## External References
 

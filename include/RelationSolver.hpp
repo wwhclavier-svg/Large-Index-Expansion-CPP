@@ -180,7 +180,7 @@ public:
     void clearTemporaryStorage();
     
     // 获取该 regime 在单个 nu 下的贡献行数
-    size_t rowsPerNu() const { return nb_ * (k_max_ + 1); }
+    size_t rowsPerNu() const { return nb_ * (deg_ + k_max_ + 1); }
     
     // 获取该 regime 支持的最大 nimax
     int maxNimax() const { return C_ ? C_->getNimax() : 0; }
@@ -523,7 +523,7 @@ void RegimeEvaluator<T>::init(const RegimeData<T>& reg,
     // ===== 创建临时存储器 =====
     g_store_ = std::make_unique<IndexStorage<T>>(ne_, nb_ * (k_max_ + 1));
     f1_store_ = std::make_unique<DualIndexStorage<T>>(ne_, k_max_ + 1);
-    f2_store_ = std::make_unique<DualIndexStorage<T>>(ne_, nb_ * (k_max_ + 1));
+    f2_store_ = std::make_unique<DualIndexStorage<T>>(ne_, nb_ * (deg_ + k_max_ + 1));
 }
 
 template<typename T>
@@ -650,13 +650,13 @@ void RegimeEvaluator<T>::step3_computeF1(const std::vector<T>& nu) {
                 
                 std::vector<T> term_poly(b + 1, T(0));
                 T th = static_cast<T>(theta_[i]);
-                T n_val = nu[i];
+                T nu_i = nu[i];
                 
                 // 二项式展开系数
                 for (int m = 0; m <= b; ++m) {
                     T coef = static_cast<T>(BINOM[b][m]) *
                              detail::power(th, b - m) *
-                             detail::power(n_val, m);
+                             detail::power(nu_i, m);
                     term_poly[m] = coef;
                 }
                 
@@ -703,22 +703,26 @@ void RegimeEvaluator<T>::step4_computeF2(const std::vector<int>& alpha, const st
         return;
     }
     
-    int f2_len = k_max_ + 1;
+    // f2 store size: n-exponents from -k_max_ to deg_, indexed by (deg_ - n_exp)
+    int f2_len = deg_ + k_max_ + 1;
     std::vector<T> f2_val(nb_ * f2_len, T(0));
     
-    // 计算 f2 = f1 * g 的卷积
+    // f1[l] = coeff of n^l, g[k] = coeff of n^{-k}
+    // Product n^l × n^{-k} = n^{l-k} → n-exponent e = l - k
+    // Index in f2: idx = deg_ - e = deg_ - l + k
     for (int i = 0; i < nb_; ++i) {
-        for (int l = 0; l <= k_max_; ++l) {
+        int l_max = (deg_ < k_max_) ? deg_ : k_max_;
+        for (int l = 0; l <= l_max; ++l) {
             T f1_val = f1_ptr[l];
             if (f1_val == T(0)) continue;
             
-            for (int k = 0; k <= k_max_ - l; ++k) {
+            for (int k = 0; k <= k_max_; ++k) {
                 T g_val = g_ptr[i * (k_max_ + 1) + k];
                 if (g_val == T(0)) continue;
                 
-                int target_pow = l + k;
-                if (target_pow <= k_max_) {  // 额外的边界检查
-                    f2_val[i * f2_len + target_pow] += f1_val * g_val;
+                int idx = deg_ - l + k;
+                if (idx >= 0 && idx < f2_len) {
+                    f2_val[i * f2_len + idx] += f1_val * g_val;
                 }
             }
         }
@@ -734,41 +738,44 @@ std::vector<std::vector<T>> RegimeEvaluator<T>::buildFinalMatrix() {
     if (!f2_store_ || alphas_.empty() || betas_.empty() || nb_ <= 0 || k_max_ < 0) {
         throw std::runtime_error("buildFinalMatrix: invalid state (empty alphas/betas or invalid dimensions)");
     }
-    
-    int total_k = k_max_ + 1;
-    int rows = nb_ * total_k;
+
+    // f2 now stores coefficients indexed by (deg_ - n_exp), so total_k = deg_ + k_max_ + 1
+    int total_k = deg_ + k_max_ + 1;
+    // Row per basis matches total_k: one row per n-exponent from deg_ down to -k_max_
+    int rows_per_basis = total_k;
+    int rows = nb_ * rows_per_basis;
     int cols = static_cast<int>(alphas_.size() * betas_.size());
-    
+
     // 验证计算的矩阵维度是否合理
     if (rows <= 0 || cols <= 0) {
-        throw std::runtime_error("buildFinalMatrix: invalid matrix dimensions (rows=" + 
+        throw std::runtime_error("buildFinalMatrix: invalid matrix dimensions (rows=" +
                                  std::to_string(rows) + ", cols=" + std::to_string(cols) + ")");
     }
-    
+
     std::vector<std::vector<T>> mat(rows, std::vector<T>(cols, T(0)));
-    
+
     // 填充矩阵：每列对应一个 (alpha, beta) 对
     for (size_t a_idx = 0; a_idx < alphas_.size(); ++a_idx) {
         for (size_t b_idx = 0; b_idx < betas_.size(); ++b_idx) {
             // 获取该 (alpha, beta) 对应的 f2 数据
             T* f2_ptr = f2_store_->retrieve(alphas_[a_idx], betas_[b_idx]);
             if (!f2_ptr) continue;  // 如果数据不存在，跳过该列
-            
+
             int col_idx = static_cast<int>(a_idx * betas_.size() + b_idx);
             
-            // 将 f2 数据填充到矩阵对应列
+            // f2[kt] = coefficient of n^{deg_ - kt} (n-exponent indexed directly)
+            // Row mapping: row for n-exponent e is deg_ - e, or simply row kt
             for (int i = 0; i < nb_; ++i) {
                 for (int kt = 0; kt < total_k; ++kt) {
-                    int row_idx = i * total_k + kt;
-                    // 边界检查（防御性编程）
-                    if (row_idx < rows && col_idx < cols) {
+                    int row_idx = i * rows_per_basis + kt;
+                    if (row_idx >= 0 && row_idx < rows && col_idx < cols) {
                         mat[row_idx][col_idx] = f2_ptr[i * total_k + kt];
                     }
                 }
             }
         }
     }
-    
+
     return mat;
 }
 
@@ -1321,9 +1328,15 @@ AdaptiveEquationBuilder<T>::build(
     result.nu_used.reserve(config_.max_nu);
     
     // 主循环：自适应采样
+    std::cout << "    [ν-sampling] special points + random fill, max_nu=" << config_.max_nu << std::endl;
+    std::cout << "    ν points: ";
+    int printed_count = 0;
     while (result.nu_count < config_.max_nu) {
         // 获取下一个采样点
         std::vector<T> nu = sampler.next();
+
+        // 打印 ν 点 (前8个+收敛时刻)
+        bool should_print = (printed_count < 8) || sampler.hasConverged();
 
         // 在该点评估所有 regime 和 nimax
         auto rows = assembler.evaluateAtNu(nu);
@@ -1335,9 +1348,32 @@ AdaptiveEquationBuilder<T>::build(
         result.nu_used.push_back(nu);
         result.nu_count++;
 
+        // 打印 ν 点
+        if (should_print) {
+            if (printed_count > 0) std::cout << ", ";
+            std::cout << "{";
+            for (int d = 0; d < ne; ++d) {
+                if (d > 0) std::cout << ",";
+                if constexpr (std::is_same_v<T, firefly::FFInt>) {
+                    std::cout << nu[d].n;
+                } else {
+                    std::cout << nu[d];
+                }
+            }
+            std::cout << "}";
+            printed_count++;
+        }
+
         // 每次迭代都调用 update 来跟踪 nullity 稳定性
         int current_nullity = solver.getNullity();
         sampler.update(current_nullity);
+        
+        // DIAGNOSTIC: print rank/nullity per ν point
+        if (ne == 2 && num_vars >= 30) {  // only for lev>=2 large systems
+            auto info = solver.getNullspace();
+            std::cerr << "      [v#" << result.nu_count << "] rank=" << info.rank 
+                      << " nullity=" << info.nullity << " rows=" << solver.getNumRows() << std::endl;
+        }
 
         // 检查是否需要进行收敛检测
         if (sampler.shouldCheck()) {
@@ -1370,6 +1406,7 @@ AdaptiveEquationBuilder<T>::build(
                     result.converged = true;
                     result.nullspace = current_info;
                     result.stop_reason = "Converged after " + std::to_string(result.nu_count) + " samples";
+                    std::cout << " (+" << (result.nu_count - printed_count) << " more, converged)" << std::endl;
                     return result;
                 }
                 // 验证失败：将测试失败的方程加入系统
@@ -1405,6 +1442,7 @@ AdaptiveEquationBuilder<T>::build(
     // 达到最大采样数
     result.nullspace = solver.getNullspace();
     result.stop_reason = "Max samples (" + std::to_string(config_.max_nu) + ") reached";
+    std::cout << " (+" << (result.nu_count - printed_count) << " more)" << std::endl;
     return result;
 }
 

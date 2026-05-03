@@ -75,7 +75,7 @@ auto layerRecursion(const struct IBPMatrixE<T> &ibpmat, int ne, int nb, int nibp
                 for(auto seed : seedlist[l]) {
                     int nindep = static_cast<int>(indepSet.size());
                     int ncurr = lastNonZero(seed);
-                    int idxcurr = getIndexOffSet(l,seed,1,max(ncurr,0)); 
+                    int idxcurr = getIndexOffSet(l,seed,1,max(ncurr - 1,0));
                     // 构建非齐次项
                     terms.buildAll(ibpmat, C, k, l, seed, nindep, ncurr, BINOM);
                     // 组装方程组

@@ -12,7 +12,7 @@ pair<std::vector<std::vector<T>>, std::vector<T>> assembleLinearSystem(const IBP
 {
     int nibp = ibpmat.M1.size();
     int num_eqns = nibp * nb;
-    int n_active_vars = ne - max(ncurr, 0);
+    int n_active_vars = ne - max(ncurr - 1, 0);
     int num_vars = n_active_vars * nb + nindep;
     // 1. 初始化矩阵和向量
     std::vector<std::vector<T>> eqnmat(num_eqns, std::vector<T>(num_vars, 0));
@@ -22,7 +22,7 @@ pair<std::vector<std::vector<T>>, std::vector<T>> assembleLinearSystem(const IBP
             int row_idx = m * nb + i;
             // --- A. 填充未知系数的矩阵部分 (M1 贡献) ---
             for (int j1 = 0; j1 < n_active_vars; ++j1) {
-                int target_seed_idx = j1 + std::max(ncurr, 0);
+                int target_seed_idx = j1 + std::max(ncurr - 1, 0);
                 T factor = static_cast<T>(seed[target_seed_idx] + 1);
                 for (int j2 = 0; j2 < nb; ++j2) {
                     // M1[m][target_seed_idx] 是一个 nb*nb 的矩阵
@@ -397,7 +397,7 @@ void inhomogTerms<T>::add_M1_contribution(const IBPMatrixE<T>& ibpmat, seriesCoe
     // M1 贡献通常针对当前 Order k
     for (int m = 0; m < nibp; ++m) {
         T* dest = get_M1(m);
-        for (int i = 0; i < ncurr; ++i) {
+        for (int i = 0; i < ncurr - 1; ++i) {
             T factor = static_cast<T>(seed[i] + 1);
             // 获取当前阶 k 的高层级系数：seed + unit(i)
             T* src = getValuePtrOffSet(C, k, l, seed, 1, i);
@@ -466,17 +466,14 @@ void inhomogTerms<T>::add_MPlus_contribution(const IBPMatrixE<T>& ibpmat, series
         T sign_l1 = utility::sgn<T>(l1);
         for (int m = 0; m < nibp; ++m) {
             T* dest = get_MPlus(l1, m);
-            // 1. K1s, K2s 项
             for (int i = 0; i < ne; ++i) {
                 T factor = static_cast<T>(BINOM[seed[i] + l1][l1]);
-                // 构造临时矩阵：K1s + sign(l1)*K2s
                 for (int idx = 0; idx < nb * nb; ++idx) {
                     mat_buf1[idx] = (ibpmat.K1s[m][i][idx] + ibpmat.K2s[m][i][idx] * sign_l1) * factor;
                 }
                 T* src = getValuePtrOffSet(C, k, l, seed, l1, i);
                 addProductTo(dest, mat_buf1, src, nindep_p1);
             }
-            // 2. F2s 耦合项
             for (int l2 = 1; l2 <= l1 - 1; ++l2) {
                 T l2_sign = utility::sgn<T>(l2);
                 for (int i = 0; i < ne; ++i) {

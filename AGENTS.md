@@ -512,6 +512,8 @@ target_link_libraries(test_MyFeature ${FIREFLY_LIBRARY} ${GMP_LIBRARY} ${GMPXX_L
 
 7. **多CMake配置**: 项目存在多个 `CMakeLists*.txt` 文件。主文件为 `CMakeLists.txt`，使用外部FireFly库；`CMakeLists_test.txt` 为备用配置，使用本地存根。切换前请确认数据类型需求。
 
+8. **FFInt 类型安全陷阱**: `FFInt` 仅有 `FFInt(uint64_t)` 构造函数，没有有符号整数构造函数。`static_cast<FFInt>(-1)` 会造成 `int(-1)` 隐式转换为 `uint64_t(2^64-1)` 再 mod p，产生垃圾值（如对于 p=179424673，结果为 4099945）。编译器不会对此产生警告。正确做法是使用 `-FFInt(1)`（调用 `operator-()`）而非从负整数构造。若需添加有符号构造函数，应使用 `int64_t` 以避免与现有 `uint64_t` 重载对 `long long` 参数产生歧义。此 bug 曾导致所有积分族的展开系数错误，而 EquationVerify（自洽性检查）仍通过（因验证器复用同一错误逻辑），详见 `verify/docs/IBPVerification.md`。
+
 ---
 
 ## References
@@ -519,3 +521,4 @@ target_link_libraries(test_MyFeature ${FIREFLY_LIBRARY} ${GMP_LIBRARY} ${GMPXX_L
 - **FireFly Library**: https://github.com/firefly-library/firefly
 - **Eigen Documentation**: https://eigen.tuxfamily.org/
 - **IBP Method**: Integration-by-parts identities for Feynman integral reduction (physics)
+- **ComprehensiveReport.tex**: [docs/ComprehensiveReport.tex](docs/ComprehensiveReport.tex) — LIE 方法的完整理论报告（原理参考）: asymptotic-solution completeness, block-recursive structure, geometric classification of solution spaces, finite-field implementation
