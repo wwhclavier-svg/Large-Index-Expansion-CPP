@@ -34,7 +34,7 @@ adjustSamplingConfig(
     RelationSolver::generateAllIndices(ne, deg, temp, betas, false);
     
     int num_variables = alphas.size() * betas.size();
-    int equations_per_sample = num_regimes * nb * (deg + k_max + 1);
+    int equations_per_sample = num_regimes * nb * (k_max + 1);
     
     static constexpr double SAFETY_FACTOR = 1.2;
     int min_samples_required = static_cast<int>(
@@ -325,32 +325,175 @@ struct SolutionAtLevel {
     }
 };
 
+// 将所有 (lev, deg) 结果导出到一个统一的 .m 文件（对应 MMA 的一次性输出）
+template<typename T>
+void exportAllResultsToMMA_SingleFile(
+    const std::vector<RelationSolver::LevDegResult<T>>& all_results,
+    int ne, int order, int modulus,
+    const std::string& family,
+    const std::string& filename)
+{
+    std::ofstream out(filename);
+    if (!out) throw std::runtime_error("Cannot open file for writing: " + filename);
+
+    auto isZero = [](const T& val) -> bool {
+        if constexpr (std::is_same_v<T, firefly::FFInt>) {
+            return val.n == 0;
+        } else {
+            return val == T(0);
+        }
+    };
+
+    auto writeValue = [&out](const T& val) {
+        if constexpr (std::is_same_v<T, firefly::FFInt>) {
+            out << val.n;
+        } else {
+            out << val;
+        }
+    };
+
+    int count_with_solution = 0;
+    for (const auto& ld : all_results) {
+        if (ld.linear_result.hasSolution) ++count_with_solution;
+    }
+
+    out << "(* C++ Relation Export: All Results *)\n";
+    out << "(* Family: " << family << ", Order: " << order
+        << ", NE: " << ne << ", Modulus: " << modulus << " *)\n";
+    out << "(* Total configurations: " << all_results.size()
+        << ", with solution: " << count_with_solution << " *)\n";
+    out << "$AllRelations = {\n";
+
+    for (size_t idx = 0; idx < all_results.size(); ++idx) {
+        const auto& ld = all_results[idx];
+        const auto& alphas = ld.coeff.getAlphas();
+        const auto& betas = ld.coeff.getBetas();
+        size_t nAlpha = alphas.size();
+        size_t nBeta = betas.size();
+        size_t nSols = ld.coeff.getNumSolutions();
+        size_t numVars = nAlpha * nBeta;
+
+        out << "  <|\n";
+        out << "    \"Family\" -> \"" << family << "\",\n";
+        out << "    \"Lev\" -> " << ld.lev << ",\n";
+        out << "    \"Deg\" -> " << ld.deg << ",\n";
+        out << "    \"NE\" -> " << ne << ",\n";
+        out << "    \"Modulus\" -> " << modulus << ",\n";
+        out << "    \"Order\" -> " << order << ",\n";
+        out << "    \"StableOrder\" -> " << ld.stable_order << ",\n";
+        out << "    \"NumRelations\" -> " << ld.num_relations << ",\n";
+        out << "    \"ActiveVars\" -> " << ld.active_vars << ",\n";
+        out << "    \"TotalVars\" -> " << ld.total_vars << ",\n";
+
+        // Alphas
+        out << "    \"Alphas\" -> {";
+        for (size_t a = 0; a < nAlpha; ++a) {
+            out << "{";
+            for (int i = 0; i < ne; ++i) {
+                if (i > 0) out << ",";
+                out << alphas[a][i];
+            }
+            out << "}";
+            if (a < nAlpha - 1) out << ", ";
+        }
+        out << "},\n";
+
+        // Betas
+        out << "    \"Betas\" -> {";
+        for (size_t b = 0; b < nBeta; ++b) {
+            out << "{";
+            for (int i = 0; i < ne; ++i) {
+                if (i > 0) out << ",";
+                out << betas[b][i];
+            }
+            out << "}";
+            if (b < nBeta - 1) out << ", ";
+        }
+        out << "},\n";
+
+        // Coefficients matrix
+        out << "    \"Coefficients\" -> {\n";
+        for (size_t i = 0; i < numVars; ++i) {
+            out << "      {";
+            if (ld.linear_result.hasSolution && i < ld.linear_result.Mext.size() && 0 < ld.linear_result.Mext[i].size()) {
+                writeValue(ld.linear_result.Mext[i][0]);
+            } else {
+                out << "0";
+            }
+            for (size_t s = 1; s <= nSols; ++s) {
+                out << ", ";
+                if (i < ld.linear_result.Mext.size() && s < ld.linear_result.Mext[i].size()) {
+                    writeValue(ld.linear_result.Mext[i][s]);
+                } else {
+                    out << "0";
+                }
+            }
+            out << "}";
+            if (i < numVars - 1) out << ",";
+            out << "\n";
+        }
+        out << "    },\n";
+
+        // Independent pairs
+        out << "    \"IndependentPairs\" -> {";
+        for (size_t p = 0; p < ld.independent_pairs.size(); ++p) {
+            const auto& [alpha, beta] = ld.independent_pairs[p];
+            out << "{{";
+            for (int i = 0; i < ne; ++i) {
+                if (i > 0) out << ",";
+                out << alpha[i];
+            }
+            out << "},{";
+            for (int i = 0; i < ne; ++i) {
+                if (i > 0) out << ",";
+                out << beta[i];
+            }
+            out << "}}";
+            if (p < ld.independent_pairs.size() - 1) out << ", ";
+        }
+        out << "},\n";
+
+        out << "    \"HasSolution\" -> " << (ld.linear_result.hasSolution ? "True" : "False") << ",\n";
+        out << "    \"NumVariables\" -> " << numVars << ",\n";
+        out << "    \"NumSolutions\" -> " << nSols << "\n";
+        out << "  |>";
+
+        if (idx < all_results.size() - 1) out << ",";
+        out << "\n";
+    }
+
+    out << "};\n";
+    out.close();
+    std::cout << "\nExported all " << all_results.size() << " results to: " << filename << std::endl;
+}
+
 int main(int argc, char* argv[]) {
     if (argc < 2) {
-        cerr << "Usage: " << argv[0] << " <family_name> [order] [lev_max] [deg_max]" << endl;
+        cerr << "Usage: " << argv[0] << " <family_name> [order] [lev_min] [lev_max] [deg_max]" << endl;
         cerr << "  family_name: e.g. bub, bub0, DBtop" << endl;
         cerr << "  order      : expansion order (default: 4)" << endl;
+        cerr << "  lev_min    : min |alpha| (default: 1)" << endl;
         cerr << "  lev_max    : max |alpha| (default: 2)" << endl;
         cerr << "  deg_max    : max |beta| (default: 2)" << endl;
         cerr << endl;
         cerr << "Example: " << argv[0] << " bub" << endl;
-        cerr << "         " << argv[0] << " DBtop 4 2 1" << endl;
+        cerr << "         " << argv[0] << " DBtop 5 1 2 1" << endl;
         return 1;
     }
 
     string family = argv[1];
     int order = (argc > 2) ? stoi(argv[2]) : 4;
-    int lev_min = 0;
-    int lev_max = (argc > 3) ? stoi(argv[3]) : 2;
+    int lev_min = (argc > 3) ? stoi(argv[3]) : 1;
+    int lev_max = (argc > 4) ? stoi(argv[4]) : 2;
     int deg_min = 0;
-    int deg_max = (argc > 4) ? stoi(argv[4]) : 2;
+    int deg_max = (argc > 5) ? stoi(argv[5]) : 2;
     const int incre = 2;
     
     initBinomial();
 
     const string binIBPFile = "IBPMat_"+family+".bin";
     const string binRingFile = "RingData_"+family+".bin";
-    const string coeffCacheFile = "ExpansionCache_"+family+".bin";
+    const string coeffCacheFile = "ExpansionCache_"+family+"_k"+to_string(order)+".bin";
 
     cout << "=== Configuration ===" << endl;
     cout << "Family: " << family << endl;
@@ -422,103 +565,66 @@ int main(int argc, char* argv[]) {
         }
 
         auto start = chrono::high_resolution_clock::now();
-        cout << "\n=== Iterative Relation Solving ===" << endl;
-        
-        vector<SolutionAtLevel> solutions;
-        double total_computation_time = 0.0;
-        
+        cout << "\n=== Relation Solving (RemoveSolvedVariables strategy) ===" << endl;
+
         RelationSolver::AdaptiveSamplingConfig base_config;
         base_config.min_nu = 3;
         base_config.max_nu = 50;
         base_config.nullity_stable_threshold = 5;
         base_config.check_interval = 5;
         base_config.verification_points = 5;
+        base_config.plateau_size = 1;       // MMA 默认: 1 个额外阶数确认稳定性
         base_config.random_min = 0;
         base_config.random_max = static_cast<double>(FFInt::p - 1);
-        
-        for (int current_lev = lev_min; current_lev <= lev_max; ++current_lev) {
-            cout << "--- Processing lev = " << current_lev << " ---" << endl;
-            
-            for (int current_deg = deg_min; current_deg <= deg_max; ++current_deg) {
-                cout << "  Solving (lev=" << current_lev << ", deg=" << current_deg << ")..." << endl;
-                
-                auto iter_start = chrono::high_resolution_clock::now();
-                
-                int k_max = order;
-                int num_regimes = ringData.size();
-                auto config = adjustSamplingConfig(
-                    base_config, current_lev, current_deg,
-                    ne, nb, k_max, num_regimes
-                );
-                
-                try {
-                    auto [res, rel_coeff] = RelationSolver::reconstructReductionRelation<FFInt>(
-                        allResults, sector_list, A_list, Ainv_list,
-                        ne, current_lev, current_deg, config
-                    );
 
-                    if (res.hasSolution) {
-                        // Export polynomial format (legacy)
-                        string relFilename = "Relations_" + family + "_lev" + to_string(current_lev) + "_deg" + to_string(current_deg) + ".m";
-                        exportRelationToMMA_Polynomial(rel_coeff, res, current_lev, current_deg, ne, relFilename);
-                        cout << "  Exported relation to: " << relFilename << endl;
+        try {
+            auto all_results = RelationSolver::reconstructAllRelations<FFInt>(
+                allResults, sector_list, A_list, Ainv_list,
+                ne, lev_min, lev_max, deg_max, base_config
+            );
 
-                        // Export unified format (for comparison with MMA)
-                        string unifiedFilename = "Compare-CPPRelation-" + family + "_lev" + to_string(current_lev) + "_deg" + to_string(current_deg) + ".m";
-                        exportRelationToMMA_Unified(rel_coeff, res, current_lev, current_deg, ne,
-                            static_cast<int>(FFInt::p), family, unifiedFilename);
-                        cout << "  Exported unified format to: " << unifiedFilename << endl;
+            // Collect solution summaries and export as single unified file
+            vector<SolutionAtLevel> solutions;
 
-                        // DIAGNOSTIC: system rank info for deg=0
-                        if (current_deg == 0 && !res.Mext.empty()) {
-                            cout << "    [DIAG] variables=" << res.Mext.size() 
-                                 << ", equations=" << res.Mext[0].size()
-                                 << ", solutions=" << rel_coeff.getNumSolutions()
-                                 << ", pivots=" << res.pivot_cols.size() << endl;
-                        }
+            for (const auto& ld : all_results) {
+                SolutionAtLevel sol;
+                sol.lev = ld.lev;
+                sol.deg = ld.deg;
+                sol.num_variables = ld.active_vars;
+                sol.solution_dimension = ld.coeff.getNumSolutions();
+                sol.computation_time = 0;
+                sol.system_rows = 0;
+                sol.system_cols = ld.active_vars;
+                sol.sampling_points_used = 0;
+                solutions.push_back(sol);
 
-                    }
-
-                    auto iter_end = chrono::high_resolution_clock::now();
-                    double elapsed = chrono::duration<double>(iter_end - iter_start).count();
-                    
-                    SolutionAtLevel sol;
-                    sol.lev = current_lev;
-                    sol.deg = current_deg;
-                    sol.num_variables = res.Mext.empty() ? 0 : res.Mext.size();
-                    sol.solution_dimension = rel_coeff.getNumSolutions();
-                    sol.computation_time = elapsed;
-                    sol.system_rows = res.Mext.empty() ? 0 : res.Mext[0].size();
-                    sol.system_cols = sol.num_variables;
-                    sol.sampling_points_used = config.max_nu;
-                    
-                    solutions.push_back(sol);
-                    total_computation_time += elapsed;
-                    
-                    double ratio = sol.system_cols > 0 ? static_cast<double>(sol.system_rows) / sol.system_cols : 0.0;
-                    cout << "OK (dim=" << sol.solution_dimension << ", ratio=" 
-                         << fixed << setprecision(2) << ratio 
-                         << ", nu=" << config.max_nu << ", time=" 
-                         << fixed << setprecision(2) << elapsed << "s)" << endl;
-                    
-                } catch (const exception& e) {
-                    cout << "FAILED (" << e.what() << ")" << endl;
-                }
+                cout << "  (lev=" << ld.lev << ", deg=" << ld.deg << "): "
+                     << "active=" << ld.active_vars << "/" << ld.total_vars
+                     << " sol_dim=" << sol.solution_dimension
+                     << " independent=" << ld.independent_pairs.size()
+                     << " stable_order=" << ld.stable_order << endl;
             }
+
+            // Export single unified file containing ALL results
+            string unifiedFilename = "AllRelations_" + family + "_k" + to_string(order) + ".m";
+            exportAllResultsToMMA_SingleFile(all_results, ne, order,
+                static_cast<int>(FFInt::p), family, unifiedFilename);
+
+            cout << "\n=== Solution Summary ===" << endl;
+            cout << "Total configurations: " << solutions.size() << endl;
+            for (const auto& sol : solutions) {
+                sol.print();
+            }
+
+            auto end = chrono::high_resolution_clock::now();
+            chrono::duration<double> total = end - start;
+            cout << "\nTotal execution time: " << total.count() << " seconds." << endl;
+            cout << "Test completed successfully." << endl;
+            return 0;
+
+        } catch (const exception& e) {
+            cout << "FAILED (" << e.what() << ")" << endl;
         }
-        
-        cout << "\n=== Solution Summary ===" << endl;
-        cout << "Total configurations: " << solutions.size() << endl;
-        cout << "Total computation time: " << fixed << setprecision(2) << total_computation_time << "s" << endl;
-        for (const auto& sol : solutions) {
-            sol.print();
-        }
-        
-        auto end = chrono::high_resolution_clock::now();
-        chrono::duration<double> total = end - start;
-        cout << "\nTotal execution time (including setup): " << total.count() << " seconds." << endl;
-        cout << "Test completed successfully." << endl;
-        return 0;
     }
     catch (const std::exception& e) {
         cerr << "Exception caught: " << e.what() << endl;
