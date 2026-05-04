@@ -157,7 +157,7 @@ public:
     // 读取指针
     T* retrieve(const std::vector<int>& alpha, const std::vector<int>& beta = {}) {
         TensorAddress addr = rawToAddress(alpha);
-        
+
         long long expNo = 0;
         int level = -1;
         if constexpr (Mode == 1) {
@@ -167,7 +167,7 @@ public:
 
         BlockKey key = {addr.secNo, addr.dot, addr.rank, level};
         if (table.find(key) == table.end()) return nullptr;
-        
+
         return table.at(key).getPtr(addr.dotNo, addr.rankNo, expNo);
     }
 
@@ -209,10 +209,14 @@ public:
         return matrix;
     }
 
+    size_t size() const {
+        return table.size();
+    }
+
     void clear() {
         // 遍历所有 table 中的 block，将其 data 向量重置为 0
         // 或者直接清空 table 映射
-        table.clear(); 
+        table.clear();
     }
 };
 

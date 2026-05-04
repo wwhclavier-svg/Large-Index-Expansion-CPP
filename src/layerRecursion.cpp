@@ -49,7 +49,7 @@ void equationVariable(vector<std::array<int,4>>& eqnvar, int order, int level, v
 { 
     eqnvar.clear();
     int ncurr = lastNonZero(seed);
-    for(int j = max(ncurr,0); j < ne; ++j) { 
+    for(int j = max(ncurr - 1, 0); j < ne; ++j) {
         for(int i = 0; i < nb; ++i) {
             eqnvar.push_back({order, level+1, getIndexOffSet(level,seed,1,j),i});
         }

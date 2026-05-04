@@ -33,12 +33,18 @@ set(COMMON_SOURCES src/LayerRecursionCore.cpp)
 add_executable(test_expandFF tests/test_expandFF.cpp ${COMMON_SOURCES})
 target_link_libraries(test_expandFF ${FIREFLY_LIBRARY} ${GMP_LIBRARY} ${GMPXX_LIBRARY} Eigen3::Eigen pthread)
 
-add_executable(test_RelationFF tests/test_RelationFF.cpp ${COMMON_SOURCES})
-target_link_libraries(test_RelationFF ${FIREFLY_LIBRARY} ${GMP_LIBRARY} ${GMPXX_LIBRARY} Eigen3::Eigen pthread)
+add_executable(test_IBPVerification tests/test_IBPVerification.cpp ${COMMON_SOURCES})
+target_link_libraries(test_IBPVerification ${FIREFLY_LIBRARY} ${GMP_LIBRARY} ${GMPXX_LIBRARY} Eigen3::Eigen pthread)
+
+add_executable(test_relationFF tests/test_relationFF.cpp ${COMMON_SOURCES})
+target_link_libraries(test_relationFF ${FIREFLY_LIBRARY} ${GMP_LIBRARY} ${GMPXX_LIBRARY} Eigen3::Eigen pthread)
 
 add_executable(test_load_bub tests/test_load_bub.cpp ${COMMON_SOURCES})
 target_link_libraries(test_load_bub ${FIREFLY_LIBRARY} ${GMP_LIBRARY} ${GMPXX_LIBRARY} Eigen3::Eigen pthread)
 
+add_executable(test_expand_family tests/test_expand_family.cpp ${COMMON_SOURCES})
+target_link_libraries(test_expand_family ${FIREFLY_LIBRARY} ${GMP_LIBRARY} ${GMPXX_LIBRARY} Eigen3::Eigen pthread)
+
 # FireFly 验证测试
-add_executable(test_ff_verify test_ff_verify.cpp)
+add_executable(test_ff_verify tools/test_ff_verify.cpp)
 target_link_libraries(test_ff_verify ${FIREFLY_LIBRARY} ${GMP_LIBRARY} ${GMPXX_LIBRARY} pthread)

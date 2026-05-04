@@ -18,6 +18,7 @@ struct LinearSystemResult {
     bool hasSolution;                  // 是否有解（非齐次时有效）
     std::vector<std::vector<Field>> Mext; // 拼接矩阵 (v | M)
     std::vector<int> S;                 // 自由变量索引
+    std::vector<int> pivot_cols;        // 主元列索引（Mext 第 i 行对应 pivot_cols[i] 列）
 };
 
 /**
@@ -74,16 +75,18 @@ LinearSystemResult<Field> solveLinearSystem_Firefly(
 
         // 归一化当前行
         Field inv = Field(1) / aug[row][col];
-        for (int j = col; j <= cols; ++j)
-            aug[row][j] *= inv;
+        for (int j = col; j <= cols; ++j) {
+            aug[row][j] = aug[row][j] * inv;
+        }
 
         // 消去其他所有行的当前列
         for (int r = 0; r < rows; ++r) {
             if (r == row) continue;
             Field factor = aug[r][col];
             if (factor != Field(0)) {
-                for (int j = col; j <= cols; ++j)
+                for (int j = col; j <= cols; ++j) {
                     aug[r][j] -= factor * aug[row][j];
+                }
             }
         }
 
@@ -144,7 +147,13 @@ LinearSystemResult<Field> solveLinearSystem_Firefly(
             Mext[i][k + 1] = kernel[k][i];
     }
 
-    return {true, Mext, free_cols};
+    LinearSystemResult<Field> res;
+    res.hasSolution = true;
+    res.Mext = std::move(Mext);
+    res.S = std::move(free_cols);
+    res.pivot_cols = std::move(pivot_cols);
+
+    return res;
 }
 
 /**
