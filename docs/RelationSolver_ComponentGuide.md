@@ -65,8 +65,9 @@ struct AdaptiveSamplingConfig {
     int min_nu = 3;                             // Minimum sampling points
     int max_nu = 50;                            // Maximum sampling points
     int check_interval = 1;                     // Rank check interval (every N points)
-    int nullity_stable_threshold = 3;           // Nullity stability plateau
+    int nullity_stable_threshold = 3;           // Nullity stability plateau (ν-space)
     int verification_points = 3;                // Extra verification points
+    int plateau_size = 1;                       // MMA "PlateauSize": extra orders for order-stability confirmation
     double tolerance = 1e-10;                   // Numerical tolerance
     bool use_special_points = true;             // Use unit vectors, all-1s, etc.
     double random_min = 3.0;                    // Random point min (avoid 0)
@@ -77,19 +78,26 @@ struct AdaptiveSamplingConfig {
 ```
 
 #### `AdaptiveEquationBuilder<T>` (Lines 230–450)
-**Core engine**: Incrementally builds and solves the linear system with convergence monitoring.
+**Core engine**: Two-phase build — ν-sampling convergence + order-stability detection.
 
 ```cpp
 template<typename T>
 class AdaptiveEquationBuilder {
-    // Builds equations at current sampling points
+    struct BuildResult {
+        std::vector<std::vector<T>> equations;       // Final equation matrix
+        NullspaceInfo nullspace;                     // Solved nullspace
+        std::vector<std::vector<T>> nu_used;         // ν-points used
+        int nu_count = 0;                            // Number of ν-points
+        bool converged = false;                      // ν-space converged?
+        std::string stop_reason;                     // Stop reason
+        int stable_order = -2;                       // Stable expansion order (-2 = not stable)
+        std::vector<std::vector<std::vector<T>>> rows_by_order;  // [k_max+1][row][col]
+    };
+
     BuildResult build(
         const std::vector<RegimeData<T>>& regimes,
         const std::vector<std::vector<int>>& nimaxLists,
         int ne);
-    
-    // Checks if nullity has stabilized
-    bool hasConverged() const;
 };
 ```
 
@@ -181,15 +189,33 @@ const vector<T>& c = coeff({0,1}, {2,0});  // Get coeff for alpha=(0,1), beta=(2
    }
    ```
 
-4. **Adaptive Equation Building** (Lines 1630–1650)
+4. **Adaptive Equation Building** (Two-Phase)
    ```cpp
-   // Incrementally sample and build until convergence
+   // Phase 1: ν-sampling loop — converge in ν-space
+   // Phase 2: Order-stability analysis — detect expansion-order convergence
    AdaptiveEquationBuilder<T> builder(config);
    auto build_result = builder.build(regimes, nimaxLists, ne);
-   
-   // build_result.converged: Has nullity stabilized?
+
+   // build_result.converged: Has ν-nullity stabilized?
    // build_result.nullspace: Solution matrix and free variables
+   // build_result.stable_order: Expansion order where nullspace stabilized (-2 = insufficient)
    ```
+
+   **Phase 1 (ν-sampling)**: Randomly samples kinematic points, builds the full-order
+   equation matrix at each point, accumulates rows into an IncrementalNullspaceSolver,
+   tracks nullity across samples. Converges when nullity stays constant for
+   `nullity_stable_threshold` consecutive checks.
+
+   **Phase 2 (order-stability)**: After ν-convergence, splits the accumulated equation
+   rows by expansion order r (using the known row layout `i·(k_max+1) + r`). Incrementally
+   adds rows for r=0,1,...,k_max and tracks nullity at each order. Stability is detected
+   when nullity remains unchanged for `plateau_size+1` consecutive orders, or when nullity
+   reaches 0 (all variables determined — definitive termination). Records the first order
+   where nullity reached its final value as `stable_order`.
+
+   This two-phase design eliminates redundant evaluation: `step2_computeG`, `step3_computeF1`,
+   and `step4_computeF2` run once per (nu, nimax) during sampling. Phase 2 only does
+   Gaussian elimination on pre-grouped row subsets.
 
 5. **Result Conversion** (Lines 1650–1665)
    ```cpp

@@ -10,6 +10,7 @@
 #include <cmath>
 #include <iostream>
 #include <cstdint>
+#include <iomanip>
 
 #include "Combinatorics.hpp"
 #include "SeriesCoefficient.hpp"
@@ -86,6 +87,138 @@ inline void generateAllIndices(int dim, int max_sum, std::vector<int>& current,
 }
 
 // ==========================================
+// 辅助：RemoveSolvedVariables 的 dominance 检查和变量过滤
+// ==========================================
+
+// 分量级 dominance: a >= b 对所有分量
+inline bool componentwiseDominates(const std::vector<int>& a, const std::vector<int>& b) {
+    for (size_t i = 0; i < a.size(); ++i) {
+        if (a[i] < b[i]) return false;
+    }
+    return true;
+}
+
+// 已求解的独立变量对 (alpha, beta)
+using AlphaBeta = std::pair<std::vector<int>, std::vector<int>>;
+
+/**
+ * 过滤变量对，移除被已求解变量"支配"的冗余变量。
+ *
+ * 规则 1 (同层、低度): 若 levelBindep 中存在 (α_s, β_s) 使得 α == α_s 且 β >= β_s，
+ *                      则 b[α,β] 被消除。
+ * 规则 2 (跨层): 若 bindep（所有更低层）中存在 (α_s, β_s) 使得 α >= α_s 且 β >= β_s，
+ *                则 b[α,β] 被消除。
+ *
+ * @return {active_indices, active_mask} 其中 active_indices 是保留下来的列索引，
+ *         active_mask 标记每个 (alpha*beta) 列是否活跃
+ */
+inline std::pair<std::vector<size_t>, std::vector<bool>> filterVariablePairs(
+    const std::vector<std::vector<int>>& alphas,
+    const std::vector<std::vector<int>>& betas,
+    const std::vector<AlphaBeta>& levelBindep,
+    const std::vector<std::vector<AlphaBeta>>& bindep)
+{
+    size_t nAlpha = alphas.size();
+    size_t nBeta = betas.size();
+    size_t total = nAlpha * nBeta;
+
+    std::vector<bool> active(total, true);
+    std::vector<size_t> active_indices;
+    active_indices.reserve(total);
+
+    for (size_t a = 0; a < nAlpha; ++a) {
+        for (size_t b = 0; b < nBeta; ++b) {
+            size_t col = a * nBeta + b;
+            bool eliminated = false;
+
+            // 规则 1: 同层低度消除
+            for (const auto& [solved_alpha, solved_beta] : levelBindep) {
+                if (alphas[a] == solved_alpha && componentwiseDominates(betas[b], solved_beta)) {
+                    eliminated = true;
+                    break;
+                }
+            }
+            if (eliminated) { active[col] = false; continue; }
+
+            // 规则 2: 跨层消除
+            for (const auto& level_solved : bindep) {
+                for (const auto& [solved_alpha, solved_beta] : level_solved) {
+                    if (componentwiseDominates(alphas[a], solved_alpha) &&
+                        componentwiseDominates(betas[b], solved_beta)) {
+                        eliminated = true;
+                        break;
+                    }
+                }
+                if (eliminated) break;
+            }
+            if (eliminated) { active[col] = false; continue; }
+
+            active_indices.push_back(col);
+        }
+    }
+
+    return {active_indices, active};
+}
+
+// 从求解结果中提取独立变量（自由变量）的 (alpha, beta) 对
+inline std::vector<AlphaBeta> extractIndependentPairs(
+    const std::vector<std::vector<int>>& alphas,
+    const std::vector<std::vector<int>>& betas,
+    const std::vector<int>& free_var_indices)
+{
+    size_t nBeta = betas.size();
+    std::vector<AlphaBeta> result;
+    result.reserve(free_var_indices.size());
+    for (int col : free_var_indices) {
+        size_t a = col / nBeta;
+        size_t b = col % nBeta;
+        if (a < alphas.size() && b < betas.size()) {
+            result.push_back({alphas[a], betas[b]});
+        }
+    }
+    return result;
+}
+
+// 从完整矩阵中剥离非活跃列，得到压缩矩阵
+template<typename T>
+inline std::vector<std::vector<T>> stripInactiveColumns(
+    const std::vector<std::vector<T>>& full_rows,
+    const std::vector<bool>& active_mask,
+    size_t active_count)
+{
+    std::vector<std::vector<T>> stripped;
+    stripped.reserve(full_rows.size());
+    for (const auto& row : full_rows) {
+        std::vector<T> new_row;
+        new_row.reserve(active_count);
+        for (size_t j = 0; j < row.size(); ++j) {
+            if (active_mask[j]) new_row.push_back(row[j]);
+        }
+        stripped.push_back(std::move(new_row));
+    }
+    return stripped;
+}
+
+// 将压缩解展开回完整变量空间（被消除的变量系数为 0）
+template<typename T>
+inline void expandNullspaceToFull(
+    std::vector<std::vector<T>>& basis,
+    const std::vector<bool>& active_mask,
+    size_t full_cols)
+{
+    for (auto& vec : basis) {
+        std::vector<T> expanded(full_cols, T(0));
+        size_t active_idx = 0;
+        for (size_t j = 0; j < full_cols; ++j) {
+            if (active_mask[j]) {
+                expanded[j] = vec[active_idx++];
+            }
+        }
+        vec = std::move(expanded);
+    }
+}
+
+// ==========================================
 // 1. Regime
 // 系统区域结构（扩展版，包含预计算能力）
 // ==========================================
@@ -93,6 +226,10 @@ template<typename T>
 struct RegimeData {
     // ===== 原始数据 =====
     const seriesCoefficient<T>* C;                     // 指向当前分支的系数容器
+    // θ = (θ₁, ..., θₑ) — asymptotic expansion sector parameter.
+    // Copied from sector[r] (= RingCell::limitSector). Defines the direction
+    // ν → ν + θn for the n → ∞ limit expansion. Used in RegimeEvaluator::
+    // step3_computeF1 to compute the polynomial (θ + ν)^β.
     std::vector<int> theta;                       // theta 向量
     std::vector<std::vector<T>> A_ops;            // A_i 矩阵组
     std::vector<std::vector<T>> A_inv_ops;        // A_i 逆矩阵组
@@ -180,7 +317,7 @@ public:
     void clearTemporaryStorage();
     
     // 获取该 regime 在单个 nu 下的贡献行数
-    size_t rowsPerNu() const { return nb_ * (deg_ + k_max_ + 1); }
+    size_t rowsPerNu() const { return nb_ * (k_max_ + 1); }
     
     // 获取该 regime 支持的最大 nimax
     int maxNimax() const { return C_ ? C_->getNimax() : 0; }
@@ -188,14 +325,18 @@ public:
     // 检查是否已初始化
     bool isInitialized() const { return C_ != nullptr && nb_ > 0; }
 
+    // 供 GlobalEquationAssembler::splitRowsByOrder 使用的访问器
+    int getKMax() const { return k_max_; }
+    int getNb() const { return nb_; }
+
 private:
-    // step2: g(alpha) = p(alpha) * h(alpha, nu, nimax_idx)
+    // step2: g[k] = coeff of 1/n^k in g(ν-α; n) = p(α) · h(ν-α; n)
     void step2_computeG(const std::vector<T>& nu, int nimax_idx);
     
-    // step3: f1(beta) = (theta + nu)^beta 展开系数
+    // step3: f1(alpha, beta) = (θ/n + ν/n)^β = n^{-|β|}·(θ + νn)^β 的 1/n 展开系数
     void step3_computeF1(const std::vector<T>& nu);
-    
-    // step4: f2 = f1 * g (多项式卷积)
+
+    // step4: f2 = f1 ⊛ g (1/n 域卷积，截断到 k_max)
     void step4_computeF2(const std::vector<int>& alpha, const std::vector<int>& beta);
     
     // step5: 组装最终矩阵
@@ -211,7 +352,9 @@ private:
     int ne_ = 0;                                  // 多重指标维度
     int k_max_ = 0;                               // 最大展开阶数
     int lev_ = 0;                                 // max |alpha|
-    int deg_ = 0;                                 // max |beta|
+    int deg_ = 0;                                 // max |beta| (user-provided, for beta generation)
+    int deg_eff_ = 0;                             // max |beta|_{supp(theta)}, effective n-degree
+    int incre_ = 0;                               // level increment per order (from seriesCoefficient)
     
     // alpha/beta 列表（全局共享）
     std::vector<std::vector<int>> alphas_;
@@ -229,11 +372,13 @@ private:
 // 策略：特殊点（单位向量、全1）优先，随后随机点
 // ==========================================
 struct AdaptiveSamplingConfig {
-    int min_nu = 3;                    // 最小采样数
-    int max_nu = 50;                   // 最大采样数
+    int min_nu = 0;                    // 最小采样数（0=自动调整）
+    int max_nu = 200;                  // 最大采样数（硬上限，自动调整时不会被超过）
+    double safety_factor = 1.2;        // 过定因子（min_required = ceil(vars * safety / eqs)）
     int check_interval = 1;            // 秩检查间隔（每几个点检查一次）
     int nullity_stable_threshold = 3;  // 零空间维度连续稳定次数
     int verification_points = 3;       // 验证用额外点数
+    int plateau_size = 1;              // MMA "PlateauSize": 稳定性确认所需额外阶数
     double tolerance = 1e-10;          // 数值容差
     
     // 采样点生成配置（使用 double，生成时转换为目标类型）
@@ -311,6 +456,7 @@ public:
         int rank = 0;                        // 矩阵秩
         int nullity = 0;                     // 零空间维度 = num_vars - rank
         bool is_valid = false;               // 是否有效
+        std::vector<int> free_cols;          // 自由变量列索引（用于 RemoveSolvedVariables）
     };
     
     // 构造：指定变量数（列数）
@@ -394,9 +540,15 @@ public:
     
     // 获取变量数（列数）= alphas.size() * betas.size()
     size_t numVariables() const { return alphas_.size() * betas_.size(); }
-    
+
     // 获取 regime 数量
     size_t numRegimes() const { return regimes_.size(); }
+
+    // 将 evaluateAtNu 返回的拼接行按展开阶数 r 拆分
+    // 返回 vector of length (k_max_+1)，每个 entry = 属于该阶数的行
+    // 行布局: 每个 evaluator 块内 row_idx = i*(k_max+1) + r
+    std::vector<std::vector<std::vector<T>>> splitRowsByOrder(
+        const std::vector<std::vector<T>>& all_rows) const;
 
 private:
     std::vector<RegimeConfig> regimes_;             // regime 配置列表
@@ -421,14 +573,18 @@ public:
         // 求解结果
         std::vector<std::vector<T>> equations;          // 最终方程矩阵
         typename IncrementalNullspaceSolver<T>::NullspaceInfo nullspace;
-        
+
         // 采样信息
         std::vector<std::vector<T>> nu_used;            // 实际使用的采样点
         int nu_count = 0;                               // 采样点数量
-        
+
         // 收敛状态
         bool converged = false;
         std::string stop_reason;                        // 停止原因
+
+        // 阶数稳定性分析
+        int stable_order = -2;                          // 零空间稳定的展开阶数 (-2=未稳定)
+        std::vector<std::vector<std::vector<T>>> rows_by_order;  // [k_max+1][row][col] 按阶数分组的行
     };
     
     // 构造函数：传入配置
@@ -442,8 +598,18 @@ public:
                      const std::vector<std::vector<int>>& nimax_lists,
                      int ne);
 
+    // 设置列掩码（用于 RemoveSolvedVariables 变量过滤）
+    // mask[j] = true 表示第 j 列活跃（保留）
+    void setColumnMask(const std::vector<bool>& mask, size_t active_count) {
+        column_mask_ = mask;
+        active_count_ = active_count;
+    }
+    bool hasColumnMask() const { return !column_mask_.empty(); }
+
 private:
     AdaptiveSamplingConfig config_;
+    std::vector<bool> column_mask_;     // 列掩码（空=使用全部列）
+    size_t active_count_ = 0;           // 活跃列数
 };
 
 // ==========================================
@@ -517,13 +683,22 @@ void RegimeEvaluator<T>::init(const RegimeData<T>& reg,
     k_max_ = k_max;
     lev_ = lev;
     deg_ = deg;
+
+    // Effective n-degree = deg (since betas include vectors concentrating all weight on supp(θ))
+    deg_eff_ = std::any_of(theta_.begin(), theta_.end(),
+                           [](int t) { return t != 0; }) ? deg_ : 0;
+
+    incre_ = C_->getIncre();
+
     alphas_ = alphas;
     betas_ = betas;
-    
+
     // ===== 创建临时存储器 =====
     g_store_ = std::make_unique<IndexStorage<T>>(ne_, nb_ * (k_max_ + 1));
-    f1_store_ = std::make_unique<DualIndexStorage<T>>(ne_, k_max_ + 1);
-    f2_store_ = std::make_unique<DualIndexStorage<T>>(ne_, nb_ * (deg_ + k_max_ + 1));
+    // f1 stores coefficients of 1/n^i for i ∈ [0, deg_eff_] (θ≠0 components only)
+    f1_store_ = std::make_unique<DualIndexStorage<T>>(ne_, deg_eff_ + 1);
+    // f2 stores coefficients of 1/n^r for r ∈ [0, k_max_] (convolution truncated at k_max)
+    f2_store_ = std::make_unique<DualIndexStorage<T>>(ne_, nb_ * (k_max_ + 1));
 }
 
 template<typename T>
@@ -579,42 +754,44 @@ void RegimeEvaluator<T>::step2_computeG(const std::vector<T>& nu, int nimax_idx)
     if (!g_store_ || !reg_ || !C_) {
         throw std::runtime_error("step2_computeG: prerequisite storage or data not initialized");
     }
-    
+
     // 对所有 alpha 计算 g(alpha)
     for (const auto& alpha : alphas_) {
         // 检查是否已计算
         T* cached = g_store_->retrieve(alpha);
         if (cached != nullptr) continue;
-        
+
         // 获取 p(alpha)（如果不存在则跳过）
         T* p_ptr = reg_->getP(alpha);
         if (!p_ptr) continue;
-        
+
         std::vector<T> g_val(nb_ * (k_max_ + 1), T(0));
-        
+
         // 计算 h_jk
+        // h_jk[k] = Σ_{l=0}^{incre*k} Σ_{|γ|=l} C(k,l,γ,j) · (ν-α)^γ
+        // l 上界为 incre*k（不是 k），因为 seriesCoefficient 中 l 的范围是 [0, incre*k]
         for (int k = 0; k <= k_max_; ++k) {
             std::vector<T> h_jk(nb_, T(0));
-            
-            for (int l = 0; l <= k; ++l) {
+            int lmax = incre_ * k;
+            for (int l = 0; l <= lmax; ++l) {
                 long long states = BINOM[l + ne_ - 1][ne_ - 1];
                 for (long long cid = 0; cid < states; ++cid) {
                     std::vector<int> gamma = readIndex(static_cast<int>(cid), l, ne_);
-                    
+
                     // 计算 weight = (nu - alpha)^gamma
                     T weight = T(1);
                     for (int m = 0; m < ne_; ++m) {
                         T diff = nu[m] - static_cast<T>(alpha[m]);
                         weight *= detail::power(diff, gamma[m]);
                     }
-                    
+
                     // 累加 h_jk
                     for (int j = 0; j < nb_; ++j) {
                         h_jk[j] += (*C_)(k, l, static_cast<int>(cid), j, nimax_idx) * weight;
                     }
                 }
             }
-            
+
             // 矩阵乘：g_i = sum_j p_ij * h_j
             for (int i = 0; i < nb_; ++i) {
                 for (int j = 0; j < nb_; ++j) {
@@ -622,10 +799,28 @@ void RegimeEvaluator<T>::step2_computeG(const std::vector<T>& nu, int nimax_idx)
                 }
             }
         }
-        
+
         g_store_->insert(alpha, g_val);
     }
 }
+
+// ==========================================
+// Unified 1/n sign convention for f1/f2:
+//
+//   Only θ_j ≠ 0 components contribute n-powers:
+//     (ν_j + θ_j n)^{β_j} = n^{β_j} · (ν_j/n + θ_j)^{β_j}   [θ_j ≠ 0]
+//     (ν_j + 0)^{β_j}     = ν_j^{β_j}                         [θ_j = 0, constant]
+//
+//   So (ν+θn)^β = n^{|β|_{supp(θ)}} · (ν/n+θ)^β|_{supp(θ)} · ν^{β}|_{θ=0}.
+//
+//   f1 stores n^{-|β|_{supp(θ)}}·(ν+θn)^β as coeffs of 1/n^i, i ∈ [0, deg_eff_]. (monic in 1/n)
+//   f2 convolution: c_r = Σ_i f1[i]·g[r-i], truncated at r=k_max.
+//   Product = n^{|β|_{supp(θ)}}·Σ_r c_r/n^r → coeff of n^{|β|_{supp(θ)}-r} is c_r.
+//
+//   To align all columns to uniform baseline n^{deg_eff_}: in buildFinalMatrix,
+//   column (α,β) at row r uses f2[r - shift_β] where shift_β = deg_eff_ - |β|_{supp(θ)}.
+//   See docs/ReconstructAlgorithm.md §1.5.
+// ==========================================
 
 template<typename T>
 void RegimeEvaluator<T>::step3_computeF1(const std::vector<T>& nu) {
@@ -633,52 +828,59 @@ void RegimeEvaluator<T>::step3_computeF1(const std::vector<T>& nu) {
     if (!f1_store_) {
         throw std::runtime_error("step3_computeF1: f1_store not initialized");
     }
-    
-    // 预分配临时向量以优化多项式乘法（避免重复创建）
-    // 主多项式和新多项式共享同一缓冲区
-    std::vector<T> work_buffer(k_max_ + 1, T(0));
-    
+
+    // 预分配临时向量以优化多项式乘法
+    // poly[i] = coefficient of 1/n^i in n^{-|β|_{supp(θ)}}·(ν+θn)^β.
+    // Only θ_j ≠ 0 components contribute 1/n factors; θ_j = 0 yields constant ν_j^{β_j}.
+    std::vector<T> work_buffer(deg_eff_ + 1, T(0));
+
     // 对所有 (alpha, beta) 组合计算 f1
     for (const auto& alpha : alphas_) {
         for (const auto& beta : betas_) {
-            std::vector<T> poly(k_max_ + 1, T(0));
+            std::vector<T> poly(deg_eff_ + 1, T(0));
             poly[0] = T(1);
-            
+
             for (int i = 0; i < ne_; ++i) {
                 int b = beta[i];
                 if (b == 0) continue;
-                
-                std::vector<T> term_poly(b + 1, T(0));
-                T th = static_cast<T>(theta_[i]);
+
                 T nu_i = nu[i];
-                
-                // 二项式展开系数
-                for (int m = 0; m <= b; ++m) {
-                    T coef = static_cast<T>(BINOM[b][m]) *
-                             detail::power(th, b - m) *
-                             detail::power(nu_i, m);
-                    term_poly[m] = coef;
-                }
-                
-                // 优化：多项式乘法使用预分配的缓冲区，避免频繁动态分配
-                // 清空工作缓冲区
-                std::fill(work_buffer.begin(), work_buffer.end(), T(0));
-                
-                // 进行多项式乘法：work_buffer = poly * term_poly
-                for (int p1 = 0; p1 <= k_max_; ++p1) {
-                    if (poly[p1] == T(0)) continue;
-                    for (int p2 = 0; p2 <= b; ++p2) {
-                        int target_idx = p1 + p2;
-                        if (target_idx <= k_max_) {
-                            work_buffer[target_idx] += poly[p1] * term_poly[p2];
+                T th = static_cast<T>(theta_[i]);
+
+                if (th == T(0)) {
+                    // θ_i = 0: (ν_i)^{b} — constant, no 1/n dependence
+                    T val = detail::power(nu_i, b);
+                    for (int p = 0; p <= deg_eff_; ++p) {
+                        poly[p] *= val;
+                    }
+                } else {
+                    // θ_i ≠ 0: (ν_i/n + θ_i)^b — binomial expansion in 1/n
+                    std::vector<T> term_poly(b + 1, T(0));
+                    for (int m = 0; m <= b; ++m) {
+                        T coef = static_cast<T>(BINOM[b][m]) *
+                                 detail::power(th, b - m) *
+                                 detail::power(nu_i, m);
+                        term_poly[m] = coef;
+                    }
+
+                    // 多项式乘法: poly = poly * term_poly (in 1/n)
+                    std::fill(work_buffer.begin(), work_buffer.end(), T(0));
+                    for (int p1 = 0; p1 <= deg_eff_; ++p1) {
+                        if (poly[p1] == T(0)) continue;
+                        for (int p2 = 0; p2 <= b; ++p2) {
+                            int target_idx = p1 + p2;
+                            if (target_idx <= deg_eff_) {
+                                work_buffer[target_idx] += poly[p1] * term_poly[p2];
+                            }
                         }
                     }
+                    poly = work_buffer;
                 }
-                
-                // 用计算结果替换 poly
-                poly = work_buffer;
             }
-            
+
+            // f1 stores n^{-|β|_{supp(θ)}}·(ν+θn)^β without global shift.
+            // Per-column alignment to n^{-deg_eff_} is done in buildFinalMatrix.
+
             // 验证结果后插入存储器
             if (!poly.empty()) {
                 f1_store_->insert(alpha, poly, beta);
@@ -693,7 +895,7 @@ void RegimeEvaluator<T>::step4_computeF2(const std::vector<int>& alpha, const st
     if (!g_store_ || !f1_store_ || !f2_store_) {
         throw std::runtime_error("step4_computeF2: required storage not initialized");
     }
-    
+
     // 获取指针并验证
     T* g_ptr = g_store_->retrieve(alpha);
     T* f1_ptr = f1_store_->retrieve(alpha, beta);
@@ -702,32 +904,30 @@ void RegimeEvaluator<T>::step4_computeF2(const std::vector<int>& alpha, const st
     if (!g_ptr || !f1_ptr) {
         return;
     }
-    
-    // f2 store size: n-exponents from -k_max_ to deg_, indexed by (deg_ - n_exp)
-    int f2_len = deg_ + k_max_ + 1;
+
+    // f2[r] = coefficient of n^{|β|_{supp(θ)}-r} in the product (ν+θn)^β · g(ν-α).
+    // f1[s] = coeff of 1/n^s in n^{-|β|_{supp(θ)}}·(ν+θn)^β.
+    // g[k] = coeff of 1/n^k.
+    // Convolution: c_r = Σ_{s=0}^{min(deg_eff_, r)} f1[s] · g[r-s], r ∈ [0, k_max_].
+    // Per-column alignment to uniform n^{deg_eff_} is applied in buildFinalMatrix.
+    int f2_len = k_max_ + 1;
     std::vector<T> f2_val(nb_ * f2_len, T(0));
-    
-    // f1[l] = coeff of n^l, g[k] = coeff of n^{-k}
-    // Product n^l × n^{-k} = n^{l-k} → n-exponent e = l - k
-    // Index in f2: idx = deg_ - e = deg_ - l + k
+
     for (int i = 0; i < nb_; ++i) {
-        int l_max = (deg_ < k_max_) ? deg_ : k_max_;
-        for (int l = 0; l <= l_max; ++l) {
-            T f1_val = f1_ptr[l];
-            if (f1_val == T(0)) continue;
-            
-            for (int k = 0; k <= k_max_; ++k) {
-                T g_val = g_ptr[i * (k_max_ + 1) + k];
+        for (int r = 0; r <= k_max_; ++r) {
+            T sum = T(0);
+            int i_max = (deg_eff_ < r) ? deg_eff_ : r;
+            for (int s = 0; s <= i_max; ++s) {
+                T f1_val = f1_ptr[s];
+                if (f1_val == T(0)) continue;
+                T g_val = g_ptr[i * (k_max_ + 1) + (r - s)];
                 if (g_val == T(0)) continue;
-                
-                int idx = deg_ - l + k;
-                if (idx >= 0 && idx < f2_len) {
-                    f2_val[i * f2_len + idx] += f1_val * g_val;
-                }
+                sum += f1_val * g_val;
             }
+            f2_val[i * f2_len + r] = sum;
         }
     }
-    
+
     // 验证结果非空后再插入
     f2_store_->insert(alpha, f2_val, beta);
 }
@@ -739,9 +939,11 @@ std::vector<std::vector<T>> RegimeEvaluator<T>::buildFinalMatrix() {
         throw std::runtime_error("buildFinalMatrix: invalid state (empty alphas/betas or invalid dimensions)");
     }
 
-    // f2 now stores coefficients indexed by (deg_ - n_exp), so total_k = deg_ + k_max_ + 1
-    int total_k = deg_ + k_max_ + 1;
-    // Row per basis matches total_k: one row per n-exponent from deg_ down to -k_max_
+    // Matrix row r = coefficient of n^{deg_eff_ - r}.
+    // f2[s] = coefficient of n^{|β|_{supp(θ)}-s} (from step4).
+    // To align: need n^{deg_eff_-r} = n^{|β|_{supp(θ)}-s} → s = r - (deg_eff_ - |β|_{supp(θ)}).
+    // Per-column shift = deg_eff_ - |β|_{supp(θ)}.
+    int total_k = k_max_ + 1;
     int rows_per_basis = total_k;
     int rows = nb_ * rows_per_basis;
     int cols = static_cast<int>(alphas_.size() * betas_.size());
@@ -757,19 +959,29 @@ std::vector<std::vector<T>> RegimeEvaluator<T>::buildFinalMatrix() {
     // 填充矩阵：每列对应一个 (alpha, beta) 对
     for (size_t a_idx = 0; a_idx < alphas_.size(); ++a_idx) {
         for (size_t b_idx = 0; b_idx < betas_.size(); ++b_idx) {
+            const auto& beta = betas_[b_idx];
+
+            // Compute per-column shift for uniform n^{deg_eff_} baseline
+            int beta_supp = 0;
+            for (size_t j = 0; j < theta_.size(); ++j) {
+                if (theta_[j] != 0) beta_supp += beta[j];
+            }
+            int shift = deg_eff_ - beta_supp;
+
             // 获取该 (alpha, beta) 对应的 f2 数据
-            T* f2_ptr = f2_store_->retrieve(alphas_[a_idx], betas_[b_idx]);
+            T* f2_ptr = f2_store_->retrieve(alphas_[a_idx], beta);
             if (!f2_ptr) continue;  // 如果数据不存在，跳过该列
 
             int col_idx = static_cast<int>(a_idx * betas_.size() + b_idx);
-            
-            // f2[kt] = coefficient of n^{deg_ - kt} (n-exponent indexed directly)
-            // Row mapping: row for n-exponent e is deg_ - e, or simply row kt
+
+            // Row r: coefficient of n^{deg_eff_-r}.  f2 source index = r - shift.
             for (int i = 0; i < nb_; ++i) {
-                for (int kt = 0; kt < total_k; ++kt) {
-                    int row_idx = i * rows_per_basis + kt;
+                for (int r = 0; r < total_k; ++r) {
+                    int f2_src = r - shift;
+                    if (f2_src < 0 || f2_src >= total_k) continue;
+                    int row_idx = i * rows_per_basis + r;
                     if (row_idx >= 0 && row_idx < rows && col_idx < cols) {
-                        mat[row_idx][col_idx] = f2_ptr[i * total_k + kt];
+                        mat[row_idx][col_idx] = f2_ptr[i * total_k + f2_src];
                     }
                 }
             }
@@ -794,44 +1006,40 @@ AdaptiveSampler<T>::AdaptiveSampler(int ne, const AdaptiveSamplingConfig& config
 template<typename T>
 void AdaptiveSampler<T>::generateSequence() {
     sequence_.clear();
-    sequence_.reserve(config_.max_nu);
-    
+    // 只预生成特殊点（< 20个），随机点按需生成
+    sequence_.reserve(std::min(config_.max_nu, 20));
+
     if (config_.use_special_points) {
         // 阶段1: 单位向量 e_i = (0,...,1,...,0)
-        for (int i = 0; i < ne_ && (int)sequence_.size() < config_.max_nu; ++i) {
+        for (int i = 0; i < ne_ && (int)sequence_.size() < 20; ++i) {
             std::vector<T> pt(ne_, T(0));
             pt[i] = T(1);
             sequence_.push_back(std::move(pt));
         }
         
         // 阶段2: 全1向量 (1,1,...,1)
-        if ((int)sequence_.size() < config_.max_nu) {
+        if ((int)sequence_.size() < 20) {
             sequence_.push_back(std::vector<T>(ne_, T(1)));
         }
-        
+
         // 阶段3: 非对称组合 (1,2,0,...), (2,1,0,...)
         if (ne_ >= 2) {
-            for (int i = 0; i < ne_ && (int)sequence_.size() < config_.max_nu; ++i) {
+            for (int i = 0; i < ne_ && (int)sequence_.size() < 20; ++i) {
                 std::vector<T> pt(ne_, T(0));
                 pt[i] = T(1);
                 pt[(i+1) % ne_] = T(2);
                 sequence_.push_back(std::move(pt));
             }
         }
-        
+
         // 阶段4: 小整数网格 (2,0,0,...), (0,2,0,...)
-        for (int i = 0; i < ne_ && (int)sequence_.size() < config_.max_nu; ++i) {
+        for (int i = 0; i < ne_ && (int)sequence_.size() < 20; ++i) {
             std::vector<T> pt(ne_, T(0));
             pt[i] = T(2);
             sequence_.push_back(std::move(pt));
         }
     }
-    
-    // 阶段5: 随机点填充剩余
-    int remaining = config_.max_nu - sequence_.size();
-    for (int i = 0; i < remaining; ++i) {
-        sequence_.push_back(generateRandomPoint());
-    }
+    // 随机点按需生成，不在初始化时预分配
 }
 
 template<typename T>
@@ -846,9 +1054,9 @@ std::vector<T> AdaptiveSampler<T>::generateRandomPoint() {
             pt[i] = static_cast<T>(dis(rng_));
         }
     } else if constexpr (std::is_same_v<T, firefly::FFInt>) {
-        // 对于 FFInt，使用模数范围内的随机数
+        // 对于 FFInt，在整个有限域 [0, p-1] 中均匀采样
         uint64_t p = firefly::FFInt::p;
-        uint64_t low = static_cast<uint64_t>(3);
+        uint64_t low = 0;
         uint64_t high = p - 1;
         std::uniform_int_distribution<uint64_t> dis(low, high);
         for (int i = 0; i < ne_; ++i) {
@@ -1133,14 +1341,15 @@ IncrementalNullspaceSolver<T>::computeNullspace() {
             if (!is_pivot_col[j]) {
                 std::vector<T> vec(n, T(0));
                 vec[j] = T(1);  // 自由变量设为1
-                
+
                 // 主元变量由行最简形确定
                 for (int r = 0; r < rank; ++r) {
                     int pc = pivot_col[r];
                     vec[pc] = -A[r][j];
                 }
-                
+
                 info.basis.push_back(std::move(vec));
+                info.free_cols.push_back(j);  // 记录自由变量列索引
                 free_idx++;
             }
         }
@@ -1252,6 +1461,88 @@ size_t GlobalEquationAssembler<T>::totalRowsPerNu() const
     return total;
 }
 
+template<typename T>
+std::vector<std::vector<std::vector<T>>> GlobalEquationAssembler<T>::splitRowsByOrder(
+    const std::vector<std::vector<T>>& all_rows) const
+{
+    std::vector<std::vector<std::vector<T>>> result(k_max_ + 1);
+
+    size_t offset = 0;
+    for (size_t r = 0; r < regimes_.size(); ++r) {
+        int nb = evaluators_[r].getNb();
+        int km = evaluators_[r].getKMax();
+        int block_size = nb * (km + 1);
+
+        for (int nimax_idx : regimes_[r].nimax_indices) {
+            (void)nimax_idx;  // 每个 nimax 贡献相同大小的块
+            for (int order = 0; order <= km; ++order) {
+                for (int i = 0; i < nb; ++i) {
+                    size_t row_idx = offset + i * (km + 1) + order;
+                    if (row_idx < all_rows.size()) {
+                        result[order].push_back(all_rows[row_idx]);
+                    }
+                }
+            }
+            offset += block_size;
+        }
+    }
+
+    return result;
+}
+
+// ==========================================
+// 阶数稳定性分析 (对应 MMA SolveDegreeEquations plateau 逻辑)
+// ==========================================
+
+template<typename T>
+static std::pair<int, int> analyzeOrderStability(
+    const std::vector<std::vector<std::vector<T>>>& rows_by_order,
+    int k_max,
+    int plateau_size,
+    size_t num_vars)
+{
+    std::vector<int> nullity(k_max + 1, -1);
+
+    IncrementalNullspaceSolver<T> solver(num_vars);
+
+    for (int cur_order = 0; cur_order <= k_max; ++cur_order) {
+        // 累加当前阶数的所有行（包括之前阶数的行已在 solver 中）
+        const auto& order_rows = rows_by_order[cur_order];
+        if (!order_rows.empty()) {
+            solver.addRows(order_rows);
+        }
+
+        nullity[cur_order] = solver.getNullity();
+
+        // 特殊处理: nullity=0 意味着所有变量已确定，这是确定性的终止条件
+        // 对应 MMA trigger 2: Length[bSolAcc] == Length[bVars] (L603-607)
+        if (nullity[cur_order] == 0) {
+            return {cur_order, 0};
+        }
+
+        // 稳定性检查: nullity 连续 plateau_size+1 个阶数不变
+        // 对应 MMA trigger 3: plateau 确认 (L667-671)
+        if (cur_order >= plateau_size) {
+            bool all_same = true;
+            for (int i = 1; i <= plateau_size; ++i) {
+                if (nullity[cur_order - i] != nullity[cur_order]) {
+                    all_same = false;
+                    break;
+                }
+            }
+            if (all_same) {
+                // 找到第一个达到该最终 nullity 的阶数
+                int final_nullity = nullity[cur_order];
+                for (int j = 0; j <= cur_order; ++j) {
+                    if (nullity[j] == final_nullity)
+                        return {j, final_nullity};
+                }
+            }
+        }
+    }
+    return {-2, nullity[k_max]};  // 在可用阶数内未稳定
+}
+
 // ==========================================
 // AdaptiveEquationBuilder 实现
 // ==========================================
@@ -1271,12 +1562,8 @@ AdaptiveEquationBuilder<T>::build(
     
     // ===== 改进3：配置参数验证 =====
     // 检查采样配置的合理性
-    if (config_.min_nu <= 0 || config_.max_nu <= 0) {
-        result.stop_reason = "Invalid config: min_nu and max_nu must be positive";
-        return result;
-    }
-    if (config_.min_nu > config_.max_nu) {
-        result.stop_reason = "Invalid config: min_nu must be <= max_nu";
+    if (config_.min_nu < 0 || config_.max_nu <= 0) {
+        result.stop_reason = "Invalid config: min_nu must be >= 0, max_nu must be > 0";
         return result;
     }
     if (config_.nullity_stable_threshold <= 0) {
@@ -1306,32 +1593,44 @@ AdaptiveEquationBuilder<T>::build(
     temp.clear();
     generateAllIndices(ne, config_.deg_hint, temp, betas, false);
     
-    size_t num_vars = alphas.size() * betas.size();
-    
+    size_t num_vars_full = alphas.size() * betas.size();
+    size_t num_vars = hasColumnMask() ? active_count_ : num_vars_full;
+
     // 初始化组件
     AdaptiveSampler<T> sampler(ne, config_);
     GlobalEquationAssembler<T> assembler;
-    IncrementalNullspaceSolver<T> solver(num_vars);
-    
-    // 初始化 assembler
+    IncrementalNullspaceSolver<T> solver(num_vars);  // 只在活跃列上求解
+
+    // 初始化 assembler（始终使用完整 alphas/betas 以保持列索引一致）
     assembler.init(k_max, config_.lev_hint, config_.deg_hint, alphas, betas);
     for (size_t r = 0; r < regimes.size(); ++r) {
         assembler.addRegime(regimes[r], nimax_lists[r]);
     }
-    
+
     // ✅ 改进2：内存预分配
     // 计算单次采样的总行数（所有 regime 和 nimax 的贡献）
     size_t rows_per_nu = assembler.totalRowsPerNu();
-    // 预分配方程矩阵的存储空间，避免多次重新分配
-    // 理论最大行数为 rows_per_nu * config_.max_nu
-    result.equations.reserve(rows_per_nu * config_.max_nu);
-    result.nu_used.reserve(config_.max_nu);
-    
+
+    // 根据活跃变量数自动调整 max_nu（不低于 10，不高于 config_.max_nu）
+    int eq_per_sample = std::max(1, static_cast<int>(rows_per_nu));
+    int min_required = static_cast<int>(std::ceil(
+        static_cast<double>(num_vars) * config_.safety_factor / eq_per_sample));
+    int effective_max_nu = std::min(config_.max_nu,
+        std::max(10, min_required));
+
+    // 预分配方程矩阵的存储空间
+    result.equations.reserve(rows_per_nu * effective_max_nu);
+    result.nu_used.reserve(effective_max_nu);
+
     // 主循环：自适应采样
-    std::cout << "    [ν-sampling] special points + random fill, max_nu=" << config_.max_nu << std::endl;
+    std::cout << "    [ν-sampling] vars=" << num_vars_full;
+    if (hasColumnMask()) std::cout << " active=" << num_vars;
+    std::cout << " eq/sample=" << eq_per_sample
+              << " min_req=" << min_required
+              << " eff_max=" << effective_max_nu << std::endl;
     std::cout << "    ν points: ";
     int printed_count = 0;
-    while (result.nu_count < config_.max_nu) {
+    while (result.nu_count < effective_max_nu) {
         // 获取下一个采样点
         std::vector<T> nu = sampler.next();
 
@@ -1341,8 +1640,25 @@ AdaptiveEquationBuilder<T>::build(
         // 在该点评估所有 regime 和 nimax
         auto rows = assembler.evaluateAtNu(nu);
 
-        // 添加到求解器
-        solver.addRows(rows);
+        // 按展开阶数拆分行，用于后续阶数稳定性分析
+        auto rows_by_order_this_nu = assembler.splitRowsByOrder(rows);
+        if (result.rows_by_order.empty()) {
+            result.rows_by_order.resize(rows_by_order_this_nu.size());
+        }
+        for (size_t r = 0; r < rows_by_order_this_nu.size(); ++r) {
+            result.rows_by_order[r].insert(
+                result.rows_by_order[r].end(),
+                rows_by_order_this_nu[r].begin(),
+                rows_by_order_this_nu[r].end());
+        }
+
+        // 添加到求解器（如有列掩码，先压缩列）
+        if (hasColumnMask()) {
+            auto stripped_rows = stripInactiveColumns(rows, column_mask_, active_count_);
+            solver.addRows(stripped_rows);
+        } else {
+            solver.addRows(rows);
+        }
 
         // 记录使用的采样点
         result.nu_used.push_back(nu);
@@ -1387,7 +1703,10 @@ AdaptiveEquationBuilder<T>::build(
                 auto current_info = solver.getNullspace();
                 for (const auto& vnu : verify_points) {
                     auto vrows = assembler.evaluateAtNu(vnu);
-                    T residual = solver.verifyBasis(vrows, current_info, T(config_.tolerance));
+                    auto vrows_check = hasColumnMask()
+                        ? stripInactiveColumns(vrows, column_mask_, active_count_)
+                        : vrows;
+                    T residual = solver.verifyBasis(vrows_check, current_info, T(config_.tolerance));
 
                     if constexpr (std::is_floating_point_v<T>) {
                         if (residual > T(config_.tolerance)) {
@@ -1407,17 +1726,36 @@ AdaptiveEquationBuilder<T>::build(
                     result.nullspace = current_info;
                     result.stop_reason = "Converged after " + std::to_string(result.nu_count) + " samples";
                     std::cout << " (+" << (result.nu_count - printed_count) << " more, converged)" << std::endl;
+
+                    // Phase 2: 阶数稳定性分析（零冗余计算——行已在采样时预拆分）
+                    if (config_.plateau_size >= 0 && k_max >= 0) {
+                        std::vector<std::vector<std::vector<T>>> rows_by_order_masked(k_max + 1);
+                        for (int r = 0; r <= k_max; ++r) {
+                            if (hasColumnMask()) {
+                                rows_by_order_masked[r] = stripInactiveColumns(
+                                    result.rows_by_order[r], column_mask_, active_count_);
+                            } else {
+                                rows_by_order_masked[r] = result.rows_by_order[r];
+                            }
+                        }
+                        auto [so, _] = analyzeOrderStability<T>(
+                            rows_by_order_masked, k_max, config_.plateau_size, num_vars);
+                        result.stable_order = so;
+                    }
                     return result;
                 }
                 // 验证失败：将测试失败的方程加入系统
                 // 这样零空间维数会单调递减，确保最终收敛到正确解
                 for (const auto& vnu : verify_points) {
                     auto vrows = assembler.evaluateAtNu(vnu);
+                    auto vrows_check = hasColumnMask()
+                        ? stripInactiveColumns(vrows, column_mask_, active_count_)
+                        : vrows;
                     T residual = T(0);
                     if constexpr (std::is_floating_point_v<T>) {
-                        residual = solver.verifyBasis(vrows, current_info, T(config_.tolerance));
+                        residual = solver.verifyBasis(vrows_check, current_info, T(config_.tolerance));
                     } else {
-                        residual = solver.verifyBasis(vrows, current_info, T(0));
+                        residual = solver.verifyBasis(vrows_check, current_info, T(0));
                     }
                     // 只有失败的才加入（residual > tolerance for float, or != 0 for FFInt）
                     bool is_failed = false;
@@ -1427,9 +1765,15 @@ AdaptiveEquationBuilder<T>::build(
                         is_failed = (residual != T(0));
                     }
                     if (is_failed) {
-                        solver.addRows(vrows);
+                        solver.addRows(vrows_check);
                         result.nu_used.push_back(vnu);
-                        result.equations.insert(result.equations.end(), vrows.begin(), vrows.end());
+                        if (hasColumnMask()) {
+                            result.equations.insert(result.equations.end(),
+                                vrows_check.begin(), vrows_check.end());
+                        } else {
+                            result.equations.insert(result.equations.end(),
+                                vrows.begin(), vrows.end());
+                        }
                     }
                 }
                 // 更新 sampler 的 nullity 状态
@@ -1441,8 +1785,24 @@ AdaptiveEquationBuilder<T>::build(
     
     // 达到最大采样数
     result.nullspace = solver.getNullspace();
-    result.stop_reason = "Max samples (" + std::to_string(config_.max_nu) + ") reached";
+    result.stop_reason = "Max samples (" + std::to_string(effective_max_nu) + ") reached";
     std::cout << " (+" << (result.nu_count - printed_count) << " more)" << std::endl;
+
+    // Phase 2: 阶数稳定性分析（零冗余计算）
+    if (config_.plateau_size >= 0 && k_max >= 0 && !result.rows_by_order.empty()) {
+        std::vector<std::vector<std::vector<T>>> rows_by_order_masked(k_max + 1);
+        for (int r = 0; r <= k_max; ++r) {
+            if (hasColumnMask()) {
+                rows_by_order_masked[r] = stripInactiveColumns(
+                    result.rows_by_order[r], column_mask_, active_count_);
+            } else {
+                rows_by_order_masked[r] = result.rows_by_order[r];
+            }
+        }
+        auto [so, _] = analyzeOrderStability<T>(
+            rows_by_order_masked, k_max, config_.plateau_size, num_vars);
+        result.stable_order = so;
+    }
     return result;
 }
 
@@ -1803,6 +2163,245 @@ static std::pair<LinearSystemResult<T>, RelationCoefficient<T>> reconstructReduc
     RelationCoefficient<T> coeff(alphas, betas, lsr_result);
     
     return {lsr_result, coeff};
+}
+
+// ==========================================
+// 7. reconstructAllRelations
+// 高层 API：对多个 (lev, deg) 配置使用 RemoveSolvedVariables 消除变量冗余
+// ==========================================
+
+/**
+ * 单次 (lev, deg) 求解结果
+ */
+template<typename T>
+struct LevDegResult {
+    int lev;
+    int deg;
+    LinearSystemResult<T> linear_result;
+    RelationCoefficient<T> coeff;
+    std::vector<AlphaBeta> independent_pairs;  // 该配置的自由变量
+    int active_vars = 0;                        // 过滤后的活跃变量数
+    int total_vars = 0;                         // 过滤前的总变量数
+    int stable_order = -2;                      // 零空间稳定的展开阶数 (-2=未稳定)
+    int num_relations = 0;                      // 正确关系数量 (= nullity)
+};
+
+/**
+ * 对所有 (lev, deg) 配置依次重构关系，使用 RemoveSolvedVariables 策略减少方程冗余。
+ *
+ * 算法流程（对应 MMA ReconstructReductionRelation.wl 的主循环）：
+ *   1. 外层循环：lev = 0..lev_max（种子层级）
+ *   2. 内层循环：deg = 0..deg_max（系数多项式度数）
+ *   3. 每次迭代前，从 ansatz 中移除已被低层/低度求解的变量（RemoveSolvedVariables）
+ *   4. 求解后记录独立变量，供后续迭代过滤
+ *
+ * @param CTable    级数系数表
+ * @param sector    sector 列表
+ * @param A_list    A 矩阵列表
+ * @param Ainv_list A 逆矩阵列表
+ * @param ne        维度
+ * @param lev_max   最大 |alpha|
+ * @param deg_max   最大 |beta|
+ * @param config    自适应采样配置
+ * @return 每个 (lev, deg) 的结果列表
+ */
+template<typename T>
+static std::vector<LevDegResult<T>> reconstructAllRelations(
+    const std::vector<std::vector<seriesCoefficient<T>>>& CTable,
+    const std::vector<std::vector<int>>& sector,
+    const std::vector<std::vector<std::vector<T>>>& A_list,
+    const std::vector<std::vector<std::vector<T>>>& Ainv_list,
+    int ne, int lev_min, int lev_max, int deg_max,
+    const AdaptiveSamplingConfig& config = {})
+{
+    std::vector<LevDegResult<T>> all_results;
+    all_results.reserve((lev_max - lev_min + 1) * (deg_max + 1));
+
+    // ---- 构建 regimes（一次性） ----
+    std::vector<RegimeData<T>> regimes;
+    for (size_t r = 0; r < CTable.size(); ++r) {
+        for (size_t s = 0; s < CTable[r].size(); ++s) {
+            RegimeData<T> reg;
+            reg.C = &CTable[r][s];
+            reg.theta = sector[r];
+            reg.A_ops = A_list[r];
+            reg.A_inv_ops = Ainv_list[r];
+            reg.nb = reg.C->basis_size();
+            regimes.push_back(std::move(reg));
+        }
+    }
+
+    if (regimes.empty()) return all_results;
+
+    // ---- 预生成 lev_max 所需的所有 alphas ----
+    std::vector<int> temp;
+    std::vector<std::vector<int>> alphas_max;
+    generateAllIndices(ne, lev_max, temp, alphas_max, false);
+
+    // ---- prepare 所有 regimes（使用最大 alphas 集） ----
+    for (auto& reg : regimes) {
+        reg.prepare(lev_max, alphas_max);
+    }
+
+    // ---- 构建 nimax 列表 ----
+    std::vector<std::vector<int>> nimax_lists;
+    for (const auto& reg : regimes) {
+        std::vector<int> nimax_list;
+        int nimax = reg.C->getNimax();
+        for (int i = 0; i <= nimax; ++i) nimax_list.push_back(i);
+        nimax_lists.push_back(nimax_list);
+    }
+
+    // ---- bindep[level] = 该层所有自由度下求解出的独立变量对 ----
+    std::vector<std::vector<AlphaBeta>> bindep;
+
+    for (int lev = lev_min; lev <= lev_max; ++lev) {
+        // 当前 lev 的 alphas（从 alphas_max 中筛选 |alpha| <= lev）
+        std::vector<std::vector<int>> alphas;
+        for (const auto& a : alphas_max) {
+            int sum = 0;
+            for (int x : a) sum += x;
+            if (sum <= lev) alphas.push_back(a);
+        }
+
+        std::vector<AlphaBeta> levelBindep;  // 同层累积独立变量
+
+        for (int deg = 0; deg <= deg_max; ++deg) {
+            // 生成 betas
+            temp.clear();
+            std::vector<std::vector<int>> betas;
+            generateAllIndices(ne, deg, temp, betas, false);
+
+            size_t num_vars_full = alphas.size() * betas.size();
+
+            // ---- RemoveSolvedVariables: 过滤被支配的变量 ----
+            auto [active_indices, active_mask] = filterVariablePairs(
+                alphas, betas, levelBindep, bindep);
+            size_t active_count = active_indices.size();
+
+            std::cout << "\n  --- (lev=" << lev << ", deg=" << deg << ") ---"
+                      << " vars=" << num_vars_full
+                      << " active=" << active_count << std::endl;
+
+            // ---- 构建求解器配置 ----
+            AdaptiveSamplingConfig cfg = config;
+            cfg.lev_hint = lev;
+            cfg.deg_hint = deg;
+
+            // ---- 构建并求解 ----
+            AdaptiveEquationBuilder<T> builder(cfg);
+            bool has_mask = (active_count < num_vars_full);
+            if (has_mask) {
+                builder.setColumnMask(active_mask, active_count);
+            }
+
+            auto build_result = builder.build(regimes, nimax_lists, ne);
+
+            // ---- 展开零空间基到完整变量空间 ----
+            auto basis = build_result.nullspace.basis;
+            int nullity = build_result.nullspace.nullity;
+            if (has_mask && nullity > 0) {
+                expandNullspaceToFull(basis, active_mask, num_vars_full);
+            }
+
+            // ---- 将 BuildResult 转换为 LinearSystemResult ----
+            LinearSystemResult<T> lsr_result;
+            lsr_result.hasSolution = build_result.converged || build_result.nullspace.is_valid;
+
+            lsr_result.Mext.resize(num_vars_full);
+            for (size_t i = 0; i < num_vars_full; ++i) {
+                lsr_result.Mext[i].resize(1 + nullity, T(0));
+                for (int j = 0; j < nullity; ++j) {
+                    if (j < (int)basis.size() && i < basis[j].size()) {
+                        lsr_result.Mext[i][j + 1] = basis[j][i];
+                    }
+                }
+            }
+
+            lsr_result.S.resize(num_vars_full);
+            std::iota(lsr_result.S.begin(), lsr_result.S.end(), 0);
+
+            // ---- 提取独立变量对（自由变量列映射到 (alpha, beta)） ----
+            std::vector<AlphaBeta> independent_pairs;
+            if (nullity > 0 && active_count > 0) {
+                // 自由变量在压缩列空间中的索引
+                const auto& free_cols_compressed = build_result.nullspace.free_cols;
+                size_t nBeta = betas.size();
+                for (int fc : free_cols_compressed) {
+                    if (fc >= 0 && fc < (int)active_indices.size()) {
+                        size_t full_col = active_indices[fc];
+                        size_t a = full_col / nBeta;
+                        size_t b = full_col % nBeta;
+                        if (a < alphas.size() && b < betas.size()) {
+                            independent_pairs.push_back({alphas[a], betas[b]});
+                        }
+                    }
+                }
+            }
+
+            // ---- 构造输出 ----
+            RelationCoefficient<T> coeff(alphas, betas, lsr_result);
+
+            LevDegResult<T> ld_result;
+            ld_result.lev = lev;
+            ld_result.deg = deg;
+            ld_result.linear_result = lsr_result;
+            ld_result.coeff = std::move(coeff);
+            ld_result.independent_pairs = independent_pairs;
+            ld_result.active_vars = static_cast<int>(active_count);
+            ld_result.total_vars = static_cast<int>(num_vars_full);
+            ld_result.stable_order = build_result.stable_order;
+            ld_result.num_relations = build_result.nullspace.nullity;
+            all_results.push_back(std::move(ld_result));
+
+            // ---- 更新 levelBindep（同层消元用） ----
+            for (const auto& pair : independent_pairs) {
+                levelBindep.push_back(pair);
+            }
+
+            std::cout << "    sol_dim=" << nullity
+                      << " independent=" << independent_pairs.size()
+                      << " stable_order=" << build_result.stable_order << std::endl;
+        }
+
+        // 当前层的独立变量追加到全局 bindep
+        bindep.push_back(levelBindep);
+    }
+
+    // ---- MMA 风格输出：阶数稳定性矩阵 ----
+    std::cout << "\n=== Stability bounds (lev x deg) ===" << std::endl;
+    std::cout << "    ";
+    for (int d = 0; d <= deg_max; ++d) std::cout << std::setw(8) << d;
+    std::cout << "\n";
+    for (int l = lev_min; l <= lev_max; ++l) {
+        std::cout << std::setw(3) << l << " ";
+        for (int d = 0; d <= deg_max; ++d) {
+            int idx = (l - lev_min) * (deg_max + 1) + d;
+            if (idx < (int)all_results.size())
+                std::cout << std::setw(8) << all_results[idx].stable_order;
+            else
+                std::cout << std::setw(8) << "?";
+        }
+        std::cout << "\n";
+    }
+
+    std::cout << "\n=== Relation counts (lev x deg) ===" << std::endl;
+    std::cout << "    ";
+    for (int d = 0; d <= deg_max; ++d) std::cout << std::setw(8) << d;
+    std::cout << "\n";
+    for (int l = lev_min; l <= lev_max; ++l) {
+        std::cout << std::setw(3) << l << " ";
+        for (int d = 0; d <= deg_max; ++d) {
+            int idx = (l - lev_min) * (deg_max + 1) + d;
+            if (idx < (int)all_results.size())
+                std::cout << std::setw(8) << all_results[idx].num_relations;
+            else
+                std::cout << std::setw(8) << "?";
+        }
+        std::cout << "\n";
+    }
+
+    return all_results;
 }
 
 // ==========================================

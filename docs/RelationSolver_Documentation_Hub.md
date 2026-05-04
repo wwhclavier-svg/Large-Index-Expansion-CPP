@@ -172,8 +172,9 @@ struct AdaptiveSamplingConfig {
     int min_nu = 3;                    // Minimum sampling points
     int max_nu = 50;                   // Maximum sampling points
     int check_interval = 1;            // Rank check interval (every N points)
-    int nullity_stable_threshold = 3;  // Nullity stability count
+    int nullity_stable_threshold = 3;  // Nullity stability count (ν-space)
     int verification_points = 3;       // Extra verification points
+    int plateau_size = 1;              // Extra orders for stability confirmation
     double tolerance = 1e-10;          // Numerical tolerance
     bool use_special_points = true;    // Use unit vectors, all-1s, etc.
     double random_min = 3.0;           // Random point min (avoid 0)
@@ -293,6 +294,6 @@ This documentation hub provides multiple perspectives on RelationSolver:
 
 ---
 
-*Last updated: 2026-05-01 (previously 2026-03-19)*  
-*Documentation version: 1.1*  
+*Last updated: 2026-05-05 (order-stability detection added)*  
+*Documentation version: 1.2*  
 *Covers: RelationSolver.hpp, test_relationFF.cpp*

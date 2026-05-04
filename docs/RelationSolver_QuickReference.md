@@ -5,7 +5,8 @@
 **What**: Linear relation reconstruction for IBP expansion coefficients  
 **Where**: `include/RelationSolver.hpp` (namespace `RelationSolver`)  
 **Types**: `double`, `firefly::FFInt`  
-**Main Entry**: `reconstructReductionRelation<T>()`
+**Main Entry**: `reconstructAllRelations<T>()` — multi-(lev,deg) with RemoveSolvedVariables + order-stability detection  
+**Legacy Entry**: `reconstructReductionRelation<T>()` — single (lev,deg)
 
 ---
 
@@ -26,6 +27,7 @@ RelationSolver::AdaptiveSamplingConfig config;
 config.min_nu = 3;
 config.max_nu = 100;
 config.nullity_stable_threshold = 3;
+config.plateau_size = 1;      // MMA "PlateauSize": extra orders to confirm stability
 ```
 
 ### 3️⃣ Solve for (lev, deg)
@@ -108,25 +110,32 @@ RelationSolver::generateAllIndices(ne, max_lev, temp, all_alphas, false);
 ## Algorithm Outline
 
 ```
-Input: CTable, sector, A/Ainv, ne, (lev, deg)
+Input: CTable, sector, A/Ainv, ne, lev_max, deg_max
   ↓
 Build RegimeData list (attach C, theta, A, nb)
   ↓
-Generate all α vectors with |α|_1 ≤ lev
-Generate all β vectors with |β|_1 ≤ deg
+For lev = 0..lev_max, deg = 0..deg_max:
+  Generate α with |α|₁ ≤ lev, β with |β|₁ ≤ deg
   ↓
-Prepare each regime (pre-compute P(α))
+  RemoveSolvedVariables: filter dominated (α,β) pairs
   ↓
-AdaptiveEquationBuilder:
-  Loop until nullity converges:
+  Phase 1: AdaptiveEquationBuilder — nu-sampling loop
     Sample random nu vector
     Build equations: for each regime, α, β, k
-    Solve homogeneous system
-    Track nullity
+    Split rows by expansion order r (zero-cost grouping)
+    Solve homogeneous system, track nullity
+    Converge when nullity stable across nu-points
   ↓
-Convert result to RelationCoefficient
+  Phase 2: Order-stability analysis (zero redundant evaluation)
+    Incrementally add rows by order r = 0..k_max
+    Track nullity at each order
+    Detect plateau: nullity unchanged for plateau_size+1 orders
+    OR nullity=0 → definitive (all variables determined)
+    Record stable_order (or -2 if never stable)
   ↓
-Output: (LinearSystemResult, RelationCoefficient)
+  Convert result to RelationCoefficient
+  ↓
+Output: stability matrix + relation counts per (lev, deg)
 ```
 
 ---
@@ -139,6 +148,7 @@ Output: (LinearSystemResult, RelationCoefficient)
 | Accurate (large system) | `max_nu=200`, nullity_stable_threshold=5 |
 | Memory-constrained | `max_nu=50`, process one (lev,deg) at a time |
 | Finite field (recommended) | Use `FFInt`, `max_nu=100` |
+| Order stability (MMA-like) | `plateau_size=1` (default), checks -2 flag for insufficient order |
 
 **Adaptive Adjustment Function** (From test_relationFF.cpp):
 ```cpp
@@ -152,19 +162,29 @@ auto config = adjustSamplingConfig(
 ## Diagnostic Output
 
 ```
-Adaptive sampling config:
-  Variables: 120
-  Equations per sample: 240
-  Actual sampling range: [5, 80]
+  --- (lev=1, deg=1) --- vars=9 active=9
+    [ν-sampling] vars=9 eq/sample=50 min_req=1 eff_max=10
+    ν points: {1,0}, {0,1}, {1,1}, {1,2}, ...
+    sol_dim=2 independent=2 stable_order=3
 
-Equation building iteration 0: nullity=3
-Equation building iteration 1: nullity=3     ← Stabilized
-Equation building iteration 2: nullity=3
-Converged! Final nullity: 3
+=== Stability bounds (lev x deg) ===
+           0       1       2
+  0        0       1       2
+  1        1       3      -2
+  2        2       4      -2
+
+=== Relation counts (lev x deg) ===
+           0       1       2
+  0        0       0       0
+  1        0       2       1
+  2        0       0       4
 ```
 
+**stable_order** values: non-negative = stable at that expansion order, `-2` = not stable within available orders (need higher k_max). Only stable solutions should be considered reliable.
+
 If not converging:
-- Increase `max_nu`
+- Increase `max_nu` for nu-space convergence
+- Increase expansion order (`k_max`) for order-space convergence (fixes -2 entries)
 - Use FFInt instead of double
 - Check data validity (A matrices invertible?)
 

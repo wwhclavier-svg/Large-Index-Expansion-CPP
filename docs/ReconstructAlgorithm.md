@@ -47,6 +47,50 @@ $$
 
 这是一个关于 $\nu$ 的多项式方程。我们可以从中提取中单项式方程，或直接取 $\nu$ 的不同数值采样得到不同的标量方程，最后解出 $b_{\alpha,\beta}$.
 
+### 1.4 θ 参数与 limitSector 语义
+
+**θ 向量**（在代码中存储为 `RingCell::limitSector`，运行时赋值给 `RegimeData::theta`）定义了渐进展开的 **sector 方向**。
+
+当取 $n \to \infty$ 极限时，做变量替换 $\underline{\nu} \to \underline{\nu} + \underline{\theta} n$。不同的 $\underline{\theta}$ 值对应 $\underline{\nu}$ 行为的不同区域（sector），同一费曼积分在不同 sector 下有不同的渐进展开形式。
+
+**关键点**：
+
+- `limitSector` / `theta` **不是** "边界标记" 或 "索引范围限制" — 它是展开 sector 的**参数**
+- 每个 regime（特征方程组的极小伴随素理想对应的解分支）从它所属的 sector 继承 $\theta$ 值
+- 在 C++ 代码中，$\theta$ 通过 `RingDataLoader` 从二进制文件 `RingData_*.bin` 加载，存储在 `RingCell::limitSector`
+- 在 `reconstructReductionRelation()` 中，`reg.theta = sector[r]` 将 sector 的 $\theta$ 赋给该 sector 内的所有 regime
+- `RegimeEvaluator::step3_computeF1` 使用 $\theta$ 计算 $(\underline{\theta} + \underline{\nu})^{\underline{\beta}}$ 的多项式展开系数
+
+**数据流**：`RingData_*.bin` → `RingCell::limitSector` → `sector[r]` → `RegimeData::theta` → `step3_computeF1`
+
+### 1.5 统一 1/n 符号基准与 k_max 截断
+
+**问题**：$(\nu+\theta n)^\beta$ 产生 $n$ 的正幂次（$n^0,...,n^{|\beta|}$），而 $g = \sum_k h_k/n^k$ 产生 $n$ 的负幂次（$1/n^0,...,1/n^{k_{max}}$）。直接在正/负混合幂次下做多项式乘法容易混淆哪些阶的贡献是完整的。
+
+**方法**：提出 $n^{|\beta|}$ 因子，将所有量统一到 $1/n$ 基准下：
+
+$$(\nu+\theta n)^\beta = n^{|\beta|} \cdot (\nu/n + \theta)^\beta = n^{|\beta|} \cdot \sum_{i=0}^{|\beta|} \tilde{p}_i / n^i$$
+
+$$g = \sum_{k=0}^{k_{max}} q_k / n^k$$
+
+两者现在都是 $1/n$ 的（截断）幂级数。乘积为：
+
+$$n^{|\beta|} \cdot \sum_{r=0}^{|\beta|+k_{max}} \left(\sum_{i=0}^{\min(|\beta|,r)} \tilde{p}_i \cdot q_{r-i}\right) / n^r$$
+
+**截断依据**：对 $r > k_{max}$，$c_r$ 必然缺少 $\tilde{p}_{|\beta|} \cdot q_r$ 的贡献（$q_r$ 因 $g$ 截断到 $k_{max}$ 而不可得）。因此 $c_r$ 对 $r > k_{max}$ 是**不精确的**，必须丢弃。仅保留 $r \in [0, k_{max}]$ 的系数。
+
+乘以 $n^{|\beta|}$ 还原后，使用的 n 指数范围为 $[|\beta|-k_{max},\; |\beta|]$。
+
+**关键点**：
+- f1 **不应**在正 n 幂次域截断到 $k_{max}$——这会错误丢弃 $n^{k_{max}+1},...,n^{|\beta|}$ 的贡献，而这些贡献与 $g$ 的低阶项（$q_0, q_1,...$）相乘后产生的是可靠的方程
+- f1 应**完整计算**（$i=0..|\beta|$），然后在 $1/n$ 域卷积，仅在乘积阶段截断到 $k_{max}$
+- 旧代码的错误：在 `step3_computeF1` 中将 f1 截断到 `k_max`（丢弃正 n 高幂次），同时保留了 $n^{-1}, n^{-2},...$ 的方程行——前者丢失了可靠的高阶方程，后者产生的负幂次方程也不可靠
+
+**C++ 实现**：
+- `step3_computeF1`: `poly[i]` = coeff of $1/n^i$，存储大小 `deg_+1`，不做截断
+- `step4_computeF2`: $c_r = \sum_{i=0}^{\min(deg, r)} f1[i] \cdot g[r-i]$（$r=0..k_{max}$），存储大小 `k_max+1`
+- `buildFinalMatrix`: 行数 `nb·(k_max+1)`，行 $r$ 对应 n 指数 $deg - r$
+
 ---
 
 ## 2. MMA 实现
@@ -292,33 +336,46 @@ void RegimeEvaluator<T>::step2_computeG(const std::vector<T>& nu, int nimax_idx)
 
 **结果**：`g_store_[alpha]` 是 `nb × (k_max+1)` 的**数值数组**
 
-#### Step 3: step3_computeF1 - 计算 (theta + nu)^beta
+#### Step 3: step3_computeF1 - 计算 (ν/n + θ)^β 的 1/n 展开
 
 ```cpp
 template<typename T>
 void RegimeEvaluator<T>::step3_computeF1(const std::vector<T>& nu) {
+    // poly[i] = coefficient of 1/n^i in (ν/n + θ)^β = n^{-|β|} · (ν + θn)^β
+    std::vector<T> work_buffer(deg_ + 1, T(0));
+
     for (const auto& alpha : alphas_) {
         for (const auto& beta : betas_) {
-            std::vector<T> poly(k_max_ + 1, T(0));
+            std::vector<T> poly(deg_ + 1, T(0));  // 完整 deg+1，不截断
             poly[0] = T(1);
 
             for (int i = 0; i < ne_; ++i) {
                 int b = beta[i];
                 if (b == 0) continue;
 
+                // term_poly[m] = coeff of 1/n^m in (ν_i/n + θ_i)^b
                 std::vector<T> term_poly(b + 1, T(0));
                 T th = static_cast<T>(theta_[i]);
-                T n_val = nu[i];  // <-- 采样点数值
+                T nu_i = nu[i];  // <-- 采样点数值
 
-                // 二项式展开: (theta + nu)^b = sum C(b,m) * theta^(b-m) * nu^m
+                // 二项式展开: (ν_i/n + θ_i)^b = Σ_m C(b,m)·θ_i^{b-m}·ν_i^m·(1/n)^m
                 for (int m = 0; m <= b; ++m) {
                     T coef = static_cast<T>(BINOM[b][m]) *
                              detail::power(th, b - m) *
-                             detail::power(n_val, m);
+                             detail::power(nu_i, m);
                     term_poly[m] = coef;
                 }
-                // 多项式乘法: poly = poly * term_poly
-                ...
+                // 多项式乘法 (1/n 域，不做 k_max 截断，仅限 deg_)
+                for (int p1 = 0; p1 <= deg_; ++p1) {
+                    if (poly[p1] == T(0)) continue;
+                    for (int p2 = 0; p2 <= b; ++p2) {
+                        int target_idx = p1 + p2;
+                        if (target_idx <= deg_) {
+                            work_buffer[target_idx] += poly[p1] * term_poly[p2];
+                        }
+                    }
+                }
+                poly = work_buffer;
             }
             f1_store_->insert(alpha, poly, beta);
         }
@@ -326,11 +383,11 @@ void RegimeEvaluator<T>::step3_computeF1(const std::vector<T>& nu) {
 }
 ```
 
-**关键**：`n_val = nu[i]` 是**采样点数值**
+**关键**：poly[i] 存储 $1/n^i$ 的系数（非 $n^i$），存储大小 `deg_+1`（完整，不截断到 `k_max`）。系数计算公式 $C(b,m) \cdot \theta^{b-m} \cdot \nu^m$ 在两个域下通用。
 
-**结果**：`f1_store_[alpha,beta]` 是 `(k_max+1)` 的**数值数组**，表示多项式 `(theta+nu)^beta` 在各阶 k 的系数
+**结果**：`f1_store_[alpha,beta]` 是 `(deg_+1)` 的**数值数组**，含义为 $(\nu/n+\theta)^\beta$ 在 $1/n$ 下的展开系数
 
-#### Step 4: step4_computeF2 - 计算 f2 = f1 * g 卷积
+#### Step 4: step4_computeF2 - 1/n 域卷积 f1 ⊛ g
 
 ```cpp
 template<typename T>
@@ -339,53 +396,60 @@ void RegimeEvaluator<T>::step4_computeF2(const std::vector<int>& alpha,
     T* g_ptr = g_store_->retrieve(alpha);
     T* f1_ptr = f1_store_->retrieve(alpha, beta);
 
+    // f2[r] = coefficient of 1/n^r, r ∈ [0, k_max_]
     int f2_len = k_max_ + 1;
     std::vector<T> f2_val(nb_ * f2_len, T(0));
 
     for (int i = 0; i < nb_; ++i) {
-        for (int l = 0; l <= k_max_; ++l) {
-            T f1_val = f1_ptr[l];
-            if (f1_val == T(0)) continue;
-
-            for (int k = 0; k <= k_max_ - l; ++k) {
-                T g_val = g_ptr[i * f2_len + k];
-                if (g_val == T(0)) continue;
-
-                int target_pow = l + k;
-                f2_val[i * f2_len + target_pow] += f1_val * g_val;
+        for (int r = 0; r <= k_max_; ++r) {
+            T sum = T(0);
+            int i_max = (deg_ < r) ? deg_ : r;
+            for (int s = 0; s <= i_max; ++s) {
+                // f1[s] = coeff of 1/n^s,  g[r-s] = coeff of 1/n^{r-s}
+                sum += f1_ptr[s] * g_ptr[i * (k_max_ + 1) + (r - s)];
             }
+            f2_val[i * f2_len + r] = sum;  // 对应 n 指数 deg_ - r
         }
     }
     f2_store_->insert(alpha, f2_val, beta);
 }
 ```
 
-**结果**：`f2_store_[alpha,beta]` 是 `nb × (k_max+1)` 的**数值数组**
+**关键**：在 $1/n$ 域做标准卷积 $c_r = \sum_{s=0}^{\min(deg, r)} f1[s] \cdot g[r-s]$，截断到 $r \le k_{max}$。乘以 $n^{deg}$ 还原后对应 n 指数 $deg - r$。
+
+**结果**：`f2_store_[alpha,beta]` 是 `nb × (k_max+1)` 的**数值数组**，`f2[r]` = $n^{deg-r}$ 的系数
 
 #### Step 5: buildFinalMatrix - 组装最终矩阵
 
 ```cpp
 template<typename T>
 std::vector<std::vector<T>> RegimeEvaluator<T>::buildFinalMatrix() {
-    // 遍历所有 (alpha, beta) 组合
+    int total_k = k_max_ + 1;  // 仅使用可靠阶数 r = 0..k_max
+    int rows = nb_ * total_k;
+    int cols = alphas_.size() * betas_.size();
+
+    std::vector<std::vector<T>> mat(rows, std::vector<T>(cols, T(0)));
+
     for (size_t a = 0; a < alphas_.size(); ++a) {
         for (size_t b = 0; b < betas_.size(); ++b) {
             T* f2_ptr = f2_store_->retrieve(alphas_[a], betas_[b]);
             if (!f2_ptr) continue;
 
-            // 将 f2_val 按 k 阶展开到矩阵行
-            for (int k = 0; k <= k_max_; ++k) {
-                for (int i = 0; i < nb_; ++i) {
-                    size_t row = ...;
-                    size_t col = a * betas_.size() + b;
-                    matrix[row][col] = f2_ptr[i * (k_max_+1) + k];
+            int col_idx = a * betas_.size() + b;
+            // f2[kt] = coefficient of n^{deg_ - kt}
+            for (int i = 0; i < nb_; ++i) {
+                for (int kt = 0; kt < total_k; ++kt) {
+                    int row_idx = i * total_k + kt;
+                    mat[row_idx][col_idx] = f2_ptr[i * total_k + kt];
                 }
             }
         }
     }
-    return matrix;
+    return mat;
 }
 ```
+
+**关键**：矩阵行数为 `nb·(k_max+1)`（曾为 `nb·(deg+k_max+1)`）。每行对应一个可靠的 n 指数 $deg, deg-1, ..., deg-k_{max}$。
 
 **结果**：得到 `M(nu) · x = 0` 的系数矩阵 `M`
 
@@ -427,13 +491,13 @@ BuildResult AdaptiveEquationBuilder<T>::build(
 
 ### 3.3 C++ 算法总结
 
-| 步骤 | 输入 | 输出 | 性质 |
-|------|------|------|------|
-| prepare | α list | `p(α) = A^(-α)` | 数值矩阵 |
-| step2_computeG | nu (采样点) | `g(nu-α)` | 数值 |
-| step3_computeF1 | nu (采样点) | `(theta+nu)^beta` 系数 | 数值 |
-| step4_computeF2 | g, f1 | `f2 = f1 * g` | 数值 |
-| buildFinalMatrix | f2 | `M(nu) · x = 0` | 数值 |
+| 步骤 | 输入 | 输出 | 存储大小 | 性质 |
+|------|------|------|----------|------|
+| prepare | α list | `p(α) = A^(-α)` | nb×nb | 数值矩阵 |
+| step2_computeG | nu (采样点) | `g[1/n^k]` | nb·(k_max+1) | 1/n 形式 |
+| step3_computeF1 | nu (采样点) | `f1[1/n^i]` | deg+1 | 1/n 形式，完整 |
+| step4_computeF2 | g, f1 | `f2[1/n^r]` | nb·(k_max+1) | 1/n 卷积，截断到 k_max |
+| buildFinalMatrix | f2 | `M(nu) · x = 0` | nb·(k_max+1) 行 | 每行对应可靠 n 指数 |
 | build() | 多个 nu | `M · x = 0` 方程组 | 数值 |
 
 ---
@@ -584,22 +648,276 @@ For each ν = (ν1, ν2):
 
 ---
 
-## 6. 待解决问题
+## 6. RemoveSolvedVariables 策略：减少多配置方程冗余
+
+### 6.1 问题背景
+
+当需要对多个 `(lev, deg)` 配置求解关系时，高配置的变量空间中包含大量已被低配置求解的变量。如果不加处理，每个配置独立求解会产生大量冗余方程，且解空间的维度膨胀。
+
+例如 bub00 在 `(lev=2, deg=2)` 时有 36 个变量 `(6 alpha × 6 beta)`，但其中约一半已被 `(lev=1, deg=1)` 和 `(lev=1, deg=2)` 的关系覆盖。
+
+### 6.2 MMA 实现 (`ReconstructReductionRelation.wl`)
+
+#### 核心函数：RemoveSolvedVariables（第 419 行）
+
+```mathematica
+RemoveSolvedVariables[cfList0_, alphaList0_, gvList0_, levelBindep_, bindep_, deg_] := Module[
+  {cfList, ...},
+  
+  (* 度数截断 *)
+  cfList = cfList0 /. {"b"[alpha_, beta_] /; Total[beta] > deg -> 0};
+  
+  (* 同层低度消除 *)
+  cfList = cfList /. {"b"[alpha_, beta_] /; Or @@ (
+    alpha == #[[1]] && And @@ Thread[beta >= #[[2]]] & /@ levelBindep) -> 0};
+  
+  (* 跨层消除 *)
+  cfList = cfList /. {"b"[alpha_, beta_] /; Or @@ (
+    And @@ Thread[alpha >= #[[1]]] && And @@ Thread[beta >= #[[2]]] & /@ Join @@ bindep) -> 0};
+  
+  ...
+];
+```
+
+两条分量级支配（componentwise dominance）规则：
+
+| 规则 | 来源 | 条件 | 含义 |
+|------|------|------|------|
+| 同层低度 | `levelBindep` | `α == α_s` 且 `β >= β_s` | 同层已求解的独立变量，其高次单项式冗余 |
+| 跨层 | `bindep` | `α >= α_s` 且 `β >= β_s` | 低层的独立变量支配高层的更大平移 |
+
+其中 `levelBindep` 是当前层已求解的独立变量对 `{α_s, β_s}`，`bindep` 是所有更低层的累计。
+
+#### 主循环结构（第 889-991 行）
+
+```
+for lev in 0..rankLevel:
+    levelBindep = {}
+    for deg in 0..maxCoefDeg:
+        {cfList, bVars} = RemoveSolvedVariables(..., levelBindep, bindep, deg)
+        bSol = SolveDegreeEquations(...)
+        bVarIndep = extract independent variables from bSol
+        levelBindep += bVarIndep
+    bindep += levelBindep
+```
+
+关键点：
+- 外层循环按 seed level 递增，内层循环按 coefficient degree 递增
+- 每次求解前先过滤被支配变量，求解后记录独立变量供后续过滤
+- `bindep` 跨层累积，`levelBindep` 仅同层累积
+
+### 6.3 C++ 实现 (`RelationSolver.hpp`)
+
+#### 辅助函数
+
+```cpp
+// 分量级支配判断
+inline bool componentwiseDominates(const vector<int>& a, const vector<int>& b) {
+    for (size_t i = 0; i < a.size(); ++i)
+        if (a[i] < b[i]) return false;
+    return true;
+}
+
+// 变量过滤：返回活跃列索引和掩码
+inline pair<vector<size_t>, vector<bool>> filterVariablePairs(
+    const vector<vector<int>>& alphas,
+    const vector<vector<int>>& betas,
+    const vector<AlphaBeta>& levelBindep,
+    const vector<vector<AlphaBeta>>& bindep);
+```
+
+#### 列压缩与展开
+
+由于变量过滤后列数减少，采用 **列压缩 → 求解 → 展开** 的策略：
+
+```
+完整矩阵 (full_cols 列)
+    │ stripInactiveColumns()  ← 按 active_mask 剥离
+    ▼
+压缩矩阵 (active_count 列)
+    │ IncrementalNullspaceSolver
+    ▼
+压缩零空间基 (active_count 列)
+    │ expandNullspaceToFull()  ← 被消除列填 0
+    ▼
+完整零空间基 (full_cols 列)
+```
+
+这避免了修改 `RegimeEvaluator` 和 `GlobalEquationAssembler` 的内部实现，仅在 `AdaptiveEquationBuilder::build()` 中插入列压缩步骤。
+
+#### 高层 API
+
+```cpp
+template<typename T>
+std::vector<LevDegResult<T>> reconstructAllRelations(
+    const std::vector<std::vector<seriesCoefficient<T>>>& CTable,
+    const std::vector<std::vector<int>>& sector,
+    const std::vector<std::vector<std::vector<T>>>& A_list,
+    const std::vector<std::vector<std::vector<T>>>& Ainv_list,
+    int ne, int lev_max, int deg_max,
+    const AdaptiveSamplingConfig& config = {});
+```
+
+`LevDegResult<T>` 包含：
+- `linear_result` — 展开回完整变量空间的 `LinearSystemResult`
+- `coeff` — `RelationCoefficient`（可直接用于 MMA 导出）
+- `independent_pairs` — 该配置的独立变量对（供验证/调试）
+- `active_vars` / `total_vars` — 过滤前后的变量数
+
+#### 独立变量提取
+
+求解后从压缩列空间的零空间信息中提取独立变量：
+
+```
+solver.free_cols (压缩空间)
+    → active_indices[free_col] → 完整空间列索引
+    → (col / nBeta, col % nBeta) → (alpha_idx, beta_idx)
+    → (alphas[a], betas[b]) → AlphaBeta 对
+```
+
+### 6.4 效果数据（bub00, ne=2, k_max=4）
+
+| (lev, deg) | 总变量 | 活跃变量 | 消除 | 解空间维数 | 独立变量 |
+|-----------|--------|---------|------|----------|---------|
+| (0, 0) | 1 | 1 | 0 | 0 | 0 |
+| (0, 1) | 3 | 3 | 0 | 0 | 0 |
+| (0, 2) | 6 | 6 | 0 | 0 | 0 |
+| (1, 0) | 3 | 3 | 0 | 0 | 0 |
+| (1, 1) | 9 | 9 | 0 | 2 | 2 |
+| (1, 2) | 18 | 13 | 5 | 1 | 1 |
+| (2, 0) | 6 | 6 | 0 | 0 | 0 |
+| (2, 1) | 18 | 12 | 6 | 0 | 0 |
+| (2, 2) | 36 | **19** | **17** | 4 | 4 |
+
+最高配置 `(lev=2, deg=2)` 变量减少 **47%**（36→19）。
+
+### 6.5 与 MMA 的对应关系
+
+| 概念 | MMA | C++ |
+|------|-----|-----|
+| 变量空间 | `b[α, β]` 符号 | `(alpha_idx, beta_idx)` 列索引 |
+| 同层消除 | `levelBindep` 列表 | `filterVariablePairs(..., levelBindep, {})` |
+| 跨层消除 | `bindep` 列表 | `filterVariablePairs(..., {}, bindep)` |
+| 变量过滤 | 模式匹配 `/. b[...]->0` | `active_mask[col]=false` |
+| 独立变量 | `bVarIndep = Cases[recIbp, b[...]]` | `solver.free_cols → active_indices → AlphaBeta` |
+| 累积机制 | `levelBindep = Join[levelBindep, bVarIndep]` | `levelBindep.push_back(independent_pairs)` |
+
+---
+
+## 7. 待解决问题
 
 1. **采样点选取**：C++ 的自适应采样是否收敛到正确解？
 2. **方程完整性**：在多个 nu 点采样是否等价于 MMA 的系数提取？
 3. **数值精度**：有限域算术是否存在奇异性？
+4. **独立变量提取精度**：当前从压缩列空间映射独立变量，需验证与 MMA 的 `bVarIndep` 提取逻辑是否完全一致
+5. ✅ **阶数稳定性检测**：已实现。C++ 两阶段零冗余设计 — Phase 1 ν-采样 + Phase 2 阶数分析，完整复现 MMA `SolveDegreeEquations` plateau 逻辑（详见 [Section 7](#7-阶数稳定性检测)）
 
 ---
+## 7. 阶数稳定性检测 (Order-Stability Convergence)
 
-## 7. 参考文件
+### 7.1 问题背景
+
+C++ 求解器使用预计算的展开系数（固定 `k_max`）一次性构建方程。然而，不同 `(lev, deg)` 配置需要的最小展开阶数不同——低配置可能只需 1-2 阶，高配置可能需要 4+ 阶。如果不检测阶数稳定性，可能：
+- 对低配置使用过多展开阶数（浪费计算资源）
+- 对高配置使用过少展开阶数（解空间未真正收敛）
+
+### 7.2 MMA 实现 (`ReconstructReductionRelation.wl`)
+
+MMA 通过 `SolveDegreeEquations` (L541-678) 实现逐阶递增求解：
+
+```wl
+While[k <= maxorder && !converged,
+    (* 构建当前阶数 k 的方程 *)
+    eqs = SetupEquationsAll[..., k, deg];
+    
+    (* 求解 *)
+    bSolNew = DispatchLinearSolve[eqs, bVarReg, ...];
+    
+    (* 稳定性检测 *)
+    If[Length[bSolAcc] == Length[bVars],   (* Trigger 2: 所有变量已确定 *)
+        state["Stable"] = True;
+        state["StableLevel"] = k;
+    ];
+    
+    (* Plateau 确认 *)
+    If[state["Stable"] && k >= state["StableLevel"] + plateausize,
+        converged = True; Break[];
+    ];
+    k++;
+];
+```
+
+三个稳定性触发器与 Plateau 确认详见 `ReconstructReductionRelation.wl` L577-671。
+
+### 7.3 C++ 实现 (`RelationSolver.hpp`)
+
+C++ 采用**两阶段零冗余**设计：
+
+**Phase 1 (ν-采样)**: 标准自适应采样循环。每次 `evaluateAtNu()` 返回的行通过 `splitRowsByOrder()` 按展开阶数 r 拆分为 `rows_by_order[r]` 并累积存储。行布局已知：`row_idx = i·(k_max+1) + r`。
+
+**Phase 2 (阶数分析)**: ν-收敛后，`analyzeOrderStability()` 使用 `IncrementalNullspaceSolver` 逐阶添加预存行 (r = 0, 1, ..., k_max)，追踪每阶 nullity。
+
+```
+analyzeOrderStability(rows_by_order, k_max, plateau_size, num_vars):
+    for cur_order = 0..k_max:
+        solver.addRows(rows_by_order[cur_order])
+        nullity[cur_order] = solver.getNullity()
+        
+        if nullity[cur_order] == 0:
+            return {cur_order, 0}   // 决定性终止（对应 MMA Trigger 2）
+        
+        if nullity stable for plateau_size+1 orders:
+            return {first_stable_order, final_nullity}  // plateau 确认
+    
+    return {-2, nullity[k_max]}  // 可用阶数内未稳定
+```
+
+**零冗余保证**: `step2_computeG`（最昂贵的操作，访问 5D 张量）、`step3_computeF1`、`step4_computeF2` 在采样时每个 ν 点仅运行一次。Phase 2 仅对预存行做增量高斯消元。
+
+### 7.4 输出格式
+
+```
+=== Stability bounds (lev x deg) ===
+           0       1       2
+  0        0       1       2
+  1        1       3      -2
+  2        2       4      -2
+
+=== Relation counts (lev x deg) ===
+           0       1       2
+  0        0       0       0
+  1        0       2       1
+  2        0       0       4
+```
+
+- `stable_order` 非负 = 在该展开阶数稳定；`-2` = 可用阶数不足
+- 只有稳定解应被视为可靠
+
+### 7.5 效果数据 (bub00, ne=2, k_max=4)
+
+| (lev, deg) | 活跃变量 | 解维数 | stable_order | 说明 |
+|-----------|---------|--------|-------------|------|
+| (0, 0) | 1 | 0 | 0 | 零阶确定 |
+| (0, 1) | 3 | 0 | 1 | 一阶确定 |
+| (0, 2) | 6 | 0 | 2 | 二阶确定 |
+| (1, 0) | 3 | 0 | 1 | 一阶确定 |
+| (1, 1) | 9 | 2 | 3 | 三阶稳定 |
+| (1, 2) | 13 | 1 | **-2** | 阶数不足 |
+| (2, 0) | 6 | 0 | 2 | 二阶确定 |
+| (2, 1) | 12 | 0 | 4 | 四阶达到 nullity=0 |
+| (2, 2) | 19 | 4 | **-2** | 阶数不足 |
+
+对角线模式（更高 `lev + deg` → 需要更高展开阶数）与 MMA 经验一致。
+
+---
+## 8. 参考文件
 
 ### MMA
-- `LIEReconstruct.wl` - 主重构算法
+- `mma/ReconstructReductionRelation.wl` - 主重构算法（含 RemoveSolvedVariables）
 - `LIEWorkflow.wl` - 工作流包装
 - `Compare-Reconstruct-bub00.wl` - 测试脚本
 
 ### C++
-- `RelationSolver.hpp` - 核心求解器
-- `test_relationFF.cpp` - 测试入口
-- `Compare-CPPRelation-bub00.m` - 输出格式
+- `include/RelationSolver.hpp` - 核心求解器（含 `reconstructAllRelations`、`filterVariablePairs`、列压缩）
+- `tests/test_relationFF.cpp` - 测试入口（使用 `reconstructAllRelations`）
+- `AllRelations_bub00_k5.m` - 统一输出文件（所有 lev/deg 的结果）
