@@ -15,6 +15,11 @@ namespace AlgebraData {
 // 定义核心数据结构，方便外部引用
 template <typename T>
 struct RingCell {
+    // θ = (θ₁, ..., θₑ) — the sector parameter for the asymptotic expansion.
+    // When taking the n → ∞ limit, we set ν → ν + θn, which defines a specific
+    // region (sector) of ν behavior. Different sectors yield different asymptotic
+    // expansions of the Feynman integral. This vector is assigned per regime and
+    // used in f1 = (θ + ν)^β computation within RegimeEvaluator::step3_computeF1.
     std::vector<int> limitSector;
     std::vector<std::vector<T>> A_list;    // [ne][nb*nb]
     std::vector<std::vector<T>> Ainv_list; // [ne][nb*nb]
