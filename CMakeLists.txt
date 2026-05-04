@@ -48,3 +48,11 @@ target_link_libraries(test_expand_family ${FIREFLY_LIBRARY} ${GMP_LIBRARY} ${GMP
 # FireFly 验证测试
 add_executable(test_ff_verify tools/test_ff_verify.cpp)
 target_link_libraries(test_ff_verify ${FIREFLY_LIBRARY} ${GMP_LIBRARY} ${GMPXX_LIBRARY} pthread)
+
+# Mathematica 对比测试
+add_executable(test_compare_MMA tests/test_compare_MMA.cpp ${COMMON_SOURCES})
+target_link_libraries(test_compare_MMA ${FIREFLY_LIBRARY} ${GMP_LIBRARY} ${GMPXX_LIBRARY} Eigen3::Eigen pthread)
+
+# MMA系数验证测试
+add_executable(verify_MMA_lev1_deg1 tests/verify_MMA_lev1_deg1.cpp ${COMMON_SOURCES})
+target_link_libraries(verify_MMA_lev1_deg1 ${FIREFLY_LIBRARY} ${GMP_LIBRARY} ${GMPXX_LIBRARY} Eigen3::Eigen pthread)

@@ -225,22 +225,40 @@ void exportAllResultsToMMA(const std::vector<std::vector<seriesCoefficient<T>>>&
                         long long nSeeds = getCapacity(ne, l);
                         for (long long cid = 0; cid < nSeeds; ++cid) {
                             auto seed = readIndex(cid, l, ne);
+                            // 检查该 seed 是否有非零分量
+                            bool anyNonZero = false;
                             for (int j = 0; j < nb; ++j) {
-                                const T& val = coeff(k, l, cid, j, i);
-                                if (val != T(0)) {
-                                    if (!firstTerm) out << " + ";
-                                    firstTerm = false;
+                                if (coeff(k, l, cid, j, i) != T(0)) {
+                                    anyNonZero = true;
+                                    break;
+                                }
+                            }
+                            if (!anyNonZero) continue;
+                            if (!firstTerm) out << " + ";
+                            firstTerm = false;
+                            // 输出 nb 维向量表示扩域元素
+                            if (nb == 1) {
+                                if constexpr (std::is_same_v<T, firefly::FFInt>) {
+                                    out << coeff(k, l, cid, 0, i).n;
+                                } else {
+                                    out << coeff(k, l, cid, 0, i);
+                                }
+                            } else {
+                                out << "{";
+                                for (int j = 0; j < nb; ++j) {
+                                    if (j > 0) out << ", ";
                                     if constexpr (std::is_same_v<T, firefly::FFInt>) {
-                                        out << val.n;
+                                        out << coeff(k, l, cid, j, i).n;
                                     } else {
-                                        out << val;
+                                        out << coeff(k, l, cid, j, i);
                                     }
-                                    for (int v = 0; v < ne; ++v) {
-                                        if (seed[v] > 0) {
-                                            out << "*v" << (v + 1);
-                                            if (seed[v] > 1) out << "^" << seed[v];
-                                        }
-                                    }
+                                }
+                                out << "}";
+                            }
+                            for (int v = 0; v < ne; ++v) {
+                                if (seed[v] > 0) {
+                                    out << "*v" << (v + 1);
+                                    if (seed[v] > 1) out << "^" << seed[v];
                                 }
                             }
                         }

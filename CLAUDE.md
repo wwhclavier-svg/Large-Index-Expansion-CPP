@@ -118,10 +118,11 @@ RingDataLoader.hpp
 **`seriesCoefficient<T>`** (`SeriesCoefficient.hpp`):
 - 5D coefficient storage indexed as `(k, l, cid, j, i)` where:
   - `k`: expansion order
-  - `l`: layer level
+  - `l`: layer level, range `[0, incre*k]` — **NOT** `[0, k]`
   - `cid`: seed/combinatorial index
   - `j`: basis index (0 to nb-1)
   - `i`: solution index (0 to nimax), i=0 is particular solution, i>0 are homogeneous solutions
+- `incre`: level increment per order, typically 2 (lmax = incre * k at each order k)
 
 **`SeriesIO`** (`SeriesCoefficientIO.hpp`):
 - Binary serialization of `seriesCoefficient<T>` with magic `"SERCOEF"` and versioning
@@ -167,15 +168,19 @@ Key types in `include/RelationSolver.hpp`:
 - **`AdaptiveSamplingConfig`**: Controls adaptive sampling and convergence detection
 ```cpp
 struct AdaptiveSamplingConfig {
-    int min_nu = 3;                // Minimum sample points
-    int max_nu = 50;               // Maximum sample points
-    int convergence_threshold = 3; // Nullity stability threshold
-    int lev_hint = 0;              // Current (lev, deg) hint
-    int deg_hint = 0;
+    int min_nu = 0;                    // Minimum sample points (0=auto)
+    int max_nu = 200;                  // Maximum sample points (hard cap)
+    double safety_factor = 1.2;        // Oversampling factor
+    int nullity_stable_threshold = 3;  // Stability count for convergence
+    int verification_points = 3;       // Extra verification points
+    int lev_hint = 2;                  // |alpha| bound hint
+    int deg_hint = 2;                  // |beta| bound hint
 };
 ```
 
-Main API:
+Main APIs:
+
+**Single-configuration** (low-level):
 ```cpp
 template<typename T>
 std::pair<LinearSystemResult<T>, RelationCoefficient<T>>
@@ -187,6 +192,31 @@ reconstructReductionRelation(
     int ne, int lev, int deg,
     const AdaptiveSamplingConfig& config = {});
 ```
+
+**Multi-configuration with RemoveSolvedVariables** (recommended):
+```cpp
+template<typename T>
+std::vector<LevDegResult<T>> reconstructAllRelations(
+    const std::vector<std::vector<seriesCoefficient<T>>>& CTable,
+    const std::vector<std::vector<int>>& sector,
+    const std::vector<std::vector<std::vector<T>>>& A_list,
+    const std::vector<std::vector<std::vector<T>>>& Ainv_list,
+    int ne, int lev_max, int deg_max,
+    const AdaptiveSamplingConfig& config = {});
+```
+
+### RemoveSolvedVariables Strategy
+
+The high-level `reconstructAllRelations()` implements the MMA-inspired **RemoveSolvedVariables** strategy to reduce equation redundancy across `(lev, deg)` configurations:
+
+1. **Nested loop**: outer loop over seed levels `lev = 0..lev_max`, inner over coefficient degrees `deg = 0..deg_max`
+2. **Variable filtering** before each solve: eliminates `(alpha, beta)` pairs that are "dominated" by previously-solved independent variables:
+   - **Same-level, lower-degree**: if `b[α_s, β_s]` solved at `deg_s < deg`, eliminate `b[α, β]` where `α == α_s` and `β >= β_s` componentwise
+   - **Cross-level**: if `b[α_s, β_s]` solved at `lev_s < lev`, eliminate `b[α, β]` where `α >= α_s` and `β >= β_s` componentwise
+3. **Independent variable tracking**: after each solve, the free (non-pivot) columns map to `(alpha, beta)` pairs that parametrize the nullspace. These feed into subsequent filtering.
+4. **Column compression**: the equation matrix is compressed to only active columns before Gaussian elimination, then solutions are expanded back to the full variable space.
+
+This reduces variable counts by up to ~50% (e.g., for bub00 at lev=2,deg=2: 36→19 active variables).
 
 ## Test Executables
 
@@ -222,6 +252,12 @@ FFInt x = -FFInt(1);
 Any `static_cast<FFInt>(negative_int)` is a bug — C++ silently converts the negative int to a huge uint64_t before the FFInt constructor sees it. No compiler warning is generated.
 
 This affected `sgn()` in `Utilities.hpp` and any code that constructs FFInt from negative literals. If adding a signed constructor, use `int64_t` to avoid ambiguity with the existing `uint64_t` overload for `long long` arguments.
+
+### l-Loop Bound: Always `incre * k`, Never Just `k`
+
+`seriesCoefficient` stores data for `l ∈ [0, incre * k]`, not `[0, k]`. Any loop summing over `l` for a given `k` must use `l <= incre * k` as the upper bound. Using `l <= k` silently drops all coefficients at `l > k`, producing wrong but self-consistent results that pass EquationVerify. With the default `incre = 2`, this means roughly half the coefficients are missed.
+
+Affected functions: `step2_computeG`, `step4_computeF2` (convolution), and any loop iterating `C(k, l, cid, j, i)` over `l`.
 
 ### Self-Consistency Checks Are Not Independent Verification
 
