@@ -11,7 +11,8 @@ namespace utility {
 // 符号函数：返回 (-1)^l 的泛型版本
 template<typename T>
 inline T sgn(int l) {
-    return static_cast<T>((l % 2 == 0) ? 1 : -1);
+    if (l % 2 == 0) return static_cast<T>(1);
+    return -static_cast<T>(1);
 }
 
 // 标量加法

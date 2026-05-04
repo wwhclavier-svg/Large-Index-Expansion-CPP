@@ -57,17 +57,22 @@ class RelationCoefficient {
 };
 ```
 
-#### `AdaptiveSamplingConfig` (Lines 180–220)
+#### `AdaptiveSamplingConfig` (Lines 231–247)
 Controls how sampling points are generated and when to stop.
 
 ```cpp
 struct AdaptiveSamplingConfig {
     int min_nu = 3;                             // Minimum sampling points
     int max_nu = 50;                            // Maximum sampling points
-    int convergence_threshold = 3;              // Nullity stability plateau
-    int lev_hint = 0;                           // Current (lev, deg) hints
-    int deg_hint = 0;
-    // ... additional parameters
+    int check_interval = 1;                     // Rank check interval (every N points)
+    int nullity_stable_threshold = 3;           // Nullity stability plateau
+    int verification_points = 3;                // Extra verification points
+    double tolerance = 1e-10;                   // Numerical tolerance
+    bool use_special_points = true;             // Use unit vectors, all-1s, etc.
+    double random_min = 3.0;                    // Random point min (avoid 0)
+    double random_max = 100.0;                  // Random point max
+    int lev_hint = 2;                           // Current (lev, deg) hints
+    int deg_hint = 2;
 };
 ```
 
@@ -205,7 +210,7 @@ const vector<T>& c = coeff({0,1}, {2,0});  // Get coeff for alpha=(0,1), beta=(2
 
 ---
 
-## Usage Example (From test_RelationFF.cpp)
+## Usage Example (From test_relationFF.cpp)
 
 ### Setup Phase
 
@@ -220,7 +225,7 @@ vector<vector<vector<FFInt>>> A_list, Ainv_list;
 RelationSolver::AdaptiveSamplingConfig base_config;
 base_config.min_nu = 3;
 base_config.max_nu = 100;
-base_config.convergence_threshold = 3;
+base_config.nullity_stable_threshold = 3;
 ```
 
 ### Solving Phase (For Each (lev, deg) Pair)
@@ -300,6 +305,8 @@ Iteration k: nullity = n_k
 Converged when: n0 == n1 == ... == n_{threshold}
 ```
 
+**Verification feedback**: After convergence, the builder generates independent verification points and tests the nullspace basis against them. If any verification point fails (residual != 0), the failed equations are added back into the system and iteration continues. This guarantees the nullity monotonically decreases toward the correct solution.
+
 This ensures the found relations are **stable across random samplings**.
 
 ---
@@ -346,7 +353,7 @@ For a given (lev, deg):
 
 ### Optimization Tips
 
-1. **Reuse A matrices** across multiple (lev, deg) pairs (already done in test_RelationFF.cpp)
+1. **Reuse A matrices** across multiple (lev, deg) pairs (already done in test_relationFF.cpp)
 2. **Tune base_config** dynamically based on (lev, deg) size
 3. **Use FFInt for large systems** (more numerically stable than double)
 
@@ -389,8 +396,8 @@ System solved successfully.
 
 ```bash
 cd build
-./test_RelationFF    # Finite field relation solving
-./test_RelationNew   # Extended test with multi-regimes
+./test_relationFF    # Finite field relation solving
+# test_RelationNew   -- archived in tests/archive/, not in current build
 ```
 
 ### Expected Output
@@ -412,6 +419,9 @@ Total time: 5.23 seconds
 
 ## See Also
 
-- [LayerRecursion](./LayerRecursion_ComponentGuide.md) — Coefficient generation
-- [LinearSolver](./LinearSolver_ComponentGuide.md) — Linear system solvers
+- [Reconstruct_Algorithm.md](Reconstruct_Algorithm.md) — Algorithm comparison: MMA vs C++, per-point evaluation (computeG/computeF1/computeF2), symbolic vs numerical approaches
+- [LayerRecursion_Algorithm.md](LayerRecursion_Algorithm.md) — Layer recursion algorithm details
+- [RelationSolver_QuickReference.md](RelationSolver_QuickReference.md) — Quick lookup and common patterns
+- [LinearSolver.hpp](../include/LinearSolver.hpp) — Linear system solver dispatch
+- [LinearSolver_FF.hpp](../include/LinearSolver_FF.hpp) — Finite field linear solver
 - [AGENTS.md](../AGENTS.md#algorithm-flow) — High-level architecture
