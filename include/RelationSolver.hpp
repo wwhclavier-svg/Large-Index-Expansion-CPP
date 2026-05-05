@@ -482,30 +482,29 @@ public:
                  T tolerance = T(1e-10));
     
     // 获取当前累积的矩阵（调试用）
-    const std::vector<std::vector<T>>& getMatrix() const { return matrix_; }
-    
+    const std::vector<std::vector<T>>& getMatrix() const { return rref_; }
+
     // 获取变量数
     size_t getNumVars() const { return num_vars_; }
-    
-    // 获取当前行数
-    size_t getNumRows() const { return matrix_.size(); }
+
+    // 获取当前行数（仅计入已保留的线性无关行）
+    size_t getNumRows() const { return rref_.size(); }
     
     // 清空所有数据
     void clear();
 
 private:
     size_t num_vars_;                           // 变量数（列数）
-    std::vector<std::vector<T>> matrix_;        // 累积的方程矩阵
-    
+    std::vector<std::vector<T>> rref_;          // 当前 RREF（最多 num_vars_ 行）
+    std::vector<int> pivot_cols_;               // rref_[i] 的主元列索引
+    int rank_ = 0;                              // 当前秩 (≤ num_vars_)
+
     // 缓存
     NullspaceInfo cached_info_;
     bool cache_valid_ = false;
-    
-    // 内部计算零空间（使用高斯消元）
+
+    // 内部计算零空间（从 RREF 直接读取）
     NullspaceInfo computeNullspace();
-    
-    // 执行高斯消元，返回秩
-    int gaussianElimination(std::vector<std::vector<T>>& A);
 };
 
 // ==========================================
@@ -1143,6 +1142,27 @@ void AdaptiveSampler<T>::reset() {
     // 可选：重新打乱随机部分或重新生成
 }
 
+// 辅助函数（IncrementalNullspaceSolver 依赖）
+namespace detail {
+    template<typename T>
+    inline bool isZero(T val) {
+        if constexpr (std::is_floating_point_v<T>) {
+            return std::abs(val) < 1e-14;
+        } else {
+            return val == T(0);
+        }
+    }
+
+    template<typename T>
+    inline T absValue(T val) {
+        if constexpr (std::is_floating_point_v<T>) {
+            return std::abs(val);
+        } else {
+            return val;
+        }
+    }
+}
+
 // ==========================================
 // IncrementalNullspaceSolver 实现
 // ==========================================
@@ -1156,7 +1176,55 @@ void IncrementalNullspaceSolver<T>::addRow(const std::vector<T>& row) {
     if (row.size() != num_vars_) {
         throw std::invalid_argument("Row size does not match number of variables");
     }
-    matrix_.push_back(row);
+    // 满秩后所有行必然冗余
+    if (rank_ >= static_cast<int>(num_vars_)) return;
+
+    // 复制行用于增量约化
+    std::vector<T> r = row;
+
+    // 用已有主元消去
+    for (int i = 0; i < rank_; ++i) {
+        int pc = pivot_cols_[i];
+        if (!detail::isZero(r[pc])) {
+            T factor = r[pc];
+            for (size_t j = pc; j < num_vars_; ++j) {
+                r[j] -= factor * rref_[i][j];
+            }
+        }
+    }
+
+    // 查找第一个非零列（新主元候选）
+    int new_pivot = -1;
+    for (size_t j = 0; j < num_vars_; ++j) {
+        if (!detail::isZero(r[j])) {
+            new_pivot = static_cast<int>(j);
+            break;
+        }
+    }
+    if (new_pivot < 0) return;  // 线性相关，丢弃
+
+    // 归一化新行
+    T piv_val = r[new_pivot];
+    for (size_t j = new_pivot; j < num_vars_; ++j) {
+        r[j] /= piv_val;
+    }
+
+    // 将已有 RREF 行对新主元消去
+    for (int i = 0; i < rank_; ++i) {
+        if (!detail::isZero(rref_[i][new_pivot])) {
+            T factor = rref_[i][new_pivot];
+            for (size_t j = new_pivot; j < num_vars_; ++j) {
+                rref_[i][j] -= factor * r[j];
+            }
+        }
+    }
+
+    // 按主元列位置插入
+    int pos = 0;
+    while (pos < rank_ && pivot_cols_[pos] < new_pivot) ++pos;
+    rref_.insert(rref_.begin() + pos, std::move(r));
+    pivot_cols_.insert(pivot_cols_.begin() + pos, new_pivot);
+    rank_++;
     cache_valid_ = false;
 }
 
@@ -1169,11 +1237,7 @@ void IncrementalNullspaceSolver<T>::addRows(const std::vector<std::vector<T>>& r
 
 template<typename T>
 int IncrementalNullspaceSolver<T>::getNullity() {
-    if (!cache_valid_) {
-        cached_info_ = computeNullspace();
-        cache_valid_ = true;
-    }
-    return cached_info_.nullity;
+    return static_cast<int>(num_vars_) - rank_;
 }
 
 template<typename T>
@@ -1188,174 +1252,64 @@ IncrementalNullspaceSolver<T>::getNullspace() {
 
 template<typename T>
 void IncrementalNullspaceSolver<T>::clear() {
-    matrix_.clear();
+    rref_.clear();
+    pivot_cols_.clear();
+    rank_ = 0;
     cached_info_ = NullspaceInfo{};
     cache_valid_ = false;
 }
 
 // 辅助函数：判断是否为0（特化版本）
-namespace detail {
-    template<typename T>
-    inline bool isZero(T val) {
-        if constexpr (std::is_floating_point_v<T>) {
-            return std::abs(val) < 1e-14;
-        } else {
-            return val == T(0);
-        }
-    }
-    
-    template<typename T>
-    inline T absValue(T val) {
-        if constexpr (std::is_floating_point_v<T>) {
-            return std::abs(val);
-        } else {
-            // 对于有限域，直接返回原值（我们只关心是否为零）
-            return val;
-        }
-    }
-}
-
 template<typename T>
-int IncrementalNullspaceSolver<T>::gaussianElimination(std::vector<std::vector<T>>& A) {
-    if (A.empty() || A[0].empty()) return 0;
-    
-    int m = A.size();
-    int n = A[0].size();
-    int rank = 0;
-    
-    for (int col = 0, row = 0; col < n && row < m; ++col) {
-        // 寻找主元
-        int pivot = -1;
-        for (int i = row; i < m; ++i) {
-            if (!detail::isZero(A[i][col])) {
-                pivot = i;
-                break;
-            }
-        }
-        
-        if (pivot == -1) continue;
-        
-        // 交换行
-        std::swap(A[row], A[pivot]);
-        
-        // 归一化主元行
-        T piv_val = A[row][col];
-        for (int j = col; j < n; ++j) {
-            A[row][j] /= piv_val;
-        }
-        
-        // 消去其他行
-        for (int i = 0; i < m; ++i) {
-            if (i != row && !detail::isZero(A[i][col])) {
-                T factor = A[i][col];
-                for (int j = col; j < n; ++j) {
-                    A[i][j] -= factor * A[row][j];
-                }
-            }
-        }
-        
-        rank++;
-        row++;
-    }
-    
-    return rank;
-}
-
-template<typename T>
-typename IncrementalNullspaceSolver<T>::NullspaceInfo 
+typename IncrementalNullspaceSolver<T>::NullspaceInfo
 IncrementalNullspaceSolver<T>::computeNullspace() {
     NullspaceInfo info;
     info.is_valid = false;
-    
-    if (matrix_.empty()) {
-        info.nullity = static_cast<int>(num_vars_);
+
+    int n = static_cast<int>(num_vars_);
+
+    if (rank_ == 0) {
+        info.nullity = n;
         info.rank = 0;
         // 零空间是全体空间，基为单位矩阵
         info.basis.resize(num_vars_, std::vector<T>(num_vars_));
         for (size_t i = 0; i < num_vars_; ++i) {
             info.basis[i][i] = T(1);
         }
+        info.free_cols.resize(n);
+        for (int j = 0; j < n; ++j) info.free_cols[j] = j;
         info.is_valid = true;
         return info;
     }
-    
-    // 复制矩阵用于消元
-    std::vector<std::vector<T>> A = matrix_;
-    int m = A.size();
-    int n = static_cast<int>(num_vars_);
-    
-    // 记录主元列位置
-    std::vector<int> pivot_col;
-    pivot_col.reserve(std::min(m, n));
-    
-    int rank = 0;
-    for (int col = 0, row = 0; col < n && row < m; ++col) {
-        // 寻找主元
-        int pivot = -1;
-        for (int i = row; i < m; ++i) {
-            if (!detail::isZero(A[i][col])) {
-                pivot = i;
-                break;
-            }
-        }
-        
-        if (pivot == -1) continue;
-        
-        std::swap(A[row], A[pivot]);
-        pivot_col.push_back(col);
-        
-        // 归一化
-        T piv_val = A[row][col];
-        for (int j = col; j < n; ++j) {
-            A[row][j] /= piv_val;
-        }
-        
-        // 消去
-        for (int i = 0; i < m; ++i) {
-            if (i != row && !detail::isZero(A[i][col])) {
-                T factor = A[i][col];
-                for (int j = col; j < n; ++j) {
-                    A[i][j] -= factor * A[row][j];
-                }
-            }
-        }
-        
-        rank++;
-        row++;
-    }
-    
-    // 构建零空间基
-    info.rank = rank;
-    info.nullity = n - rank;
+
+    // 从 RREF 直接构建零空间基（无需高斯消元）
+    info.rank = rank_;
+    info.nullity = n - rank_;
     info.basis.clear();
-    
+    info.free_cols.clear();
+
     if (info.nullity > 0) {
-        // 确定自由变量
         std::vector<bool> is_pivot_col(n, false);
-        for (int pc : pivot_col) {
+        for (int pc : pivot_cols_) {
             is_pivot_col[pc] = true;
         }
-        
-        // 为每个自由变量构建一个基向量
-        int free_idx = 0;
+
         for (int j = 0; j < n; ++j) {
             if (!is_pivot_col[j]) {
                 std::vector<T> vec(n, T(0));
-                vec[j] = T(1);  // 自由变量设为1
+                vec[j] = T(1);
 
-                // 主元变量由行最简形确定
-                for (int r = 0; r < rank; ++r) {
-                    int pc = pivot_col[r];
-                    vec[pc] = -A[r][j];
+                for (int r = 0; r < rank_; ++r) {
+                    int pc = pivot_cols_[r];
+                    vec[pc] = -rref_[r][j];
                 }
 
                 info.basis.push_back(std::move(vec));
-                info.free_cols.push_back(j);  // 记录自由变量列索引
-                free_idx++;
+                info.free_cols.push_back(j);
             }
         }
     }
-    
+
     info.is_valid = true;
     return info;
 }
@@ -2137,22 +2091,12 @@ static std::pair<LinearSystemResult<T>, RelationCoefficient<T>> reconstructReduc
         reg.prepare(lev, alphas);
     }
     
-    // 构建 nimax 列表（从 CTable 结构推断）
-    // 裁剪策略: M1 矩阵零空间维度 ≤ nb*ne,
-    // 解指标只需要 1(特解) + nb*ne(齐次解) = nb*ne+1 个
-    // 为避免截断不足，保守取 nb*(ne+2)
+    // 构建 nimax 列表（每个 RegimeData 已对应一个具体解，只需 nimax_idx=0）
     std::vector<std::vector<int>> nimax_lists;
-    for (const auto& reg : regimes) {
-        std::vector<int> nimax_list;
-        int nimax = reg.C->getNimax();
-        int nb = reg.C->getNb();
-        int nmax_trim = std::min(nimax, nb * (ne + 2));
-        for (int i = 0; i <= nmax_trim; ++i) {
-            nimax_list.push_back(i);
-        }
-        nimax_lists.push_back(nimax_list);
+    for (size_t r = 0; r < regimes.size(); ++r) {
+        nimax_lists.push_back({0});
     }
-    
+
     // 使用自适应构建器
     AdaptiveSamplingConfig cfg = config;
     cfg.lev_hint = lev;
@@ -2265,15 +2209,10 @@ static std::vector<LevDegResult<T>> reconstructAllRelations(
         reg.prepare(lev_max, alphas_max);
     }
 
-    // ---- 构建 nimax 列表（裁剪策略同 reconstructReductionRelation）----
+    // ---- 构建 nimax 列表（每个 RegimeData 已对应一个具体解，只需 nimax_idx=0）----
     std::vector<std::vector<int>> nimax_lists;
-    for (const auto& reg : regimes) {
-        std::vector<int> nimax_list;
-        int nimax = reg.C->getNimax();
-        int nb = reg.C->getNb();
-        int nmax_trim = std::min(nimax, nb * (ne + 2));
-        for (int i = 0; i <= nmax_trim; ++i) nimax_list.push_back(i);
-        nimax_lists.push_back(nimax_list);
+    for (size_t r = 0; r < regimes.size(); ++r) {
+        nimax_lists.push_back({0});
     }
 
     // ---- bindep[level] = 该层所有自由度下求解出的独立变量对 ----
