@@ -469,15 +469,17 @@ void exportAllResultsToMMA_SingleFile(
 
 int main(int argc, char* argv[]) {
     if (argc < 2) {
-        cerr << "Usage: " << argv[0] << " <family_name> [order] [lev_min] [lev_max] [deg_max]" << endl;
+        cerr << "Usage: " << argv[0] << " <family_name> [order] [lev_min] [lev_max] [deg_max] [--topsector]" << endl;
         cerr << "  family_name: e.g. bub, bub0, DBtop" << endl;
         cerr << "  order      : expansion order (default: 4)" << endl;
         cerr << "  lev_min    : min |alpha| (default: 1)" << endl;
         cerr << "  lev_max    : max |alpha| (default: 2)" << endl;
         cerr << "  deg_max    : max |beta| (default: 2)" << endl;
+        cerr << "  --topsector: load only top sector (max-sum limitSector)" << endl;
         cerr << endl;
         cerr << "Example: " << argv[0] << " bub" << endl;
         cerr << "         " << argv[0] << " DBtop 5 1 2 1" << endl;
+        cerr << "         " << argv[0] << " SR 5 1 2 2 --topsector" << endl;
         return 1;
     }
 
@@ -487,6 +489,10 @@ int main(int argc, char* argv[]) {
     int lev_max = (argc > 4) ? stoi(argv[4]) : 2;
     int deg_min = 0;
     int deg_max = (argc > 5) ? stoi(argv[5]) : 2;
+    bool top_sector_only = false;
+    for (int i = 1; i < argc; ++i) {
+        if (string(argv[i]) == "--topsector") { top_sector_only = true; break; }
+    }
     const int incre = 2;
     
     initBinomial();
@@ -500,53 +506,107 @@ int main(int argc, char* argv[]) {
     cout << "Order: " << order << endl;
     cout << "lev range: [" << lev_min << ", " << lev_max << "]" << endl;
     cout << "deg range: [" << deg_min << ", " << deg_max << "]" << endl;
+    if (top_sector_only) cout << "Mode: top sector only" << endl;
     cout << "Files: " << binIBPFile << ", " << binRingFile << endl;
     cout << endl;
 
     try {
         cout << "=== Test: Reconstruction of Linear Relations (Finite Field) ===" << endl;
 
-        // ---- 第1a步：加载 IBP 矩阵 ----
-        cout << "Loading IBP matrices from " << binIBPFile << " ..." << endl;
-        auto ibpmatlist = loadAllIBPMatricesBinary<FFInt>(binIBPFile);
-        if (ibpmatlist.empty()) {
-            cerr << "Error: No IBP matrices loaded." << endl;
-            return 1;
-        }
-        int ne = ibpmatlist[0].ne;
-        int nb = ibpmatlist[0].nb;
-        cout << "Loaded: ne=" << ne << ", nb=" << nb << ", mod=" << FFInt::p << endl;
+        std::set<size_t> keep_indices_set;
+        const std::set<size_t>* keep_ptr = nullptr;
 
-        // ---- 第1b步：计算/读取展开系数 ----
+        // ---- 第0步：--topsector 模式下预加载环数据找 top sector ----
         vector<vector<seriesCoefficient<FFInt>>> allResults;
-        try {
-            allResults = SeriesIO::loadAllResults<FFInt>(coeffCacheFile);
-            cout << "Loaded coefficients from cache." << endl;
-        } catch (const std::exception& e) {
+        vector<AlgebraData::RingCell<FFInt>> ringData;
+        int ne, nb;
+
+        if (top_sector_only) {
+            cout << "\n=== Top Sector Mode ===" << endl;
+            // 1. 预加载环数据，找 max-sum limitSector 的 regime
+            cout << "Pre-scanning ring data for top sector..." << endl;
+            auto allRingData = AlgebraData::LoadBinary<FFInt>(binRingFile, FFInt::p);
+            int max_sum = -1;
+            for (size_t i = 0; i < allRingData.size(); ++i) {
+                int sum = 0;
+                for (int v : allRingData[i].limitSector) sum += v;
+                if (sum > max_sum) {
+                    max_sum = sum;
+                    keep_indices_set.clear();
+                    keep_indices_set.insert(i);
+                } else if (sum == max_sum) {
+                    keep_indices_set.insert(i);
+                }
+            }
+            cout << "  Top sector(s) found at index ";
+            for (auto idx : keep_indices_set) {
+                cout << idx << " [";
+                const auto& sec = allRingData[idx].limitSector;
+                for (size_t j = 0; j < sec.size(); ++j) {
+                    if (j) cout << ",";
+                    cout << sec[j];
+                }
+                cout << "] ";
+            }
+            cout << "(sum=" << max_sum << ")" << endl;
+            keep_ptr = &keep_indices_set;
+
+            // 2. 加载 IBP 矩阵（仅 top sector）
+            cout << "Loading IBP matrices from " << binIBPFile << " ..." << endl;
+            auto ibpmatlist = loadAllIBPMatricesBinary<FFInt>(binIBPFile, false, keep_ptr);
+            if (ibpmatlist.empty()) { cerr << "Error: No IBP matrices loaded." << endl; return 1; }
+            ne = ibpmatlist[0].ne;
+            nb = ibpmatlist[0].nb;
+
+            // 3. 过滤环数据
+            ringData.clear();
+            ringData.reserve(keep_indices_set.size());
+            for (size_t idx : keep_indices_set)
+                ringData.push_back(std::move(allRingData[idx]));
+
+            // 4. 计算展开系数（不走 cache，因为 filtered 和 full 不兼容）
             cout << "Computing expansion coefficients (order=" << order << ", incre=" << incre << ")..." << endl;
             auto t0 = chrono::high_resolution_clock::now();
             allResults = batchProcessRecursion<FFInt>(ibpmatlist, order, incre);
             auto t1 = chrono::high_resolution_clock::now();
             double dt = chrono::duration<double>(t1 - t0).count();
             cout << "Recursion completed in " << fixed << setprecision(3) << dt << "s" << endl;
-            SeriesIO::saveAllResults(allResults, coeffCacheFile);
-            cout << "Saved to cache: " << coeffCacheFile << endl;
-            string mmaCacheFile = "ExpansionMMA_" + family + ".m";
-            SeriesIO::exportAllResultsToMMA(allResults, mmaCacheFile);
-            cout << "Exported to MMA format: " << mmaCacheFile << endl;
-        }
-        cout << "Total branches: " << allResults.size() << " matrices" << endl;
+        } else {
+            // ---- 原有流程：全量加载 ----
+            // ---- 第1a步：加载 IBP 矩阵 ----
+            cout << "Loading IBP matrices from " << binIBPFile << " ..." << endl;
+            auto ibpmatlist = loadAllIBPMatricesBinary<FFInt>(binIBPFile);
+            if (ibpmatlist.empty()) { cerr << "Error: No IBP matrices loaded." << endl; return 1; }
+            ne = ibpmatlist[0].ne;
+            nb = ibpmatlist[0].nb;
 
-        // ---- 第2步：加载环数据 ----
-        cout << "\nLoading ring data from " << binRingFile << " ..." << endl;
-        auto ringData = AlgebraData::LoadBinary<FFInt>(binRingFile, FFInt::p);
-        if (ringData.empty()) {
-            cerr << "Error: No ring data loaded." << endl;
-            return 1;
-        }
-        cout << "Loaded " << ringData.size() << " regimes." << endl;
+            // ---- 第1b步：计算/读取展开系数 ----
+            try {
+                allResults = SeriesIO::loadAllResults<FFInt>(coeffCacheFile);
+                cout << "Loaded coefficients from cache." << endl;
+            } catch (const std::exception& e) {
+                cout << "Computing expansion coefficients (order=" << order << ", incre=" << incre << ")..." << endl;
+                auto t0 = chrono::high_resolution_clock::now();
+                allResults = batchProcessRecursion<FFInt>(ibpmatlist, order, incre);
+                auto t1 = chrono::high_resolution_clock::now();
+                double dt = chrono::duration<double>(t1 - t0).count();
+                cout << "Recursion completed in " << fixed << setprecision(3) << dt << "s" << endl;
+                SeriesIO::saveAllResults(allResults, coeffCacheFile);
+                cout << "Saved to cache: " << coeffCacheFile << endl;
+                string mmaCacheFile = "ExpansionMMA_" + family + ".m";
+                SeriesIO::exportAllResultsToMMA(allResults, mmaCacheFile);
+                cout << "Exported to MMA format: " << mmaCacheFile << endl;
+            }
+            cout << "Total branches: " << allResults.size() << " matrices" << endl;
 
-        // ---- 数据提取 ----
+            // ---- 第2步：加载环数据 ----
+            cout << "\nLoading ring data from " << binRingFile << " ..." << endl;
+            ringData = AlgebraData::LoadBinary<FFInt>(binRingFile, FFInt::p);
+            if (ringData.empty()) { cerr << "Error: No ring data loaded." << endl; return 1; }
+            cout << "Loaded " << ringData.size() << " regimes." << endl;
+        }
+
+        // ---- 数据提取（共用） ----
         std::vector<std::vector<int>> sector_list;
         std::vector<std::vector<std::vector<FFInt>>> A_list, Ainv_list;
         for (const auto& ring : ringData) {

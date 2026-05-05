@@ -1,0 +1,11 @@
+{
+    "name": "bub00",
+    "description": "1-loop bubble, msq=0",
+    "propagators": ["-k1^2", "-(k1-p1)^2"],
+    "loopMomenta": ["k1"],
+    "externalMomenta": ["p1"],
+    "kinematicRules": {"p1^2": "s"},
+    "topSector": [1, 1],
+    "numeric": {"s": 3, "msq": 0, "d": "1/3"},
+    "modulus": 179424673
+}

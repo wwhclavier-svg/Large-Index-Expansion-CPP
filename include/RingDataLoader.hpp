@@ -8,6 +8,7 @@
 #include <stdexcept>
 #include <type_traits>   // 添加
 #include <cstdint>        // 添加
+#include <set>
 #include "firefly/FFInt.hpp"
 
 namespace AlgebraData {
@@ -28,15 +29,18 @@ struct RingCell {
 
 // 自由函数声明
 template <typename T>
-std::vector<RingCell<T>> LoadBinary(const std::string& filename);
+std::vector<RingCell<T>> LoadBinary(const std::string& filename,
+                                         const std::set<size_t>* keep_indices = nullptr);
 
 template <typename T>
-std::vector<RingCell<T>> LoadBinary(const std::string& filename, uint64_t modulus = 0);
+std::vector<RingCell<T>> LoadBinary(const std::string& filename, uint64_t modulus,
+                                         const std::set<size_t>* keep_indices = nullptr);
 
 inline int Idx(int row, int col, int nb) { return row * nb + col; }
 
 template<typename T>
-std::vector<RingCell<T>> LoadBinary(const std::string& filename) {
+std::vector<RingCell<T>> LoadBinary(const std::string& filename,
+                                    const std::set<size_t>* keep_indices) {
     std::ifstream file(filename, std::ios::binary);
     if (!file.is_open()) {
         throw std::runtime_error("Cannot open file: " + filename);
@@ -101,11 +105,24 @@ std::vector<RingCell<T>> LoadBinary(const std::string& filename) {
     }
 
     file.close();
+
+    // 按 keep_indices 过滤 regime
+    if (keep_indices && !keep_indices->empty()) {
+        std::vector<RingCell<T>> filtered;
+        filtered.reserve(keep_indices->size());
+        for (size_t idx : *keep_indices) {
+            if (idx < cells.size())
+                filtered.push_back(std::move(cells[idx]));
+        }
+        cells = std::move(filtered);
+    }
+
     return cells;
 }
                                                                             
 template<typename T>
-std::vector<RingCell<T>> LoadBinary(const std::string& filename, uint64_t modulus) {
+std::vector<RingCell<T>> LoadBinary(const std::string& filename, uint64_t modulus,
+                                    const std::set<size_t>* keep_indices) {
     std::ifstream file(filename, std::ios::binary);
     if (!file.is_open()) throw std::runtime_error("Cannot open file: " + filename);
 
@@ -193,6 +210,18 @@ std::vector<RingCell<T>> LoadBinary(const std::string& filename, uint64_t modulu
 
         cells.push_back(std::move(cell));
     }
+
+    // 按 keep_indices 过滤 regime
+    if (keep_indices && !keep_indices->empty()) {
+        std::vector<RingCell<T>> filtered;
+        filtered.reserve(keep_indices->size());
+        for (size_t idx : *keep_indices) {
+            if (idx < cells.size())
+                filtered.push_back(std::move(cells[idx]));
+        }
+        cells = std::move(filtered);
+    }
+
     return cells;
 }
 

@@ -31,7 +31,7 @@
 |------|---------|:---:|:---:|
 | **2a. MatrixBuild** | M(ν) × coeffs = 0，C++ 零空间自洽 | 纯 C++ | **110/110 PASS** |
 | **2b. CPP-KiraVerify** | C++ 关系代入 Kira 约化 → 0 | 需 Kira 规则 | **11/11 PASS** |
-| **2c. CPP-SeriesVerify** | C++ 关系代入展开系数 | 需展开结果 | 基底关系不适用 |
+| **2c. CPP-SeriesVerify** | C++ 关系代入展开系数 | 需展开结果 | **待处理** (见 §6) |
 | **2d. NuVerify / ν 采样** | 任意 ν 点 Kira 约化验证 | 需 Kira 规则 | 见下文 |
 
 各方法的详细流程见下方对应章节。
@@ -249,47 +249,68 @@ verifyAtNu[rel_, nu1_, nu2_] := Module[
 
 ---
 
-## Step 6: CPP-SeriesVerify (展开代入验证)
+## Step 6: CPP-SeriesVerify (展开代入验证) — 待处理
 
-**文件:** `Compare-CPP-SeriesVerify-[famname].wl`
+**文件:** `verify/VerifyUtility/VerifyRelation-SeriesVerify.wl`
 
 ### 6.1 验证方法
 
-将 C++ 关系代回展开系数，验证等式是否成立。
+**原理**（反向思维，对应 VerifyExpand-SeriesVerify）：
 
-**公式:**
-```
-Sum_{alpha,beta} c(alpha,beta) * v^beta * j(alpha) = 0
+C++ 关系方程：
+$$\sum_{\alpha,\beta} b_{\alpha,\beta} \cdot (\nu + \theta n)^\beta \cdot g(\nu-\alpha; n) = 0$$
 
-其中 j(alpha) = g(nu - alpha)，即 g[v1+nu1-alpha1, v2+nu2-alpha2]
-```
+将 $g(\nu-\alpha; n) = p(\alpha) \cdot \sum_k h_k(\nu-\alpha) / n^k$ 代入，提取 $1/n^m$ 系数：
 
-### 6.2 验证结果
+$$\sum_{\alpha,\beta} b_{\alpha,\beta} \sum_{t=0}^{|\beta|} c_{\beta,t}(\nu) \cdot p(\alpha) \cdot h_{m+t}(\nu-\alpha) \equiv 0 \pmod{p}$$
 
-| 指标 | 值 |
-|------|-----|
-| 通过数 | 0/30 |
-| 失败数 | 30 |
+其中：
+- $c_{\beta,t}(\nu)$ = $(\nu+\theta n)^\beta$ 展开中 $n^t$ 的系数
+- $p(\alpha) = \prod_i A_{\text{inv},i}^{\alpha_i}$
+- $h_k$ = 展开系数多项式（从 `Compare-CPPResult-*.m` 加载）
 
-**分析:** C++ 关系是基底关系，单独代入 ν 点验证时每个关系都不满足零化条件。这不代表 C++ 程序有 bug，而是验证方法的层次问题。
-
-**结论:** C++ 的 30 个基底关系需要通过系数矩阵验证向量空间等价性，而不是单独验证每个关系是否为零。
-
-### 6.3 验证方法的数学理解
-
-根据理论框架，关系方程为：
-```
-Σ_{α,β} b_{α,β} · (ν + θn)^β · g(ν - α) = 0
+**运行命令：**
+```bash
+cd verify/VerifyUtility
+wolframscript -file VerifyRelation-SeriesVerify.wl <famname> [lev] [deg] [order]
 ```
 
-（完整推导见 **[Reconstruct_Algorithm.md §1](Reconstruct_Algorithm.md)**）
+### 6.2 当前状态：待处理
 
-C++ 导出的 `v^β * g[ν-α]` 是上述方程中 `(ν + θn)^β · g(ν - α)` 的基向量展开系数。
+**验证结果：** m=0 (n^0 系数) 通过，但 m≥1 全部失败。
 
-**正确的验证方法**：
-1. 构建 C++ 系数矩阵 `M_CPP`（36×31）
-2. 将每列视为一个基向量 `b_{α,β} · (ν + θn)^β · g(ν - α)`
-3. 验证 C++ 基向量张成的空间与 MMA 关系空间是否相同
+**根因分析（2026-05-05）：**
+
+问题不在于公式错误，而在于 C++ 求解器的 **order truncation**：
+
+1. C++ `AdaptiveEquationBuilder` 对方程按 $n$ 的幂次做 **阶数稳定性分析** (`analyzeOrderStability`)
+2. 对于 (lev=1, deg=1)，`stable_order=0`，求解器只强制 $n^1$ (r=0) 和 $n^0$ (r=1) 的系数为零
+3. $n^{-1}$ 及以下的方程**未被纳入求解系统**（它们对应的零空间尚未稳定）
+
+直接数值验证（重建 C++ 矩阵 M，计算 M·b）证实：
+```
+r=0 (n^1):  0 ✓
+r=1 (n^0):  0 ✓  
+r=2 (n^{-1}): 44856167 ✗  ← 未被求解器强制
+r=3 (n^{-2}): 71022264 ✗
+...
+```
+
+**结论：** SeriesVerify 的数学公式是正确的，但需要求解器在更高阶达成稳定后才能通过完整验证。当前 stable_order=0 意味着只有 $n^1$ 和 $n^0$ 被约束。
+
+**后续工作：**
+1. [ ] 使 SeriesVerify 脚本感知 `stable_order` 边界，只验证 solver 实际约束的阶数
+2. [ ] 或：扩展 C++ 求解器以在更高阶收敛（需要更多 ν 采样点或更高 k_max）
+3. [ ] 或：从 MMA `LIEReconstruct` 路径导出完整符号关系进行对比
+
+### 6.3 与 NuVerify 的互补关系
+
+| 方法 | 验证对象 | 数据需求 | 当前状态 |
+|------|---------|---------|---------|
+| **NuVerify** (§2d) | 完整关系 (ν 固定, Kira 约化) | Kira 规则 | **PASS** (外部验证) |
+| **SeriesVerify** (§2c) | 逐阶系数 (ν 任意, 展开系数) | 展开 h_k | **待处理** (内部验证) |
+
+两种方法互补：NuVerify 是外部 Kira 验证（不需要展开数据），SeriesVerify 是内部展开自洽验证（不需要 Kira）。
 
 ---
 
@@ -313,9 +334,9 @@ j[a__]/;!Or@@({a}/.{b_/;b>0->True,b_/;b<=0->False})->0
 
 | 项目 | MMA-KiraVerify | CPP-KiraVerify | CPP-SeriesVerify |
 |------|---------------|----------------|------------------|
-| 关系条数 | 4 条 | 11 条 | 30 条 |
-| 通过数 | 0/4 (0%) | **11/11 (100%)** | 0/30 (0%) |
-| 状态 | 失败（格式 bug） | **PASS** | 基底关系不适用 |
+| 关系条数 | 4 条 | 11 条 | 待处理 |
+| 通过数 | 0/4 (0%) | **11/11 (100%)** | 仅 n^0 阶通过 |
+| 状态 | 失败（格式 bug） | **PASS** | **待处理**（order truncation，见 §6） |
 
 **补充测试:**
 | 方法 | 结果 | 说明 |

@@ -117,22 +117,6 @@ $FamilyDatabase = <|
     (* SR — Sunrise (2L1P, 5 propagators)                       *)
     (* 来源: LIETest_2L2P_SR212.nb "Massless" 节                *)
     (* -------------------------------------------------------- *)
-    "SR" -> <|
-        "Description" -> "Sunrise 2L1P, massless, s=1",
-        "Propagators" -> {
-            -l1^2,
-            -(l1 + p)^2,
-            -l2^2,
-            -(l2 + p)^2,
-            -(l1 + l2 + p)^2
-        },
-        "LoopMomenta" -> {l1, l2},
-        "ExternalMomenta" -> {p},
-        "KinematicRules" -> {p^2 -> s},
-        "TopSector" -> {1, 1, 1, 1, 1},
-        "Numeric" -> {s -> 1, "d" -> 1/13},
-        "Modulus" -> Prime[10000000]
-    |>,
     "SR212" -> <|
         "Description" -> "Sunrise 2L1P, massless, s=1",
         "Propagators" -> {
@@ -150,23 +134,6 @@ $FamilyDatabase = <|
         "Modulus" -> Prime[10000000]
     |>,
 
-    (* -------------------------------------------------------- *)
-    "SR3m" -> <|
-        "Description" -> "Sunrise 2L1P, 3-massive (props 1,3,5), s=3/2",
-        "Propagators" -> {
-            -l1^2 - msq,
-            -(l1 + p)^2,
-            -l2^2 - msq,
-            -(l2 + p)^2,
-            -(l1 + l2 + p)^2 - msq
-        },
-        "LoopMomenta" -> {l1, l2},
-        "ExternalMomenta" -> {p},
-        "KinematicRules" -> {p^2 -> s},
-        "TopSector" -> {1, 0, 1, 0, 1},
-        "Numeric" -> {s -> 3/2, msq -> 1, "d" -> 1/7},
-        "Modulus" -> Prime[10000000]
-    |>,
     (* SR212-3m — Sunrise 3-Massive (2L1P, 5 prop)                  *)
     (* 来源: LIETest_2L2P_SR212_3Massive.nb                     *)
     (* -------------------------------------------------------- *)

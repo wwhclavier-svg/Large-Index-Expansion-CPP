@@ -322,7 +322,8 @@ std::vector<IBPMatrixE<T>> loadAllIBPMatricesBinary0(const std::string& filename
 
 // 主函数：加载所有 IBP 矩阵
 template<typename T>
-std::vector<IBPMatrixE<T>> loadAllIBPMatricesBinary(const std::string& filename) {
+std::vector<IBPMatrixE<T>> loadAllIBPMatricesBinary(const std::string& filename, bool verbose = false,
+                                                     const std::set<size_t>* keep_indices = nullptr) {
     std::ifstream in(filename, std::ios::binary);
     if (!in) throw std::runtime_error("Cannot open file: " + filename);
 
@@ -337,7 +338,7 @@ std::vector<IBPMatrixE<T>> loadAllIBPMatricesBinary(const std::string& filename)
     int32_t numRegs = readBE32(in);
     if (numRegs <= 0 || numRegs > 10000)  // 合理性检查
         throw std::runtime_error("Invalid numRegs: " + std::to_string(numRegs));
-    cout << "valid numRegs = " << numRegs << endl; 
+    if (verbose) cout << "valid numRegs = " << numRegs << endl;
 
     std::vector<IBPMatrixE<T>> results;
     results.reserve(numRegs);
@@ -350,15 +351,15 @@ std::vector<IBPMatrixE<T>> loadAllIBPMatricesBinary(const std::string& filename)
 
         // 读取元数据 (均为大端序)
         int32_t nibp = readBE32(in);
-            cout << "valid nibp = " << nibp << endl; 
+            if (verbose) cout << "valid nibp = " << nibp << endl;
         int32_t ne   = readBE32(in);
-            cout << "valid ne = " << ne << endl; 
+            if (verbose) cout << "valid ne = " << ne << endl;
         int32_t nb   = readBE32(in);
-            cout << "valid nb = " << nb << endl; 
+            if (verbose) cout << "valid nb = " << nb << endl;
         int32_t incre = readBE32(in);
-            cout << "valid incre = " << incre << endl; 
+            if (verbose) cout << "valid incre = " << incre << endl;
         int64_t modulus = readBE64(in);
-            cout << "valid modolus = " << modulus << endl; 
+            if (verbose) cout << "valid modolus = " << modulus << endl;
 
         mat.nibp = nibp;
         mat.ne = ne;
@@ -377,7 +378,7 @@ std::vector<IBPMatrixE<T>> loadAllIBPMatricesBinary(const std::string& filename)
                 throw std::runtime_error("Inconsistent prime modulus across matrices");
             }
         }
-        cout << "new prime set"<<endl;
+        if (verbose) cout << "new prime set"<<endl;
 
         // 定义读取稀疏矩阵的 lambda
         auto readSparse = [&](auto& targetVec, int nb) {
@@ -390,17 +391,17 @@ std::vector<IBPMatrixE<T>> loadAllIBPMatricesBinary(const std::string& filename)
             int32_t dims_len = readBE32(in);
             std::vector<int32_t> dims(dims_len), dims_flattened(dims_len-1);
             for (int i = 0; i < dims_len; ++i) dims[i] = readBE32(in);
-            cout << "dims = [";
+            if (verbose) cout << "dims = [";
             for (int i = 0; i < dims_len - 1; ++i) {
-                if(i < dims_len - 2) { 
+                if(i < dims_len - 2) {
                     dims_flattened[i] = dims[i];
-                    cout << dims_flattened[i] << " ";
+                    if (verbose) cout << dims_flattened[i] << " ";
                 } else {
                     dims_flattened[i] = dims[i]*dims[i+1];
-                    cout << dims_flattened[i];
+                    if (verbose) cout << dims_flattened[i];
                 }
             }
-            cout << "]" << endl;
+            if (verbose) cout << "]" << endl;
 
             // 读取 rowPtr 数组
             int32_t rowPtr_len = readBE32(in);
@@ -414,7 +415,7 @@ std::vector<IBPMatrixE<T>> loadAllIBPMatricesBinary(const std::string& filename)
 
             // 读取 values 数组
             int32_t values_len = readBE32(in);
-            cout << "values_len: "<< values_len << endl;
+            if (verbose) cout << "values_len: "<< values_len << endl;
             std::vector<T> values(values_len);
 
             if constexpr (std::is_same_v<T, double>) {
@@ -471,13 +472,30 @@ std::vector<IBPMatrixE<T>> loadAllIBPMatricesBinary(const std::string& filename)
         // 按顺序读取
         for (const auto& op : opOrder) {
             readers[op]();
-            cout << op << " <- read" << endl;
+            if (verbose) cout << op << " <- read" << endl;
         }
-        cout << "all read" << endl;
-        cout << "first M1: " << mat.M1[0][0][0] << endl;
+        if (verbose) cout << "all read" << endl;
+        if (verbose) cout << "first M1: " << mat.M1[0][0][0] << endl;
 
         results.push_back(std::move(mat));
     }
+
+    // 按 keep_indices 过滤 regime
+    if (keep_indices && !keep_indices->empty()) {
+        std::vector<IBPMatrixE<T>> filtered;
+        filtered.reserve(keep_indices->size());
+        for (size_t idx : *keep_indices) {
+            if (idx < results.size())
+                filtered.push_back(std::move(results[idx]));
+        }
+        results = std::move(filtered);
+    }
+
+    cout << "Loaded " << results.size() << " IBP regime(s): ne=" << results[0].ne
+         << ", nb=" << results[0].nb << ", mod=";
+    if constexpr (std::is_same_v<T, firefly::FFInt>) cout << firefly::FFInt::p;
+    else cout << "(double)";
+    cout << endl;
 
     return results;
 }
