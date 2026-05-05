@@ -19,7 +19,7 @@ Get["LIEWorkflow.wl"];
 (* ============================================================ *)
 
 (* ---- Paths ---- *)
-$CPPVerifyRoot = ParentDirectory[$InputFileName] <> "/";
+$CPPVerifyRoot = ParentDirectory[DirectoryName[$InputFileName]] <> "/";
 $MMARoot = DirectoryName[$InputFileName];
 
 (* ---- CLI ---- *)
@@ -161,8 +161,8 @@ runPrepare[famname_] := Module[{
     binFile = target <> "IBPMat_" <> famname <> ".bin";
     ringFile = target <> "RingData_" <> famname <> ".bin";
     Get["ExportBinary_IBPMatrix.wl"];
-    ExportBinaryIBPMatrix[binFile, expregdata, char];
-    ExportBinaryRingData[ringFile, expregdata, Alist, ne, char];
+    ExportIBPMatrixBinary`ExportBinaryIBPMatrix[binFile, expregdata, char];
+    ExportIBPMatrixBinary`ExportBinaryRingData[ringFile, expregdata, Alist, ne, char];
     Print["  ", binFile];
     Print["  ", ringFile];
 
