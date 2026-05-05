@@ -77,6 +77,25 @@ target_link_libraries(test_expand_family ${FIREFLY_LIBRARY} ${GMP_LIBRARY} ${GMP
 add_executable(test_ff_verify tools/test_ff_verify.cpp)
 target_link_libraries(test_ff_verify ${FIREFLY_LIBRARY} ${GMP_LIBRARY} ${GMPXX_LIBRARY} pthread)
 
+# 二进制文件读写往返验证测试
+add_executable(test_family_generate tests/test_family_generate.cpp ${COMMON_SOURCES})
+target_link_libraries(test_family_generate ${FIREFLY_LIBRARY} ${GMP_LIBRARY} ${GMPXX_LIBRARY} Eigen3::Eigen pthread)
+
+# JSON 家族配置解析器测试
+add_executable(test_family_config tests/test_family_config.cpp)
+target_link_libraries(test_family_config pthread)
+
+# FamilyGenerate CLI 工具 (Phase 1: stub intermediate data)
+add_executable(family_generate tools/family_generate.cpp)
+target_link_libraries(family_generate ${FIREFLY_LIBRARY} ${GMP_LIBRARY} ${GMPXX_LIBRARY} pthread)
+
+# Singular CAS 集成测试
+add_executable(test_singular_runner tools/test_singular_runner.cpp)
+target_link_libraries(test_singular_runner pthread)
+
+add_executable(test_region_solver tools/test_region_solver.cpp)
+target_link_libraries(test_region_solver pthread)
+
 # --- 可选测试（仅在源文件存在时构建）---
 if(EXISTS "${CMAKE_SOURCE_DIR}/tests/test_compare_MMA.cpp")
     add_executable(test_compare_MMA tests/test_compare_MMA.cpp ${COMMON_SOURCES})

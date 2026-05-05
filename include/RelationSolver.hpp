@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <map>
+#include <set>
 #include <random>
 #include <memory>
 #include <algorithm>
@@ -583,7 +584,7 @@ public:
         std::string stop_reason;                        // 停止原因
 
         // 阶数稳定性分析
-        int stable_order = -2;                          // 零空间稳定的展开阶数 (-2=未稳定)
+        int stable_order = -1;                          // -1=未运行, ≥0=已稳定, -2=未能在可用阶数内稳定
         std::vector<std::vector<std::vector<T>>> rows_by_order;  // [k_max+1][row][col] 按阶数分组的行
     };
     
@@ -1434,19 +1435,35 @@ template<typename T>
 std::vector<std::vector<T>> GlobalEquationAssembler<T>::evaluateAtNu(const std::vector<T>& nu)
 {
     std::vector<std::vector<T>> all_rows;
-    
+
     // 遍历所有 regime
     for (size_t r = 0; r < regimes_.size(); ++r) {
         // 遍历该 regime 的所有 nimax
         for (int nimax_idx : regimes_[r].nimax_indices) {
             // 计算该 (regime, nimax) 在当前 nu 下的贡献
             auto rows = evaluators_[r].evaluate(nu, nimax_idx);
-            
+
             // 累加到全局行集合
             all_rows.insert(all_rows.end(), rows.begin(), rows.end());
         }
     }
-    
+
+    // ---- 行去重：排序后移除重复行 ----
+    if constexpr (std::is_same_v<T, firefly::FFInt>) {
+        std::sort(all_rows.begin(), all_rows.end());
+        auto last = std::unique(all_rows.begin(), all_rows.end());
+        all_rows.erase(last, all_rows.end());
+    } else {
+        // double 路径: 仅去除全零行（浮点比较不准，不去重）
+        all_rows.erase(
+            std::remove_if(all_rows.begin(), all_rows.end(),
+                [](const std::vector<double>& row) {
+                    return std::all_of(row.begin(), row.end(),
+                        [](double v) { return std::abs(v) < 1e-15; });
+                }),
+            all_rows.end());
+    }
+
     return all_rows;
 }
 
@@ -1616,7 +1633,7 @@ AdaptiveEquationBuilder<T>::build(
     int min_required = static_cast<int>(std::ceil(
         static_cast<double>(num_vars) * config_.safety_factor / eq_per_sample));
     int effective_max_nu = std::min(config_.max_nu,
-        std::max(10, min_required));
+        std::max(std::max(30, min_required * 5), config_.nullity_stable_threshold * 6));
 
     // 预分配方程矩阵的存储空间
     result.equations.reserve(rows_per_nu * effective_max_nu);
@@ -2121,11 +2138,16 @@ static std::pair<LinearSystemResult<T>, RelationCoefficient<T>> reconstructReduc
     }
     
     // 构建 nimax 列表（从 CTable 结构推断）
+    // 裁剪策略: M1 矩阵零空间维度 ≤ nb*ne,
+    // 解指标只需要 1(特解) + nb*ne(齐次解) = nb*ne+1 个
+    // 为避免截断不足，保守取 nb*(ne+2)
     std::vector<std::vector<int>> nimax_lists;
     for (const auto& reg : regimes) {
         std::vector<int> nimax_list;
         int nimax = reg.C->getNimax();
-        for (int i = 0; i <= nimax; ++i) {
+        int nb = reg.C->getNb();
+        int nmax_trim = std::min(nimax, nb * (ne + 2));
+        for (int i = 0; i <= nmax_trim; ++i) {
             nimax_list.push_back(i);
         }
         nimax_lists.push_back(nimax_list);
@@ -2182,7 +2204,7 @@ struct LevDegResult {
     std::vector<AlphaBeta> independent_pairs;  // 该配置的自由变量
     int active_vars = 0;                        // 过滤后的活跃变量数
     int total_vars = 0;                         // 过滤前的总变量数
-    int stable_order = -2;                      // 零空间稳定的展开阶数 (-2=未稳定)
+    int stable_order = -1;                      // -1=未运行, ≥0=已稳定, -2=未能在可用阶数内稳定
     int num_relations = 0;                      // 正确关系数量 (= nullity)
 };
 
@@ -2243,12 +2265,14 @@ static std::vector<LevDegResult<T>> reconstructAllRelations(
         reg.prepare(lev_max, alphas_max);
     }
 
-    // ---- 构建 nimax 列表 ----
+    // ---- 构建 nimax 列表（裁剪策略同 reconstructReductionRelation）----
     std::vector<std::vector<int>> nimax_lists;
     for (const auto& reg : regimes) {
         std::vector<int> nimax_list;
         int nimax = reg.C->getNimax();
-        for (int i = 0; i <= nimax; ++i) nimax_list.push_back(i);
+        int nb = reg.C->getNb();
+        int nmax_trim = std::min(nimax, nb * (ne + 2));
+        for (int i = 0; i <= nmax_trim; ++i) nimax_list.push_back(i);
         nimax_lists.push_back(nimax_list);
     }
 
