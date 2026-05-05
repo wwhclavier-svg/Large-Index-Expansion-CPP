@@ -77,8 +77,8 @@ run_mma_compare.sh
 Compare-MMARelation-*.m
 
 # Temporary Mathematica scripts (specific test cases, workflow not finalized)
-Compare-*.wl
-Verify-*.wl
+/Compare-*.wl
+/Verify-*.wl
 AValues*.m
 debug_series.m
 test_rel*.wl
