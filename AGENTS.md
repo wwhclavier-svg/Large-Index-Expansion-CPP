@@ -34,7 +34,6 @@
 .
 ├── CMakeLists.txt           # 主构建配置（使用 /root/firefly-2.0.3 的FireFly）
 ├── CMakeLists_test.txt      # 备用构建配置（使用本地FireFly存根）
-├── CMakeLists_backup.txt    # 历史备份构建配置
 ├── include/                 # 头文件（模板+接口）
 │   ├── firefly/
 │   │   └── FFInt.hpp              # 本地最小化FFInt存根实现
@@ -43,24 +42,32 @@
 │   ├── LayerRecursionCore.tpp     # 模板实现
 │   ├── IBPMatrixLoader_Binary.hpp # 二进制IBP矩阵加载器
 │   ├── IBPMatrixLoader.hpp        # JSON格式IBP矩阵加载器
+│   ├── BinaryIBPWriter.hpp        # 二进制IBP矩阵写入器
+│   ├── BinaryRingWriter.hpp       # 二进制环数据写入器
+│   ├── RingDataLoader.hpp         # 环/代数数据加载器
 │   ├── SeriesCoefficient.hpp      # 系数存储类
 │   ├── SeriesCoefficientIO.hpp    # 系数二进制序列化
-│   ├── LinearSolver.hpp           # 统一求解器调度器
+│   ├── LinearSolver.hpp           # 统一求解器调度器 + LinearSystemResult
 │   ├── LinearSolver_Eigen.hpp     # 基于Eigen的浮点求解器
 │   ├── LinearSolver_FF.hpp        # 基于FireFly的有限域求解器
-│   ├── RelationSolver.hpp         # 线性关系重建求解器
-│   ├── IncrementalRelationSolver.hpp # 增量式多层级求解器
-│   ├── RingDataLoader.hpp         # 环/代数数据加载器
+│   ├── RelationSolver.hpp         # 线性关系重建（RelationSolver组件）
+│   ├── IncrementalRelationSolver.hpp # 增量式RREF维护多层级求解器
+│   ├── IBPEqGenerator.hpp         # IBP方程生成器（调用Singular）
+│   ├── SingularRunner.hpp         # Singular子进程管理
+│   ├── RegionSolver.hpp           # 渐近区域求解器
+│   ├── FamilyConfig.hpp           # 积分族配置
+│   ├── IBPAnalyzer.hpp            # IBP矩阵分析
+│   ├── PolyArith.hpp              # 多项式算术
+│   ├── RecursionBuilder.hpp       # 递归构建器
+│   ├── RingBuilder.hpp            # 环数据构建器
 │   ├── Combinatorics.hpp          # 索引工具与种子生成
 │   ├── binomial.hpp               # 预计算组合数表
 │   ├── binomial2.hpp              # 组合数表变体
 │   ├── UnifiedStorage.hpp         # 内存管理工具
 │   ├── Utilities.hpp              # 通用工具函数
-│   ├── json.hpp                   # 第三方JSON库（nlohmann/json）
-│   ├── RelationRecon.hpp.txt      # 存档：旧版关系重建头文件
-│   └── layerRecursion.hpp.txt     # 存档：旧版层递归头文件
+│   └── json.hpp                   # 第三方JSON库（nlohmann/json）
 ├── src/                     # 源文件（非模板实现）
-│   ├── LayerRecursionCore.cpp     # 核心非模板函数实现（极小，22行）
+│   ├── LayerRecursionCore.cpp     # 核心非模板函数实现
 │   ├── layerRecursion.cpp         # 遗留驱动实现
 │   ├── main.cpp                   # 遗留主程序（未活跃使用）
 │   ├── #RelationRecon.cpp.txt     # 存档：旧版关系重建实现
@@ -71,36 +78,81 @@
 │   ├── test_IBPVerification.cpp   # IBP矩阵验证测试
 │   ├── test_expand_family.cpp     # 展开族测试
 │   ├── test_load_bub.cpp          # bub格式矩阵加载测试
-│   ├── IBPVerification.hpp        # IBP验证辅助函数
-│   └── archive/                   # 存档的历史测试文件
-│       ├── test_expand.cpp
-│       ├── test_recons.cpp
-│       ├── test_RelationNew.cpp
-│       ├── IBPMatrixLoader_Test.cpp
-│       └── RingDataLoader_test.cpp
+│   ├── test_family_generate.cpp   # 积分族生成测试
+│   ├── test_family_config.cpp     # 族配置测试
+│   ├── test_ibp_analyzer.cpp      # IBP分析器测试
+│   ├── test_poly_arith.cpp        # 多项式算术测试
+│   ├── test_recursion_builder.cpp # 递归构建器测试
+│   ├── test_recursion_builder_tri.cpp # 三角族递归构建器测试
+│   ├── test_region_solver_full.cpp# 区域求解器完整测试
+│   ├── test_ring_builder.cpp      # 环构建器测试
+│   ├── verify_ring_builder.cpp    # 环构建器验证
+│   ├── test_compare_MMA.cpp       # MMA对比测试
+│   ├── verify_MMA_lev1_deg1.cpp   # MMA lev1/deg1 验证
+│   └── IBPVerification.hpp        # IBP验证辅助函数
+├── tools/                   # 独立工具和脚本
+│   ├── family_generate.cpp        # 积分族生成工具
+│   ├── diagnose_ibp.cpp           # IBP诊断工具
+│   ├── test_ff_verify.cpp         # FireFly库验证
+│   ├── test_firefly_simple.cpp    # FireFly简单测试
+│   ├── test_region_solver.cpp     # 区域求解器独立测试
+│   ├── test_singular_runner.cpp   # Singular运行器测试
+│   └── dump_mma_equations.wl      # MMA方程导出脚本
+├── archive/                 # 存档的历史文件
+│   ├── CMakeLists_backup.txt      # 历史备份构建配置
+│   ├── #CMakeLists_full.txt       # 完整构建配置存档
+│   └── tests/archive/             # 存档的历史测试文件
 ├── build/                   # 构建输出目录（自动生成）
+├── verify/                  # 跨验证框架（C++ vs MMA vs Kira）
+│   ├── README.md
+│   ├── FamilyDatabase/
+│   │   ├── FamilyDatabase.wl      # 统一积分族定义（19族，1L+2L+3L）
+│   │   └── README.md
+│   ├── VerifyUtility/             # MMA验证工具集
+│   │   ├── LIECoreAlgebra.wl      # 核心代数
+│   │   ├── LIEExpand.wl           # 展开
+│   │   ├── LIEReconstruct.wl      # 重建
+│   │   ├── LIERegions.wl          # 区域
+│   │   ├── LIEUtility.wl          # 工具
+│   │   ├── LIEFamilyDefine.wl     # 族定义
+│   │   ├── LIEWorkflow.wl         # 工作流
+│   │   ├── SingularInterface.wl   # Singular接口
+│   │   ├── KiraRuleLoader.wl      # Kira规则加载
+│   │   ├── M2Kira.wl              # MMA到Kira转换
+│   │   ├── VerifyExpand-*.wl      # 展开验证系列
+│   │   ├── VerifyRelation-*.wl    # 关系验证系列
+│   │   ├── Compare-*.wl           # 对比工具系列
+│   │   ├── ExportBinary_IBPMatrix.wl # 二进制导出
+│   │   └── README.md
+│   ├── docs/
+│   │   ├── IBPVerification.md     # 三种验证方法
+│   │   ├── Test-Expand.md         # 展开验证结果
+│   │   ├── Test-Relation.md       # 关系重建结果
+│   │   ├── Verify-MMA-KIRA-Guide.md # Kira交叉验证指南
+│   │   └── CPP-KiraVerify-Debugger.md
+│   └── bub00/                     # bub00族验证结果快照
+│       ├── IBPMat_bub00.bin
+│       ├── RingData_bub00.bin
+│       └── Compare-*.m
 ├── docs/                    # 文档目录
 │   ├── LayerRecursion_Algorithm.md    # 层递归算法详情
+│   ├── ReconstructAlgorithm.md        # 重建算法：MMA vs C++ 对比
 │   ├── RelationSolver_ComponentGuide.md    # RelationSolver组件指南
 │   ├── RelationSolver_QuickReference.md    # 快速参考
-│   └── RelationSolver_Documentation_Hub.md # 文档中心
+│   ├── RelationSolver_Documentation_Hub.md # 文档中心
+│   ├── ReconstructReductionRelation_Documentation.md # Mathematica包文档
+│   ├── Benchmark_Results.md           # 性能基准测试结果
+│   ├── Plan-FamilyGenerate-CPP-Rewrite.md # FamilyGenerate重写计划
+│   └── Progress_Report_April_May_2026.tex # 进度报告
+├── mma/                     # Mathematica脚本
+│   └── *.wl                      # IBP展开、关系重建、bubble生成等
 ├── ReconstructReductionRelation.wl          # Mathematica关系重建包
-└── ReconstructReductionRelation_Documentation.md # Mathematica包文档
-
-# 根目录中的独立测试/工具文件（未加入CMake主配置或直接在根目录）
-├── test_ff_verify.cpp       # FireFly库验证测试
-├── test_check_matrix.cpp    # 矩阵检查工具
-├── test_matrix_dump.cpp     # 矩阵转储工具
-├── test_solver.cpp          # 求解器独立测试
-├── test_firefly_simple.cpp  # FireFly简单测试
-├── test_ffint.cpp           # FFInt基本测试
-├── test_ff_div_debug.cpp    # 除法调试工具
 
 # 数据文件（二进制和JSON格式，必须位于工作目录/项目根目录）
 ├── IBPMat_*.bin             # IBP矩阵二进制数据文件
 ├── RingData_*.bin           # 环数据二进制文件
 ├── resCache_*.bin           # 展开结果缓存文件
-└── ExpansionCache_*.bin     # 展开缓存文件
+└── AllRelations_*.m         # 导出的关系结果（MMA格式）
 ```
 
 ---
@@ -150,7 +202,7 @@ brew install eigen gmp
 |------|------|
 | `CMakeLists.txt` | **主配置**：使用外部FireFly（`/root/firefly-2.0.3`）+ GMP + Eigen + pthread |
 | `CMakeLists_test.txt` | **备用配置**：使用本地 `include/firefly/FFInt.hpp` 存根，仅依赖Eigen + GMP |
-| `CMakeLists_backup.txt` | **历史备份**：使用 `find_package` 方式查找FireFly |
+| `archive/CMakeLists_backup.txt` | **历史备份**：使用 `find_package` 方式查找FireFly |
 
 如需切换配置，可覆盖主文件：
 ```bash
@@ -202,7 +254,7 @@ struct IBPMatrixE {
 - `j`: 基索引（0到nb-1）
 - `i`: 解索引（0到nimax），i=0为特解，i>0为齐次解
 
-#### `LinearSystemResult<T>` (LinearSolver_Eigen.hpp / LinearSolver_FF.hpp)
+#### `LinearSystemResult<T>` (LinearSolver.hpp)
 统一的线性求解器结果结构：
 ```cpp
 template<typename T>
@@ -218,17 +270,22 @@ struct LinearSystemResult {
 
 ```
 LayerRecursion.hpp                    RelationSolver.hpp
-       ↓                                      ↓
-LayerRecursionCore.hpp              RegimeData<T>
-       ↓                               RegimeEvaluator<T>
-LayerRecursionCore.tpp              AdaptiveEquationBuilder<T>
-       ↓                                      ↓
-LinearSolver.hpp ←────────────────→ LinearSolver_FF.hpp
-       ↓                               LinearSolver_Eigen.hpp
-       ↓                                      ↓
-SeriesCoefficient.hpp              UnifiedStorage.hpp
-IBPMatrixLoader_Binary.hpp         Combinatorics.hpp
-RingDataLoader.hpp
+       ↓                              (RegimeData<T>, RegimeEvaluator<T>,
+LayerRecursionCore.hpp                 AdaptiveEquationBuilder<T>,
+       ↓                               RelationCoefficient<T>)
+LayerRecursionCore.tpp                        ↓
+       ↓                              IncrementalRelationSolver.hpp
+LinearSolver.hpp                              ↓
+  (dispatches to ↓)                  UnifiedStorage.hpp
+LinearSolver_FF.hpp                  Combinatorics.hpp
+LinearSolver_Eigen.hpp               Utilities.hpp
+       ↓                              binomial.hpp / binomial2.hpp
+SeriesCoefficient.hpp
+SeriesCoefficientIO.hpp             FamilyGenerate pipeline:
+IBPMatrixLoader_Binary.hpp            IBPEqGenerator.hpp
+IBPMatrixLoader.hpp (JSON)            SingularRunner.hpp
+RingDataLoader.hpp                    RegionSolver.hpp
+                                      FamilyConfig.hpp
 ```
 
 ### 层递归算法四层结构
@@ -280,11 +337,19 @@ class RelationCoefficient {
 自适应采样和收敛检测配置。
 ```cpp
 struct AdaptiveSamplingConfig {
-    int min_nu = 3;                    // 最小采样点数
-    int max_nu = 50;                   // 最大采样点数
-    int convergence_threshold = 3;     // 零化度稳定性检测阈值
-    int lev_hint = 0;                  // 当前(lev, deg)级别提示
-    int deg_hint = 0;
+    int min_nu = 0;                    // 最小采样数（0=自动调整）
+    int max_nu = 200;                  // 最大采样数（硬上限）
+    double safety_factor = 1.2;        // 过定因子
+    int check_interval = 1;            // 秩检查间隔
+    int nullity_stable_threshold = 3;  // 零空间维度连续稳定次数
+    int verification_points = 3;       // 验证用额外点数
+    int plateau_size = 1;              // 稳定性确认所需额外阶数
+    double tolerance = 1e-10;          // 数值容差
+    bool use_special_points = true;    // 是否使用特殊点
+    double random_min = 3.0;           // 随机点最小值
+    double random_max = 100.0;         // 随机点最大值
+    int lev_hint = 2;                  // |alpha| 上界提示
+    int deg_hint = 2;                  // |beta| 上界提示
 };
 ```
 
@@ -304,6 +369,31 @@ reconstructReductionRelation(
     int lev, int deg,                  // 当前级别/次数
     const AdaptiveSamplingConfig& config = {});
 ```
+
+### 高级API：`reconstructAllRelations<T>()`（推荐）
+
+**用途**: 多配置求解，内置 RemoveSolvedVariables 策略以减少方程冗余。
+
+```cpp
+template<typename T>
+std::vector<LevDegResult<T>> reconstructAllRelations(
+    const std::vector<std::vector<seriesCoefficient<T>>>& CTable,
+    const std::vector<std::vector<int>>& sector,
+    const std::vector<std::vector<std::vector<T>>>& A_list,
+    const std::vector<std::vector<std::vector<T>>>& Ainv_list,
+    int ne, int lev_max, int deg_max,
+    const AdaptiveSamplingConfig& config = {});
+```
+
+### RemoveSolvedVariables 策略
+
+嵌套循环 `lev=0..lev_max, deg=0..deg_max`，每次求解前过滤已被支配的变量：
+
+1. **同级低次过滤**: 若 `b[α_s, β_s]` 在 `deg_s < deg` 已解出独立变量，则消除 `α == α_s, β >= β_s`（分量级）的变量
+2. **跨级过滤**: 若 `b[α_s, β_s]` 在 `lev_s < lev` 已解出独立变量，则消除 `α >= α_s, β >= β_s` 的变量
+3. **列压缩**: 方程矩阵压缩到活跃列后再做高斯消元，然后扩展回完整变量空间
+
+典型效果：bub00 在 lev=2,deg=2 时变量数从 36 降到 19（约 50% 减少）。
 
 ### 使用模式（来自test_relationFF.cpp）
 
@@ -352,10 +442,38 @@ if (linear_result.hasSolution) {
 3. 序列化：SeriesIO::saveAllResults() 缓存计算的系数
        ↓
 4. 关系求解：
-   - 用(lev, deg)提示配置自适应采样
-   - 对每个(lev, deg)调用reconstructReductionRelation<T>()
-   - 以RelationCoefficient<T>形式返回解供下游处理
+   - reconstructAllRelations<T>() 嵌套循环 lev=0..lev_max, deg=0..deg_max
+   - 每步用 RemoveSolvedVariables 过滤已支配变量
+   - 自适应采样求解，返回 LevDegResult<T> 供下游处理
 ```
+
+---
+
+## Common Pitfalls
+
+### 1. FFInt 类型安全：禁止强制转换负整数
+
+`firefly::FFInt` 仅有 `FFInt(uint64_t)` 构造函数，没有有符号整数构造函数。
+
+```cpp
+// 错误: int(-1) 隐式转换为 uint64_t(2^64-1) 再 mod p，产生垃圾值
+FFInt x = static_cast<FFInt>(-1);
+
+// 正确: 对正 FFInt 使用 operator-()
+FFInt x = -FFInt(1);
+```
+
+`static_cast<FFInt>(negative_int)` 始终是 bug。编译器不会对此产生警告。此问题曾影响 `Utilities.hpp` 中的 `sgn()` 及所有从负字面量构造 FFInt 的代码。
+
+### 2. l 循环上界：始终 `incre * k`，绝非仅 `k`
+
+`seriesCoefficient` 存储 `l ∈ [0, incre * k]` 的数据，而非 `[0, k]`。对给定 `k` 遍历 `l` 的循环必须使用 `l <= incre * k`。使用 `l <= k` 会丢弃所有 `l > k` 的系数，产生结果错误但自洽的展开结果，EquationVerify 无法检测。
+
+受影响函数：`step2_computeG`、`step4_computeF2`（卷积）及所有遍历 `C(k, l, cid, j, i)` 中 `l` 的循环。
+
+### 3. 自洽性检查不是独立验证
+
+EquationVerify（`M1*C + Total == 0`）等测试复用了生成系数的同一套方程构建代码。如果 bug 出在方程构建中（如 `sgn()` 符号错误），生成器和验证器都会产生错误但一致的结果。始终将自洽性检查与独立验证方法配对——参考实现对比（MMA）或将结果代回原始（分解前）IBP 方程。
 
 ---
 
@@ -366,11 +484,21 @@ if (linear_result.hasSolution) {
 | 测试 | 用途 | 数据类型 | 命令 |
 |------|------|----------|------|
 | `test_expandFF` | 展开系数计算 | `FFInt` | `./build/test_expandFF` |
-| `test_relationFF` | 线性关系重建 | `FFInt` | `./build/test_relationFF` |
+| `test_relationFF` | 线性关系重建（需参数） | `FFInt` | `./build/test_relationFF [family] [order] [lev] [deg]` |
 | `test_IBPVerification` | IBP矩阵验证 | `FFInt` | `./build/test_IBPVerification` |
 | `test_expand_family` | 展开族测试 | `FFInt` | `./build/test_expand_family` |
 | `test_load_bub` | bub格式矩阵加载 | `FFInt` | `./build/test_load_bub` |
-| `test_ff_verify` | FireFly库验证 | `FFInt` | `./build/test_ff_verify` |
+| `test_family_generate` | 积分族生成 | `FFInt` | `./build/test_family_generate` |
+| `test_family_config` | 族配置测试 | `FFInt` | `./build/test_family_config` |
+| `test_ibp_analyzer` | IBP分析器测试 | `FFInt` | `./build/test_ibp_analyzer` |
+| `test_poly_arith` | 多项式算术 | `FFInt` | `./build/test_poly_arith` |
+| `test_recursion_builder` | 递归构建器 | `FFInt` | `./build/test_recursion_builder` |
+| `test_recursion_builder_tri` | 三角族递归构建器 | `FFInt` | `./build/test_recursion_builder_tri` |
+| `test_region_solver_full` | 区域求解器 | `FFInt` | `./build/test_region_solver_full` |
+| `test_ring_builder` | 环构建器 | `FFInt` | `./build/test_ring_builder` |
+| `verify_ring_builder` | 环构建器验证 | `FFInt` | `./build/verify_ring_builder` |
+| `test_compare_MMA` | MMA对比测试 | `FFInt` | `./build/test_compare_MMA` |
+| `verify_MMA_lev1_deg1` | MMA lev1/deg1验证 | `FFInt` | `./build/verify_MMA_lev1_deg1` |
 
 **注意**: 本项目不使用`ctest`或`add_test()`。测试是独立的可执行文件。
 
@@ -381,32 +509,31 @@ if (linear_result.hasSolution) {
 ```bash
 # 从项目根目录执行
 ./build/test_expandFF
-./build/test_relationFF
+./build/test_relationFF [family] [order] [lev_range] [deg_range]
 ./build/test_IBPVerification
 ./build/test_load_bub
 ./build/test_expand_family
+./build/test_family_generate
+./build/test_region_solver_full
 ```
 
-### 根目录中的独立测试/工具文件
-
-以下文件位于项目根目录，未加入 `CMakeLists.txt` 主配置，需单独编译或作为参考：
+### tools/ 目录中的独立工具
 
 | 文件 | 用途 |
 |------|------|
+| `family_generate.cpp` | 积分族生成主工具 |
+| `diagnose_ibp.cpp` | IBP矩阵诊断 |
 | `test_ff_verify.cpp` | 验证FireFly库基本功能 |
-| `test_check_matrix.cpp` | 检查矩阵一致性 |
-| `test_matrix_dump.cpp` | 转储矩阵内容用于调试 |
-| `test_solver.cpp` | 线性求解器独立测试 |
 | `test_firefly_simple.cpp` | FireFly最简功能测试 |
-| `test_ffint.cpp` | 本地FFInt存根测试 |
-| `test_ff_div_debug.cpp` | 有限域除法调试 |
+| `test_region_solver.cpp` | 区域求解器独立测试 |
+| `test_singular_runner.cpp` | Singular子进程测试 |
+| `dump_mma_equations.wl` | MMA方程导出脚本 |
 
-### 存档测试文件
+### 存档文件
 
-以下历史测试文件已移至 `tests/archive/`，不再参与主构建：
-- `test_expand.cpp`、`test_recons.cpp` — 早期双精度测试
-- `test_RelationNew.cpp` — 早期多regime扩展测试
-- `IBPMatrixLoader_Test.cpp`、`RingDataLoader_test.cpp` — 早期数据加载器测试
+以下历史文件已移至 `archive/`，不再参与主构建：
+- 测试: `test_expand.cpp`、`test_recons.cpp`、`test_RelationNew.cpp`、`IBPMatrixLoader_Test.cpp`、`RingDataLoader_test.cpp`
+- 构建: `CMakeLists_backup.txt`、`#CMakeLists_full.txt`
 
 ### 测试数据文件
 
@@ -414,6 +541,38 @@ if (linear_result.hasSolution) {
 - `IBPMat_*.bin`（如 `IBPMat_DBtop.bin`、`IBPMat_DPpart_QuadriScale.bin`）- IBP矩阵
 - `RingData_*.bin`（如 `RingData_DBtop.bin`、`RingData_DPpart_QuadriScale.bin`）- 环数据
 - `ExpansionCache_*.bin` / `resCache_*.bin` - 系数缓存（部分自动生成）
+
+---
+
+## 验证框架（verify/）
+
+`verify/` 目录是一个结构化跨验证框架，对比 C++ 输出与 Mathematica (MMA) 及 Kira IBP 约化结果：
+
+```
+verify/
+├── README.md                    # 完整验证流程（逐步命令）
+├── FamilyDatabase/
+│   ├── FamilyDatabase.wl        # 统一积分族定义（19族，1L+2L+3L，按 L 和 E 排序）
+│   └── README.md
+├── docs/
+│   ├── Test-Expand.md           # 展开验证结果
+│   ├── Test-Relation.md         # 关系重建验证结果
+│   ├── IBPVerification.md       # 三种验证方法：CompareVerify, EquationVerify, SeriesVerify
+│   ├── Verify-MMA-KIRA-Guide.md # Kira 交叉验证指南
+│   └── CPP-KiraVerify-Debugger.md
+├── VerifyUtility/               # MMA 验证工具集脚本
+│   ├── LIECoreAlgebra.wl, LIEExpand.wl, LIEReconstruct.wl, LIERegions.wl
+│   ├── LIEUtility.wl, LIEFamilyDefine.wl, LIEWorkflow.wl
+│   ├── SingularInterface.wl, KiraRuleLoader.wl, M2Kira.wl
+│   ├── VerifyExpand-*.wl, VerifyRelation-*.wl, Compare-*.wl
+│   └── ExportBinary_IBPMatrix.wl
+└── results/bub00/               # 验证结果快照（.m 文件供 MMA 使用）
+```
+
+三种验证方法：
+1. **CompareVerify**: C++ 输出 vs MMA 参考直接对比
+2. **EquationVerify**: 自洽性检查 `M1*C + Total == 0`
+3. **SeriesVerify**: 将结果代回原始 IBP 方程验证
 
 ---
 
@@ -512,7 +671,9 @@ target_link_libraries(test_MyFeature ${FIREFLY_LIBRARY} ${GMP_LIBRARY} ${GMPXX_L
 
 7. **多CMake配置**: 项目存在多个 `CMakeLists*.txt` 文件。主文件为 `CMakeLists.txt`，使用外部FireFly库；`CMakeLists_test.txt` 为备用配置，使用本地存根。切换前请确认数据类型需求。
 
-8. **FFInt 类型安全陷阱**: `FFInt` 仅有 `FFInt(uint64_t)` 构造函数，没有有符号整数构造函数。`static_cast<FFInt>(-1)` 会造成 `int(-1)` 隐式转换为 `uint64_t(2^64-1)` 再 mod p，产生垃圾值（如对于 p=179424673，结果为 4099945）。编译器不会对此产生警告。正确做法是使用 `-FFInt(1)`（调用 `operator-()`）而非从负整数构造。若需添加有符号构造函数，应使用 `int64_t` 以避免与现有 `uint64_t` 重载对 `long long` 参数产生歧义。此 bug 曾导致所有积分族的展开系数错误，而 EquationVerify（自洽性检查）仍通过（因验证器复用同一错误逻辑），详见 `verify/docs/IBPVerification.md`。
+8. **FFInt 类型安全陷阱**: 详见上方 [Common Pitfalls](#1-ffint-类型安全禁止强制转换负整数)。此处保留原因：此 bug 曾导致所有积分族的展开系数错误，而 EquationVerify（自洽性检查）仍通过，因验证器复用同一错误逻辑。
+
+9. **验证框架**: `verify/` 目录提供 C++ vs MMA vs Kira 的三方交叉验证。在修改核心算法后，除自洽性检查外，应始终运行独立验证。详见 `verify/README.md`。
 
 ---
 
@@ -521,4 +682,7 @@ target_link_libraries(test_MyFeature ${FIREFLY_LIBRARY} ${GMP_LIBRARY} ${GMPXX_L
 - **FireFly Library**: https://github.com/firefly-library/firefly
 - **Eigen Documentation**: https://eigen.tuxfamily.org/
 - **IBP Method**: Integration-by-parts identities for Feynman integral reduction (physics)
-- **ComprehensiveReport.tex**: [docs/ComprehensiveReport.tex](docs/ComprehensiveReport.tex) — LIE 方法的完整理论报告（原理参考）: asymptotic-solution completeness, block-recursive structure, geometric classification of solution spaces, finite-field implementation
+- **docs/ComprehensiveReport.tex**: LIE 方法的完整理论报告：asymptotic-solution completeness, block-recursive structure, geometric classification of solution spaces, finite-field implementation
+- **verify/README.md**: 完整验证流程文档（逐步命令）
+- **verify/docs/**: 展开与关系重建的验证方法文档
+- **docs/ReconstructAlgorithm.md**: 重建算法 MMA vs C++ 实现对比

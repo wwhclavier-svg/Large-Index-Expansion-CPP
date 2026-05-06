@@ -284,9 +284,14 @@ matrix lm = lift(m, gb);
     return {gb, {}};
 }
 
-// Minimal associated primes via minAssGTZ
+// Minimal associated primes via primdecGTZ
 // Returns {primelist, dimlist} where primelist is vector of components,
-// each component is a vector of polynomial strings
+// each component is a vector of polynomial strings (the associated prime ideal).
+//
+// NOTE: We use primdecGTZ rather than minAssGTZ because minAssGTZ is buggy
+// in some Singular versions (returns positive-dimensional primes for
+// zero-dimensional ideals). primdecGTZ returns {primary, prime} pairs,
+// and we extract the prime component from each pair.
 inline std::pair<std::vector<std::vector<std::string>>, std::vector<int>>
 minimalAssPrimes(
     const std::vector<std::string>& ideal,
@@ -310,14 +315,19 @@ minimalAssPrimes(
 LIB "primdec.lib";
 ring r = <char>, (<vars>), (<mo>);
 ideal I = <ideal>;
-list minass = minAssGTZ(I);
-list plist,rdim,npoly=list(),list(),list();
-for(int i=1; i<=size(minass); i++)
+option(redSB);
+ideal gb = std(I);
+list primdec = primdecGTZ(gb);
+int n = size(primdec);
+list plist, rdim, npoly = list(), list(), list();
+for (int i = 1; i <= n; i++)
 {
-  plist=plist+list(string(minass[i]));
-  rdim=rdim+list(dim(minass[i]));
-  npoly=npoly+list(size(minass[i]));
-};
+  list comp = primdec[i];
+  ideal pideal = comp[2];
+  plist = plist + list(string(pideal));
+  rdim = rdim + list(string(dim(std(pideal))));
+  npoly = npoly + list(string(size(pideal)));
+}
 )";
 
     auto result = runSingularTemplate(script,
@@ -330,21 +340,11 @@ for(int i=1; i<=size(minass); i++)
     if (!result.count("plist"))
         throw std::runtime_error("Singular minAssPrime: no output");
 
-    // Parse poly counts per component
+    // Parse poly counts per component and dimensions
     std::vector<int> npoly = parseDimensionList(result["npoly"]);
     std::vector<int> dims  = parseDimensionList(result["rdim"]);
 
-    // Parse compounds: Singular writes a flat concatenation of all components
-    // We need npoly to split correctly
-    std::vector<std::string> allComps;
-    {
-        std::string s = result["plist"];
-        while (!s.empty() && (s[0] == ' ' || s[0] == '\n')) s.erase(0, 1);
-        // Each component is enclosed in [...] if it was a list in Singular
-        // But string() flattens: "x3,x2+17252630,x1+34505260,x3,x2-17252630,..."
-        // We need npoly[i] to know where each component ends.
-    }
-
+    // Parse prime ideals: each component's string is a comma-separated list
     std::vector<std::string> tokens;
     {
         std::string s = result["plist"];

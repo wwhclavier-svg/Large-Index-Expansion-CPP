@@ -4,19 +4,20 @@
 // Module C: Region Solver — algebraic decomposition of IBP equations
 //
 // Mirrors MMA's LIECoreAlgebra.wl:expRegSolve2 pipeline:
-//   1. Convert IBP eqs → A/B variable equations
-//   2. Groebner basis (Mathematica or Singular)
-//   3. Minimal associated primes (Singular minAssGTZ)
-//   4. Per-component Groebner basis + variable classification
-//   5. Monomial basis extraction (quotient ring)
-//   6. Recursion matrix construction
+//   1. Convert IBP eqs → A/B variable equations (done by IBPAnalyzer)
+//   2. Groebner basis (Singular)
+//   3. Minimal associated primes (Singular primdecGTZ)
+//   4. Per-component: GB, variable classification, VarRule, FractionRule
+//   5. Monomial basis extraction + multiplication matrices (quotient ring)
+//   6. Subsector decomposition: enumerate all subsectors, solve each
 //
-// Dependencies: SingularRunner.hpp, IBPEqGenerator.hpp
+// Dependencies: SingularRunner.hpp, PolyArith.hpp, IBPAnalyzer.hpp
 
 #include <string>
 #include <vector>
 #include <map>
 #include <set>
+#include <sstream>
 #include <iostream>
 #include <algorithm>
 #include <functional>
@@ -25,6 +26,8 @@
 #include <stdexcept>
 
 #include "SingularRunner.hpp"
+#include "PolyArith.hpp"
+#include "IBPAnalyzer.hpp"
 
 namespace RegionSolver {
 
@@ -40,6 +43,8 @@ struct RegionData {
     std::vector<std::string>  MonomialBasis;   // monomial basis for quotient ring
     std::vector<std::vector<int>> MonomialBasisIndex; // exponent vectors for basis
     std::map<std::string, std::string> VarRule;  // varDep → polynomial(varIndep)
+    std::map<std::string, std::string> FractionRule; // "B"[j,i] → polynomial(varIndep)
+    std::vector<std::vector<std::vector<int64_t>>> MonomialBasisMatrix; // [nb][nb][nb]
     std::vector<int>          VarDeg;          // degrees of each variable
 };
 
@@ -47,60 +52,34 @@ struct RegionData {
 // Utilities
 // ==========================================
 
-// Convert "A"[i] ↔ A[i] format (Singular-safe ↔ MMA-readable)
 inline std::string makeSingularVar(const std::string& name, int idx) {
     return name + std::to_string(idx);
 }
 
-inline std::string makeBracketVar(const std::string& name, int idx) {
-    return "\"" + name + "\"[" + std::to_string(idx) + "]";
-}
-
 // ==========================================
 // Variable ordering for Singular ring declaration
-//
-// varorder = {{"B"[1],...,"B"[ne]}, {"A"[1],...,"A"[ne]}, param_vars}
-// This encodes: A's > B's > params (dp block ordering)
-// In dp: variables in LATER blocks are SMALLER (less significant)
-// So: (dp(nB), dp(nA), dp(nParam), C) means:
-//   params(1) < ... < params(nParam) < A[1] < ... < A[ne] < B[1] < ... < B[ne]
 // ==========================================
 
 inline std::string buildVarDeclaration(int ne, const std::vector<std::string>& paramNames,
                                         const std::string& monomialOrder = "dp") {
     std::stringstream ss;
-
-    // Count variables
     int nA = ne, nB = ne;
-
-    // Build variable list: B_1,...,B_nB, A_1,...,A_nA, param_1,...
     std::vector<std::string> vars;
     for (int i = 1; i <= nB; ++i) vars.push_back("B" + std::to_string(i));
     for (int i = 1; i <= nA; ++i) vars.push_back("A" + std::to_string(i));
     for (size_t i = 0; i < paramNames.size(); ++i)
         vars.push_back(paramNames[i]);
-
-    // Block ordering: (dp(nB), dp(nA), dp(nParams), C)
-    // NOTE: Singular uses dp(N) with variables in REVERSE order for block ordering
-    // But for simplicity, I'll use a flat dp ordering first
     ss << "(";
     for (size_t i = 0; i < vars.size(); ++i) {
         if (i > 0) ss << ",";
         ss << vars[i];
     }
     ss << "),(" << monomialOrder << ")";
-
     return ss.str();
 }
 
 // ==========================================
-// Build A/B equations from IBP equations
-//
-// From expRegSolve2:
-//   aeqs0 = Coefficient[ibpeqs, n] /. g[α] → ∏ A_i^{α_i - v_i}
-//   aeqs  = aeqs0 /. {1/A_i → B_i}  ∪  {A_i B_i - 1}
-//
-// In C++, we work with the stub pre-computed data for now.
+// Build A/B equations Singular script
 // ==========================================
 
 inline std::string buildABEquationsScript(
@@ -109,18 +88,13 @@ inline std::string buildABEquationsScript(
     const std::vector<std::string>& paramNames)
 {
     std::stringstream ss;
-
-    ss << "// Build A/B variable system from IBP equations\n";
     ss << "LIB \"primdec.lib\";\n\n";
-
-    // Ring: B[1..ne], A[1..ne], params — dp ordering
     ss << "ring r0 = " << modulus << ", (";
     for (int i = 1; i <= ne; ++i) ss << "B" << i << ",";
     for (int i = 1; i <= ne; ++i) { ss << "A" << i; if (i < ne) ss << ","; }
     for (size_t i = 0; i < paramNames.size(); ++i) ss << "," << paramNames[i];
     ss << "), (dp);\n\n";
 
-    // Equations
     ss << "ideal aeqs = ";
     for (size_t i = 0; i < ibpPolynomials.size(); ++i) {
         if (i > 0) ss << ",";
@@ -128,8 +102,6 @@ inline std::string buildABEquationsScript(
     }
     ss << ";\n";
 
-    // Add A_i * B_i - 1 = 0 relations
-    ss << "// Add A_i*B_i - 1 relations\n";
     ss << "ideal ab = aeqs";
     for (int i = 1; i <= ne; ++i)
         ss << ",A" << i << "*B" << i << "-1";
@@ -152,9 +124,6 @@ inline std::vector<std::string> computeGroebnerBasis(
 
 // ==========================================
 // Minimal associated primes via Singular
-//
-// Mirrors expRegSolve2's call to SingularMinAssPrime.
-// Returns zero-dimensional prime components only.
 // ==========================================
 
 inline std::pair<std::vector<std::vector<std::string>>, std::vector<int>>
@@ -165,8 +134,6 @@ computeMinAssPrimes(
 {
     auto [primelist, dims] = SingularRunner::minimalAssPrimes(
         ideal, varOrder, modulus, "lp");
-
-    // Filter to zero-dimensional components
     std::vector<std::vector<std::string>> zdComps;
     std::vector<int> zdDims;
     for (size_t i = 0; i < primelist.size(); ++i) {
@@ -175,36 +142,17 @@ computeMinAssPrimes(
             zdDims.push_back(dims[i]);
         }
     }
-
-    std::cout << "[RegionSolver] " << primelist.size() << " prime components, "
-              << zdComps.size() << " zero-dimensional" << std::endl;
-
     return {zdComps, zdDims};
 }
 
 // ==========================================
-// Monomial basis extraction (quotient ring basis)
-//
-// Mirrors quotientRingBasisPower:
-//   - From Groebner basis, extract leading monomials
-//   - Compute max degrees for each variable
-//   - Generate all monomials below the degree bound
+// Monomial basis extraction (unchanged)
 // ==========================================
 
-// Simple parser for leading monomial extraction from Singular output.
-// For lex ordering, the LM is just the first term of each polynomial.
-
 inline std::string extractLeadingMonomial(const std::string& poly) {
-    // The leading monomial for lex is the first term in the Singular output.
-    // Singular writes: x1^2-1 which means LM = x1^2.
-    // We need to extract the first term before any + or -.
-
     std::string lm;
     size_t i = 0;
-    // Skip leading sign
-    if (i < poly.size() && poly[i] == '-')
-        { lm += '-'; ++i; }
-    // Read until we hit + or - (but not ^ for exponent)
+    if (i < poly.size() && poly[i] == '-') { lm += '-'; ++i; }
     while (i < poly.size()) {
         if (poly[i] == '+' || (poly[i] == '-' && i > 0 && poly[i-1] != '^')) break;
         lm += poly[i];
@@ -213,25 +161,19 @@ inline std::string extractLeadingMonomial(const std::string& poly) {
     return lm;
 }
 
-// Count variable occurrences: parse x1^2*x3 from a monomial
 inline std::vector<int> parseExponents(const std::string& monomial,
                                         const std::vector<std::string>& varOrder) {
     int n = static_cast<int>(varOrder.size());
     std::vector<int> exps(n, 0);
-
     std::string s = monomial;
-    // Remove sign
     if (!s.empty() && s[0] == '-') s.erase(0, 1);
-
-    // Find each variable pattern xi^e or xi
     for (int i = 0; i < n; ++i) {
         const std::string& v = varOrder[i];
         size_t pos = 0;
         while ((pos = s.find(v, pos)) != std::string::npos) {
             size_t after = pos + v.size();
             if (after < s.size() && s[after] == '^') {
-                // Read exponent
-                ++after; // skip ^
+                ++after;
                 std::string expStr;
                 while (after < s.size() && std::isdigit(s[after]))
                     expStr += s[after++];
@@ -250,12 +192,8 @@ inline std::vector<std::vector<int>> computeMonomialBasisIndex(
     const std::vector<std::string>& varOrder)
 {
     int n = static_cast<int>(varOrder.size());
+    if (n == 0) return {{}};
 
-    // Empty varOrder → single basis element (constant 1)
-    if (n == 0)
-        return {{}};
-
-    // Extract leading monomials and compute max degree per variable
     std::vector<int> maxDeg(n, 0);
     for (const auto& poly : gb) {
         std::string lm = extractLeadingMonomial(poly);
@@ -264,47 +202,39 @@ inline std::vector<std::vector<int>> computeMonomialBasisIndex(
             maxDeg[i] = std::max(maxDeg[i], exps[i]);
     }
 
-    // Generate all monomial indices:
-    // For each var i: exponent ∈ [0, maxDeg[i]-1] (since GB gives degree bound)
     std::vector<std::vector<int>> basis;
     std::vector<int> current(n, 0);
-
     std::function<void(int)> generate = [&](int dim) {
         if (dim == n) {
-            // Check if this monomial is NOT divisible by any leading monomial
             bool divisible = false;
             for (const auto& poly : gb) {
                 std::string lm = extractLeadingMonomial(poly);
                 auto lmExps = parseExponents(lm, varOrder);
+                // Skip LMs that don't involve any VarIndep variable
+                // (their LM in the subring is 1, which divides everything)
+                bool hasVar = false;
+                for (int e : lmExps) if (e > 0) { hasVar = true; break; }
+                if (!hasVar) continue;
                 bool div = true;
                 for (int j = 0; j < n; ++j) {
                     if (current[j] < lmExps[j]) { div = false; break; }
                 }
                 if (div) { divisible = true; break; }
             }
-            if (!divisible)
-                basis.push_back(current);
+            if (!divisible) basis.push_back(current);
             return;
         }
-        // Bounds: exponent from 0 to maxDeg[dim]-1, inclusive both ends.
-        // If maxDeg[dim]==1, range is [0, 0] → one value.
         for (int e = 0; e < maxDeg[dim]; ++e) {
             current[dim] = e;
             generate(dim + 1);
         }
     };
     generate(0);
-
     return basis;
 }
 
 // ==========================================
-// Variable classification into generators and parametrized
-//
-// Mirrors MMA's logic:
-//   - For each polynomial in the GB, check leading term degree
-//   - If deg > 1: variable is a "generator" (vargen)
-//   - If deg == 1: variable is "parametrized" (varpar, solvable linearly)
+// Variable classification
 // ==========================================
 
 inline void classifyVariables(
@@ -314,26 +244,18 @@ inline void classifyVariables(
     std::vector<std::string>& varpar,
     std::vector<int>& varDeg)
 {
-    // Count degree per variable from leading terms
     int n = static_cast<int>(varOrder.size());
     std::vector<int> maxTermDeg(n, 0);
-    std::vector<std::string> maxTermPoly(n); // which poly has the highest-degree LM for this var
-
     for (const auto& poly : gb) {
         std::string lm = extractLeadingMonomial(poly);
         auto exps = parseExponents(lm, varOrder);
         for (int i = 0; i < n; ++i) {
-            if (exps[i] > maxTermDeg[i]) {
-                maxTermDeg[i] = exps[i];
-                maxTermPoly[i] = poly;
-            }
+            if (exps[i] > maxTermDeg[i]) maxTermDeg[i] = exps[i];
         }
     }
-
     vargen.clear();
     varpar.clear();
     varDeg.clear();
-
     for (int i = 0; i < n; ++i) {
         varDeg.push_back(maxTermDeg[i]);
         if (maxTermDeg[i] > 1) {
@@ -341,59 +263,363 @@ inline void classifyVariables(
         } else if (maxTermDeg[i] == 1) {
             varpar.push_back(varOrder[i]);
         }
-        // maxTermDeg[i] == 0 → variable doesn't appear in any LM (free parameter)
+    }
+}
+
+// ==========================================
+// Singular polynomial reduction helper
+//
+// Reduces a list of polynomials modulo a GB in a given ring.
+// Returns the reduced polynomials as strings.
+// ==========================================
+
+inline std::vector<std::string> reducePolynomialsSingular(
+    const std::vector<std::string>& polys,
+    const std::vector<std::string>& gb,
+    const std::vector<std::string>& varOrder,
+    int64_t modulus)
+{
+    if (polys.empty()) return {};
+
+    std::stringstream ss;
+    ss << "ring r = " << modulus << ", (";
+    for (size_t i = 0; i < varOrder.size(); ++i) {
+        if (i > 0) ss << ",";
+        ss << varOrder[i];
+    }
+    ss << "), (lp);\n";
+
+    // GB
+    ss << "ideal gb = ";
+    for (size_t i = 0; i < gb.size(); ++i) {
+        if (i > 0) ss << ",";
+        ss << gb[i];
+    }
+    ss << ";\n\n";
+
+    // Reduce each polynomial
+    for (size_t i = 0; i < polys.size(); ++i) {
+        ss << "poly p" << i << " = " << polys[i] << ";\n";
+        ss << "poly r" << i << " = reduce(p" << i << ", gb);\n";
+    }
+    ss << "string results;\n";
+
+    // Build the output string with pipe separators
+    ss << "results = ";
+    for (size_t i = 0; i < polys.size(); ++i) {
+        if (i > 0) ss << " + \"|\" + ";
+        ss << "string(r" << i << ")";
+    }
+    ss << ";\n";
+
+    auto out = SingularRunner::runSingular(ss.str(), {"results"});
+    if (out.count("results") == 0) return {};
+
+    // Parse pipe-delimited results
+    std::vector<std::string> result;
+    std::string data = out["results"];
+    // Remove trailing newline
+    while (!data.empty() && (data.back() == '\n' || data.back() == '\r'))
+        data.pop_back();
+
+    size_t pos = 0;
+    while (pos < data.size()) {
+        size_t next = data.find('|', pos);
+        if (next == std::string::npos) {
+            result.push_back(data.substr(pos));
+            break;
+        }
+        result.push_back(data.substr(pos, next - pos));
+        pos = next + 1;
+    }
+    return result;
+}
+
+// ==========================================
+// solveVarRule — extract VarRule from Groebner basis
+//
+// For lex-ordered GB, each varpar variable has a polynomial with LM = varpar^1.
+// This polynomial is of the form: varpar_i + P(vargen) = 0
+// So varpar_i = -P(vargen) = (mod - P(vargen)) mod modulus.
+//
+// We parse the Singular polynomial string, extract the non-LM terms,
+// and build the VarRule mapping.
+// ==========================================
+
+inline void solveVarRule(
+    const std::vector<std::string>& compGb,
+    const std::vector<std::string>& varpar,
+    const std::vector<std::string>& vargen,
+    int64_t modulus,
+    std::map<std::string, std::string>& varRule)
+{
+    varRule.clear();
+
+    // Combined variable list: vargen first, then varpar
+    std::vector<std::string> allVars = vargen;
+    allVars.insert(allVars.end(), varpar.begin(), varpar.end());
+
+    for (const auto& dpVar : varpar) {
+        // Find the GB polynomial whose LM (first term) starts with this variable
+        for (const auto& poly : compGb) {
+            std::string lm = extractLeadingMonomial(poly);
+            // Check if LM is exactly dpVar^1
+            auto lmExps = parseExponents(lm, allVars);
+            int varIdx = -1;
+            for (int i = 0; i < (int)allVars.size(); ++i) {
+                if (allVars[i] == dpVar) { varIdx = i; break; }
+            }
+            if (varIdx < 0) continue;
+
+            bool isLinear = (lmExps[varIdx] == 1);
+            for (int i = 0; i < (int)allVars.size(); ++i)
+                if (i != varIdx && lmExps[i] != 0) { isLinear = false; break; }
+            if (!isLinear) continue;
+
+            // Parse full polynomial and extract non-LM part
+            // The polynomial is: dpVar + other_terms = 0  →  dpVar = -other_terms
+            PolyArith::Polynomial p = PolyArith::parseSingularPolynomial(poly, allVars, modulus);
+
+            // Remove the LM term (dpVar with coeff 1)
+            PolyArith::Polynomial rhs;
+            for (const auto& m : p) {
+                bool isLM = (m.exps[varIdx] == 1);
+                for (int i = 0; i < (int)allVars.size(); ++i)
+                    if (i != varIdx && m.exps[i] != 0) isLM = false;
+                if (isLM) continue; // skip the LM term
+                // Negate
+                int64_t c = (-m.coeff) % modulus;
+                if (c < 0) c += modulus;
+                if (c != 0) rhs.push_back({m.exps, c});
+            }
+            PolyArith::canonicalize(rhs, modulus);
+
+            // Remap exponents to vargen-only space (first nVargen entries of allVars)
+            int nVargen = (int)vargen.size();
+            PolyArith::Polynomial projected;
+            for (const auto& m : rhs) {
+                std::vector<int> newExps(nVargen, 0);
+                for (int ei = 0; ei < nVargen && ei < (int)m.exps.size(); ++ei)
+                    newExps[ei] = m.exps[ei];
+                projected.push_back({newExps, m.coeff});
+            }
+            PolyArith::canonicalize(projected, modulus);
+
+            // Format as string in vargen variables only
+            varRule[dpVar] = PolyArith::polyToSingularString(projected, vargen);
+            break;
+        }
+    }
+}
+
+// ==========================================
+// computeFractionRule — compute B[j,i] = A_i * B_j reduced mod GB
+//
+// For each (i,j) with i≠j, reduces A_i * B_j modulo the prime ideal GB.
+// Returns polynomial expressions in VarIndep.
+// ==========================================
+
+inline void computeFractionRule(
+    const std::vector<std::string>& compGb,
+    const std::vector<std::string>& varOrder,  // all A/B vars
+    const std::vector<std::string>& abVars,    // A1..Ane, B1..Bne in order
+    const std::vector<std::string>& vargen,    // VarIndep for formatting output
+    int ne,
+    int64_t modulus,
+    std::map<std::string, std::string>& fractionRule)
+{
+    fractionRule.clear();
+
+    // Build list of products A_i * B_j for i != j
+    std::vector<std::string> products;
+    std::vector<std::pair<int,int>> pairs;
+    for (int i = 1; i <= ne; ++i) {
+        for (int j = 1; j <= ne; ++j) {
+            if (i == j) continue;
+            products.push_back("A" + std::to_string(i) + "*B" + std::to_string(j));
+            pairs.push_back({i, j});
+        }
+    }
+
+    if (products.empty()) return;
+
+    auto reduced = reducePolynomialsSingular(products, compGb, varOrder, modulus);
+
+    for (size_t k = 0; k < reduced.size() && k < pairs.size(); ++k) {
+        int i = pairs[k].first;
+        int j = pairs[k].second;
+        std::string key = "\"B\"[" + std::to_string(j) + "," + std::to_string(i) + "]";
+        // Parse with full varOrder, then project to vargen
+        PolyArith::Polynomial poly = PolyArith::parseSingularPolynomial(reduced[k], varOrder, modulus);
+        // Remap exponents: extract only vargen components
+        // Build index map from varOrder → vargen
+        std::map<std::string, int> varOrderIdx;
+        for (size_t vi = 0; vi < varOrder.size(); ++vi) varOrderIdx[varOrder[vi]] = (int)vi;
+        std::vector<int> vargenIdx(varOrder.size(), -1);
+        for (size_t vi = 0; vi < vargen.size(); ++vi) {
+            auto it = varOrderIdx.find(vargen[vi]);
+            if (it != varOrderIdx.end()) vargenIdx[it->second] = (int)vi;
+        }
+        PolyArith::Polynomial projected;
+        for (const auto& m : poly) {
+            std::vector<int> newExps(vargen.empty() ? 0 : vargen.size(), 0);
+            for (size_t ei = 0; ei < m.exps.size() && ei < varOrder.size(); ++ei) {
+                if (m.exps[ei] != 0 && vargenIdx[ei] >= 0)
+                    newExps[vargenIdx[ei]] = m.exps[ei];
+            }
+            projected.push_back({newExps, m.coeff});
+        }
+        PolyArith::canonicalize(projected, modulus);
+        fractionRule[key] = PolyArith::polyToSingularString(projected, vargen);
+    }
+}
+
+// ==========================================
+// computeMonomialBasisMatrix — compute multiplication matrices
+//
+// For each basis monomial m_k, computes the nb×nb matrix representing
+// multiplication by m_k in the quotient ring.
+//
+// Matrix[k][i][j] = coefficient of basis[j] in reduce(basis[i] * basis[k], gb)
+//
+// Uses Singular's reduce() to handle the polynomial reduction.
+// ==========================================
+
+inline void computeMonomialBasisMatrix(
+    const std::vector<std::string>& compGb,
+    const std::vector<std::string>& vargen,
+    const std::vector<std::vector<int>>& basisIndex,
+    int nb,
+    int64_t modulus,
+    std::vector<std::vector<std::vector<int64_t>>>& basisMatrix)
+{
+    basisMatrix.clear();
+    if (nb == 0 || vargen.empty()) return;
+
+    basisMatrix.resize(nb,
+        std::vector<std::vector<int64_t>>(nb,
+            std::vector<int64_t>(nb, 0)));
+
+    // Build monomial strings from basis index (in vargen space)
+    std::vector<std::string> basisPolys;
+    for (int i = 0; i < nb; ++i) {
+        PolyArith::Polynomial p;
+        p.push_back({basisIndex[i], int64_t(1)});
+        basisPolys.push_back(PolyArith::polyToSingularString(p, vargen));
+    }
+
+    // Build index map: vargen name → position in vargen vector
+    std::map<std::string, int> vargenIdx;
+    for (size_t vi = 0; vi < vargen.size(); ++vi)
+        vargenIdx[vargen[vi]] = (int)vi;
+
+    // For each basis element k, compute products with all basis elements
+    for (int k = 0; k < nb; ++k) {
+        std::vector<std::string> products;
+        for (int i = 0; i < nb; ++i) {
+            if (basisPolys[i] == "1") {
+                products.push_back(basisPolys[k]);
+            } else if (basisPolys[k] == "1") {
+                products.push_back(basisPolys[i]);
+            } else {
+                products.push_back(basisPolys[i] + "*" + basisPolys[k]);
+            }
+        }
+
+        // Use FULL variable ring (allVars from compGb context) to avoid
+        // "undefined variable" errors. The GB polynomials may reference
+        // VarDep variables that aren't in vargen alone.
+        // We build the full varOrder from the compGb by extracting variable names.
+        // For now, use the vargen ring if the GB only involves vargen variables;
+        // otherwise use the full ring and project results.
+        //
+        // Strategy: use vargen ring for reduction. If the GB references non-vargen
+        // vars, Singular will error → reduced comes back empty → we fall through
+        // and basisMatrix stays zero.
+        //
+        // The caller (solveRegion) ensures compGb is projected to vargen space
+        // by substituting VarRule before calling this function. See the
+        // solveRegion code where we build vargenGb.
+        auto reduced = reducePolynomialsSingular(products, compGb, vargen, modulus);
+
+        if (reduced.empty()) {
+            std::cerr << "[computeMonomialBasisMatrix] WARNING: Singular reduction "
+                         "returned empty for k=" << k
+                      << ". GB may reference undefined variables." << std::endl;
+            continue;
+        }
+
+        // Parse each reduced polynomial and express in the monomial basis
+        for (int i = 0; i < nb && i < (int)reduced.size(); ++i) {
+            PolyArith::Polynomial poly = PolyArith::parseSingularPolynomial(
+                reduced[i], vargen, modulus);
+
+            if (poly.empty()) continue;
+
+            for (const auto& mon : poly) {
+                for (int j = 0; j < nb; ++j) {
+                    bool match = true;
+                    for (size_t vi = 0; vi < basisIndex[j].size(); ++vi) {
+                        if (basisIndex[j][vi] != mon.exps[vi]) {
+                            match = false;
+                            break;
+                        }
+                    }
+                    if (match) {
+                        basisMatrix[k][i][j] = (basisMatrix[k][i][j] + mon.coeff) % modulus;
+                        if (basisMatrix[k][i][j] < 0) basisMatrix[k][i][j] += modulus;
+                        break;
+                    }
+                }
+            }
+        }
     }
 }
 
 // ==========================================
 // Full region solving pipeline
 //
-// mirrors expRegSolve2 + bivarPrimeInfo
+// Takes A/B polynomial strings (from IBPAnalyzer::buildABEquations),
+// computes Groebner basis, primary decomposition, variable classification,
+// VarRule, FractionRule, and monomial basis matrices.
 // ==========================================
 
 inline std::vector<RegionData> solveRegion(
-    const std::vector<std::string>& abEquations,   // A/B system
+    const std::vector<std::string>& abEquations,
     const std::vector<int>& limitSector,
     int ne,
     int64_t modulus)
 {
     std::vector<RegionData> results;
 
-    // Build variable ordering for this region
-    // The GB variables are only the A_i and B_i where the sector is active
-    // For the full system: all A_i and B_i
     std::vector<std::string> allVars;
     for (int i = 1; i <= ne; ++i) allVars.push_back("B" + std::to_string(i));
     for (int i = 1; i <= ne; ++i) allVars.push_back("A" + std::to_string(i));
 
-    std::cout << "[RegionSolver] Computing Groebner basis for sector ";
-    for (int s : limitSector) std::cout << s;
-    std::cout << " (ne=" << ne << ", neqs=" << abEquations.size() << ")" << std::endl;
+    // Add A_i*B_i-1 constraints to make the ideal zero-dimensional
+    std::vector<std::string> fullIdeal = abEquations;
+    for (int i = 1; i <= ne; ++i)
+        fullIdeal.push_back("A" + std::to_string(i) + "*B" + std::to_string(i) + "-1");
 
     // Step 1: Groebner basis
-    auto gb = computeGroebnerBasis(abEquations, allVars, modulus);
-    std::cout << "  GB done: " << gb.size() << " polynomials" << std::endl;
+    auto gb = computeGroebnerBasis(fullIdeal, allVars, modulus);
 
     // Step 2: Minimal associated primes (zero-dimensional only)
     auto [primelist, dims] = computeMinAssPrimes(gb, allVars, modulus);
 
-    if (primelist.empty()) {
-        std::cout << "  No zero-dimensional prime components found." << std::endl;
+    if (primelist.empty())
         return results;
-    }
 
     // Step 3: Per-component processing
     for (size_t p = 0; p < primelist.size(); ++p) {
-        std::cout << "  Component " << (p+1) << "/" << primelist.size()
-                  << " (" << primelist[p].size() << " gens, dim=" << dims[p] << ")" << std::endl;
 
-        // Recompute GB for this component (with appropriate ordering)
+        // Recompute GB for this component
         auto compGb = computeGroebnerBasis(primelist[p], allVars, modulus);
 
-        // Classify variables
         RegionData reg;
         reg.limitSector = limitSector;
 
+        // Classify variables
         classifyVariables(compGb, allVars, reg.VarIndep, reg.VarDep, reg.VarDeg);
         reg.MinPoly = compGb;
 
@@ -403,24 +629,66 @@ inline std::vector<RegionData> solveRegion(
 
         // Build monomial basis strings
         for (const auto& idx : reg.MonomialBasisIndex) {
-            std::string term = "1";
-            for (size_t i = 0; i < idx.size(); ++i) {
-                if (idx[i] > 0) {
-                    if (idx[i] == 1)
-                        term += "*" + reg.VarIndep[i];
-                    else
-                        term += "*" + reg.VarIndep[i] + "^" + std::to_string(idx[i]);
-                }
-            }
-            if (term == "1" && !reg.VarIndep.empty()) term = "1"; // the constant 1
-            reg.MonomialBasis.push_back(term);
+            PolyArith::Polynomial mpoly;
+            mpoly.push_back({idx, int64_t(1)});
+            reg.MonomialBasis.push_back(PolyArith::polyToSingularString(mpoly, reg.VarIndep));
         }
 
-        std::cout << "    VarIndep: ";
-        for (auto& v : reg.VarIndep) std::cout << v << " ";
-        std::cout << "\n    VarDep: ";
-        for (auto& v : reg.VarDep) std::cout << v << " ";
-        std::cout << "\n    nb = " << reg.nb << std::endl;
+        // Solve VarRule: express VarDep in terms of VarIndep
+        if (!reg.VarDep.empty()) {
+            solveVarRule(compGb, reg.VarDep, reg.VarIndep, modulus, reg.VarRule);
+        }
+
+        // Compute FractionRule: A_i * B_j reduced modulo GB
+        computeFractionRule(compGb, allVars, allVars, reg.VarIndep, ne, modulus, reg.FractionRule);
+
+        // Compute MonomialBasisMatrix: multiplication matrices
+        if (reg.nb > 0) {
+            if (reg.VarIndep.empty()) {
+                reg.MonomialBasisMatrix.resize(1,
+                    std::vector<std::vector<int64_t>>(1,
+                        std::vector<int64_t>(1, 1)));
+            } else {
+                // Project GB to VarIndep space by substituting VarRule.
+                // The compGb contains all A/B variables, but Singular reduction
+                // for the monomial basis needs only VarIndep variables in the ring.
+                std::vector<std::string> vargenGb;
+                // Build replacement list: for each allVars variable, its
+                // expression as a polynomial in VarIndep.
+                std::vector<PolyArith::Polynomial> replacements(allVars.size());
+                for (size_t vi = 0; vi < allVars.size(); ++vi) {
+                    const std::string& vname = allVars[vi];
+                    auto rit = reg.VarRule.find(vname);
+                    if (rit != reg.VarRule.end()) {
+                        replacements[vi] = PolyArith::parseSingularPolynomial(
+                            rit->second, reg.VarIndep, modulus);
+                    } else {
+                        // VarIndep variable: it maps to itself in VarIndep space
+                        auto vit = std::find(reg.VarIndep.begin(), reg.VarIndep.end(), vname);
+                        if (vit != reg.VarIndep.end()) {
+                            int pos = (int)(vit - reg.VarIndep.begin());
+                            std::vector<int> exps(reg.VarIndep.size(), 0);
+                            exps[pos] = 1;
+                            replacements[vi].push_back({exps, int64_t(1)});
+                        } else {
+                            // Variable not in VarRule or VarIndep → constant 0
+                        }
+                    }
+                }
+                for (const auto& gbPoly : compGb) {
+                    auto poly = PolyArith::parseSingularPolynomial(gbPoly, allVars, modulus);
+                    auto projected = PolyArith::polySubstituteMulti(
+                        poly, replacements, modulus, (int)reg.VarIndep.size());
+                    PolyArith::canonicalize(projected, modulus);
+                    if (!projected.empty()) {
+                        vargenGb.push_back(
+                            PolyArith::polyToSingularString(projected, reg.VarIndep));
+                    }
+                }
+                computeMonomialBasisMatrix(vargenGb, reg.VarIndep,
+                    reg.MonomialBasisIndex, reg.nb, modulus, reg.MonomialBasisMatrix);
+            }
+        }
 
         results.push_back(reg);
     }
@@ -429,14 +697,96 @@ inline std::vector<RegionData> solveRegion(
 }
 
 // ==========================================
-// Stub: extract region data from existing .bin file
+// Subsector enumeration
 //
-// Phase 3 stub: reads IBP + Ring binary data, reconstructs RegionData.
-// In full implementation, this will be replaced by Singular computation.
+// Generates all binary masks m such that m[i] <= topSector[i].
+// For a top sector of {1,1,...,1}, this enumerates all 2^ne subsectors.
 // ==========================================
 
-// For the stub, region data is embedded in the binary files.
-// We provide a wrapper that loads from the .bin and converts to RegionData.
+// Generate subsectors matching MMA's Subsets[activeIndices, {nl, ne}]
+inline std::vector<std::vector<int>> generateSubsectors(const std::vector<int>& topSector, int nl) {
+    int ne = static_cast<int>(topSector.size());
+    std::vector<int> activeProps;
+    for (int i = 0; i < ne; ++i)
+        if (topSector[i] == 1) activeProps.push_back(i);
+
+    int nActive = static_cast<int>(activeProps.size());
+    int minSize = std::max(1, nl);
+    int maxSize = ne;
+    std::vector<std::vector<int>> result;
+    std::function<void(int, std::vector<int>&)> dfs = [&](int start, std::vector<int>& chosen) {
+        if ((int)chosen.size() >= minSize && (int)chosen.size() <= maxSize) {
+            std::vector<int> sector(ne, 0);
+            for (int idx : chosen) sector[idx] = 1;
+            result.push_back(sector);
+        }
+        if ((int)chosen.size() >= maxSize) return;
+        for (int i = start; i < nActive; ++i) {
+            chosen.push_back(activeProps[i]);
+            dfs(i + 1, chosen);
+            chosen.pop_back();
+        }
+    };
+    std::vector<int> chosen;
+    dfs(0, chosen);
+    return result;
+}
+
+// ==========================================
+// solveAllSectors — full subsector decomposition
+//
+// Mirrors MMA's expRegSolve2 outer loop over limitSector values.
+//
+// For each subsector of the top sector:
+//   1. Build A/B equations via IBPAnalyzer::buildABEquations
+//   2. Run solveRegion (GB + primdec + VarRule + FractionRule + MBM)
+//   3. Collect results with correct limitSector labels
+//
+// Skips subsectors that produce no zero-dimensional components.
+// ==========================================
+
+inline std::vector<RegionData> solveAllSectors(
+    const IBPEqGenerator::IBPEquations& ibp,
+    const std::vector<int>& topSector,
+    int64_t modulus)
+{
+    int ne = ibp.ne;
+    int nl = ibp.nl;
+    std::vector<RegionData> allResults;
+    auto subsectors = generateSubsectors(topSector, nl);
+
+    for (const auto& sub : subsectors) {
+        auto abEqs = IBPAnalyzer::buildABEquations(ibp, sub, modulus);
+
+        // DEBUG: print A/B for ne<=4 families
+        if (ne <= 4) {
+            std::cout << "\n[DEBUG A/B] sector=[";
+            for (size_t si=0;si<sub.size();++si){if(si)std::cout<<",";std::cout<<sub[si];}
+            std::cout << "] ne=" << ne << " nibp=" << ibp.nibp << std::endl;
+            for (size_t ei=0;ei<abEqs.size();++ei) std::cout << "  AB[" << ei << "] = " << abEqs[ei] << std::endl;
+        }
+        // Skip empty subsectors (all equations are constant 0)
+        bool hasContent = false;
+        for (const auto& eq : abEqs) {
+            for (char ch : eq) {
+                if (ch != '0' && ch != '+' && ch != '-' && ch != '*') {
+                    hasContent = true;
+                    break;
+                }
+            }
+            if (hasContent) break;
+            if (!eq.empty() && eq != "0") hasContent = true;
+        }
+        if (!hasContent) continue;
+
+        auto regions = solveRegion(abEqs, sub, ne, modulus);
+        for (auto& reg : regions) {
+            allResults.push_back(std::move(reg));
+        }
+    }
+
+    return allResults;
+}
 
 } // namespace RegionSolver
 #endif

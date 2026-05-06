@@ -93,9 +93,11 @@ inline std::vector<std::pair<int, std::string>> parseMomentumLinearCombination(c
         char c = (i < expr.size()) ? expr[i] : '\0';
         if (c == '+' || c == '-' || c == '\0') {
             if (!current.empty()) {
-                // Trim whitespace
+                // Trim whitespace (both ends)
                 while (!current.empty() && current.back() == ' ') current.pop_back();
-                result.push_back({sign, current});
+                size_t pos = 0;
+                while (pos < current.size() && current[pos] == ' ') ++pos;
+                result.push_back({sign, current.substr(pos)});
                 current.clear();
             }
             sign = (c == '-') ? -1 : 1;
@@ -310,6 +312,17 @@ inline void parsePropagator(const std::string& propStr,
         std::string resolvedKey;
         if (it != kinematicRules.end()) {
             resolvedKey = it->second;
+            // Normalize for Singular: remove spaces, insert * for implicit
+            // multiplication (e.g., "2 t" → "2*t"). Singular does not parse
+            // "2t" as 2*t — it treats it as a single identifier.
+            std::string norm;
+            for (char ch : resolvedKey) if (ch != ' ') norm += ch;
+            resolvedKey.clear();
+            for (size_t ci = 0; ci < norm.size(); ++ci) {
+                if (ci > 0 && isdigit(norm[ci-1]) && isalpha(norm[ci]))
+                    resolvedKey += '*';
+                resolvedKey += norm[ci];
+            }
         } else {
             resolvedKey = key; // parameter name, like "msq"
         }
@@ -331,7 +344,6 @@ inline void parsePropagator(const std::string& propStr,
         } else if (coeff == -1) {
             css << "-" << key;
         } else {
-            if (coeff > 0 && !first) css << "+";
             css << coeff << "*" << key;
         }
         first = false;
@@ -701,10 +713,21 @@ inline std::string buildIBPDerivativeScript(const ScalarProductBasis& spb,
                 for (auto& [key, coeff] : constTerms) {
                     auto it = kinematicRules.find(key);
                     std::string resolvedKey;
-                    if (it != kinematicRules.end())
+                    if (it != kinematicRules.end()) {
                         resolvedKey = it->second;
-                    else
+                        // Normalize for Singular: remove spaces, insert * for
+                        // implicit multiplication (e.g., "2 t" → "2*t")
+                        std::string norm;
+                        for (char ch : resolvedKey) if (ch != ' ') norm += ch;
+                        resolvedKey.clear();
+                        for (size_t ci = 0; ci < norm.size(); ++ci) {
+                            if (ci > 0 && isdigit(norm[ci-1]) && isalpha(norm[ci]))
+                                resolvedKey += '*';
+                            resolvedKey += norm[ci];
+                        }
+                    } else {
                         resolvedKey = key;
+                    }
                     resolvedConstTerms[resolvedKey] += coeff;
                 }
                 // Build constant expression string
@@ -715,7 +738,6 @@ inline std::string buildIBPDerivativeScript(const ScalarProductBasis& spb,
                     if (!first) css << (coeff > 0 ? "+" : "");
                     if (coeff == 1) { if (!first) css << "+"; }
                     else if (coeff == -1) css << "-";
-                    else if (coeff > 0 && !first) css << "+" << coeff << "*";
                     else if (coeff > 0) css << coeff << "*";
                     else css << coeff << "*";
                     css << key;
@@ -728,6 +750,7 @@ inline std::string buildIBPDerivativeScript(const ScalarProductBasis& spb,
             }
         }
     }
+
 
     // Now build the Singular script
     ss << "// ========================================\n";
@@ -774,7 +797,8 @@ inline std::string buildIBPDerivativeScript(const ScalarProductBasis& spb,
     ss << "    p = p + C_inv[ss,ii] * (-z(ii) - Cconst[ii,1]);\n";
     ss << "  }\n";
     ss << "  spL = spL + list(p);\n";
-    ss << "}\n\n";
+    ss << "}\n";
+    ss << "\n";
 
     // Derivative assembly
     ss << "// Derivative: for each (i,j,k), deriv = Σ_s dSp[s] * poly(spL[s] + const\n";
@@ -1091,7 +1115,8 @@ struct IBPEquationG {
 
 inline std::vector<IBPEquationG> assembleIBPFromDerivatives(
     const DerivResult& deriv,
-    int ne, int nl, int nE, int64_t modulus)
+    int ne, int nl, int nE, int64_t modulus,
+    int64_t dCoeff = 1)
 {
     int nTotal = nl + nE;
     std::vector<IBPEquationG> equations;
@@ -1112,7 +1137,7 @@ inline std::vector<IBPEquationG> assembleIBPFromDerivatives(
             if (j == kk) {
                 GTerm dt;
                 dt.gShift = prodAll;
-                dt.coeff = 1;
+                dt.coeff = dCoeff;
                 dt.hasD = true;
                 allTerms.push_back(dt);
             }
@@ -1203,21 +1228,34 @@ struct IBPEquations {
 // Subsector generation
 // ============================================================
 
-inline std::vector<std::vector<int>> generateSubsectors(const std::vector<int>& topSector) {
+// Generate subsectors matching MMA's Subsets[activeIndices, {nl, ne}]
+// Only generates subsets with sizes from nl to ne (inclusive), excluding empty set.
+inline std::vector<std::vector<int>> generateSubsectors(const std::vector<int>& topSector, int nl) {
     std::vector<int> activeProps;
     for (int i = 0; i < (int)topSector.size(); ++i)
         if (topSector[i] == 1) activeProps.push_back(i);
 
     int nActive = (int)activeProps.size();
-    int total = 1 << nActive;
+    int ne = (int)topSector.size();
     std::vector<std::vector<int>> result;
-    for (int mask = 0; mask < total; ++mask) {
-        std::vector<int> sector(topSector.size(), 0);
-        for (int b = 0; b < nActive; ++b)
-            if (mask & (1 << b))
-                sector[activeProps[b]] = 1;
-        result.push_back(sector);
-    }
+    // Generate all combinations of sizes nl..ne
+    int minSize = std::max(1, nl); // exclude empty set
+    int maxSize = ne;
+    std::function<void(int, int, std::vector<int>&)> dfs = [&](int start, int depth, std::vector<int>& chosen) {
+        if ((int)chosen.size() >= minSize && (int)chosen.size() <= maxSize) {
+            std::vector<int> sector(ne, 0);
+            for (int idx : chosen) sector[idx] = 1;
+            result.push_back(sector);
+        }
+        if ((int)chosen.size() >= maxSize) return;
+        for (int i = start; i < nActive; ++i) {
+            chosen.push_back(activeProps[i]);
+            dfs(i + 1, depth + 1, chosen);
+            chosen.pop_back();
+        }
+    };
+    std::vector<int> chosen;
+    dfs(0, 0, chosen);
     return result;
 }
 
@@ -1240,7 +1278,7 @@ inline IBPEquations generateIBPEquations(const FamilyDef& fam) {
         eqs.vlist.push_back("\"v\"[" + std::to_string(i) + "]");
     }
 
-    eqs.sectorlist = generateSubsectors(fam.topSector);
+    eqs.sectorlist = generateSubsectors(fam.topSector, eqs.nl);
 
     std::cout << "[IBPEqGenerator] Family " << fam.name
               << ": ne=" << eqs.ne << " nl=" << eqs.nl << " nE=" << eqs.nE
@@ -1268,10 +1306,41 @@ inline IBPEquations generateIBPEquations(const FamilyDef& fam) {
     std::cout << "[IBPEqGenerator] Derivatives OK: " << deriv.nibp
               << " polynomials computed" << std::endl;
 
+    // Parse d-value from family config (rational string → integer mod p)
+    int64_t dCoeff = 1;
+    auto it = fam.numeric.find("d");
+    if (it != fam.numeric.end()) {
+        const std::string& ds = it->second;
+        size_t slash = ds.find('/');
+        if (slash != std::string::npos) {
+            int64_t num = std::stoll(ds.substr(0, slash));
+            int64_t den = std::stoll(ds.substr(slash + 1));
+            // Modular inverse via Fermat's little theorem (modulus is prime)
+            int64_t inv = 1, base = ((den % fam.modulus) + fam.modulus) % fam.modulus;
+            int64_t exp = fam.modulus - 2;
+            while (exp > 0) {
+                if (exp & 1) inv = (inv * base) % fam.modulus;
+                base = (base * base) % fam.modulus;
+                exp >>= 1;
+            }
+            dCoeff = ((num % fam.modulus) + fam.modulus) % fam.modulus;
+            dCoeff = (dCoeff * inv) % fam.modulus;
+        } else {
+            dCoeff = std::stoll(ds);
+            dCoeff = (dCoeff % fam.modulus + fam.modulus) % fam.modulus;
+        }
+    }
+
+    // DEBUG: print derivatives for small families
+    if (eqs.ne <= 4) {
+        std::cout << "\n[DEBUG DERIV] Raw derivatives:" << std::endl;
+        for (size_t di=0; di<deriv.derivPolynomials.size(); ++di)
+            std::cout << "  deriv[" << di << "] = " << deriv.derivPolynomials[di] << std::endl;
+    }
     // Step 3: Assemble IBP equations from derivatives
     std::cout << "[IBPEqGenerator] Step 3: Assembling IBP equations (mon2F)..." << std::endl;
     auto ibpEqsG = assembleIBPFromDerivatives(
-        deriv, eqs.ne, eqs.nl, eqs.nE, fam.modulus);
+        deriv, eqs.ne, eqs.nl, eqs.nE, fam.modulus, dCoeff);
 
     for (auto& geq : ibpEqsG) {
         IBPEquation eq;
