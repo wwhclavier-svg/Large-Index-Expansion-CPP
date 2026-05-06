@@ -331,7 +331,8 @@ void exportAllResultsToMMA_SingleFile(
     const std::vector<RelationSolver::LevDegResult<T>>& all_results,
     int ne, int order, int modulus,
     const std::string& family,
-    const std::string& filename)
+    const std::string& filename,
+    RelationSolver::AnsatzMode ansatz_mode = RelationSolver::AnsatzMode::Pyramid)
 {
     std::ofstream out(filename);
     if (!out) throw std::runtime_error("Cannot open file for writing: " + filename);
@@ -378,6 +379,11 @@ void exportAllResultsToMMA_SingleFile(
         out << "    \"Lev\" -> " << ld.lev << ",\n";
         out << "    \"Deg\" -> " << ld.deg << ",\n";
         out << "    \"NE\" -> " << ne << ",\n";
+        out << "    \"AnsatzMode\" -> \""
+            << (ansatz_mode == RelationSolver::AnsatzMode::Pyramid ? "Pyramid" :
+                ansatz_mode == RelationSolver::AnsatzMode::DotPyramid ? "DotPyramid" :
+                ansatz_mode == RelationSolver::AnsatzMode::Star ? "Star" : "ExtendedPyramid")
+            << "\",\n";
         out << "    \"Modulus\" -> " << modulus << ",\n";
         out << "    \"Order\" -> " << order << ",\n";
         out << "    \"StableOrder\" -> " << ld.stable_order << ",\n";
@@ -469,17 +475,21 @@ void exportAllResultsToMMA_SingleFile(
 
 int main(int argc, char* argv[]) {
     if (argc < 2) {
-        cerr << "Usage: " << argv[0] << " <family_name> [order] [lev_min] [lev_max] [deg_max] [--topsector]" << endl;
+        cerr << "Usage: " << argv[0] << " <family_name> [order] [lev_min] [lev_max] [deg_max] [--topsector] [--mode <0|1|2>]" << endl;
         cerr << "  family_name: e.g. bub, bub0, DBtop" << endl;
         cerr << "  order      : expansion order (default: 4)" << endl;
         cerr << "  lev_min    : min |alpha| (default: 1)" << endl;
         cerr << "  lev_max    : max |alpha| (default: 2)" << endl;
         cerr << "  deg_max    : max |beta| (default: 2)" << endl;
         cerr << "  --topsector: load only top sector (max-sum limitSector)" << endl;
+        cerr << "  --mode <n> : ansatz mode: 0=Pyramid 1=DotPyramid 2=Star 3=ExtendedPyramid (default: 0)" << endl;
+        cerr << "  --sector <s>: ExtendedPyramid sector (e.g. \"1101\"), default=auto top sector" << endl;
         cerr << endl;
         cerr << "Example: " << argv[0] << " bub" << endl;
         cerr << "         " << argv[0] << " DBtop 5 1 2 1" << endl;
         cerr << "         " << argv[0] << " SR 5 1 2 2 --topsector" << endl;
+        cerr << "         " << argv[0] << " bub 4 1 2 2 --mode 1" << endl;
+        cerr << "         " << argv[0] << " bub 4 0 2 2 --mode 3 --sector 11" << endl;
         return 1;
     }
 
@@ -490,8 +500,33 @@ int main(int argc, char* argv[]) {
     int deg_min = 0;
     int deg_max = (argc > 5) ? stoi(argv[5]) : 2;
     bool top_sector_only = false;
+    RelationSolver::AnsatzMode ansatz_mode = RelationSolver::AnsatzMode::Pyramid;
+    std::vector<int> ext_sector;  // ExtendedPyramid sector override
     for (int i = 1; i < argc; ++i) {
-        if (string(argv[i]) == "--topsector") { top_sector_only = true; break; }
+        if (string(argv[i]) == "--topsector") { top_sector_only = true; }
+        else if (string(argv[i]) == "--mode" && i + 1 < argc) {
+            int m = stoi(argv[++i]);
+            if (m == 0) ansatz_mode = RelationSolver::AnsatzMode::Pyramid;
+            else if (m == 1) ansatz_mode = RelationSolver::AnsatzMode::DotPyramid;
+            else if (m == 2) ansatz_mode = RelationSolver::AnsatzMode::Star;
+            else if (m == 3) ansatz_mode = RelationSolver::AnsatzMode::ExtendedPyramid;
+            else {
+                cerr << "Invalid mode: " << m << " (use 0=Pyramid, 1=DotPyramid, 2=Star, 3=ExtendedPyramid)" << endl;
+                return 1;
+            }
+        }
+        else if (string(argv[i]) == "--sector" && i + 1 < argc) {
+            string sec_str = argv[++i];
+            ext_sector.clear();
+            for (char c : sec_str) {
+                if (c == '0') ext_sector.push_back(0);
+                else if (c == '1') ext_sector.push_back(1);
+                else {
+                    cerr << "Invalid sector char '" << c << "' in --sector (use 0/1 only)" << endl;
+                    return 1;
+                }
+            }
+        }
     }
     const int incre = 2;
     
@@ -506,6 +541,19 @@ int main(int argc, char* argv[]) {
     cout << "Order: " << order << endl;
     cout << "lev range: [" << lev_min << ", " << lev_max << "]" << endl;
     cout << "deg range: [" << deg_min << ", " << deg_max << "]" << endl;
+    cout << "Ansatz Mode: "
+         << (ansatz_mode == RelationSolver::AnsatzMode::Pyramid ? "Pyramid (0)" :
+             ansatz_mode == RelationSolver::AnsatzMode::DotPyramid ? "DotPyramid (1)" :
+             ansatz_mode == RelationSolver::AnsatzMode::Star ? "Star (2)" :
+             "ExtendedPyramid (3)") << endl;
+    if (!ext_sector.empty()) {
+        cout << "Ext sector: [";
+        for (size_t i = 0; i < ext_sector.size(); ++i) {
+            if (i) cout << ",";
+            cout << ext_sector[i];
+        }
+        cout << "]" << endl;
+    }
     if (top_sector_only) cout << "Mode: top sector only" << endl;
     cout << "Files: " << binIBPFile << ", " << binRingFile << endl;
     cout << endl;
@@ -640,7 +688,7 @@ int main(int argc, char* argv[]) {
         try {
             auto all_results = RelationSolver::reconstructAllRelations<FFInt>(
                 allResults, sector_list, A_list, Ainv_list,
-                ne, lev_min, lev_max, deg_max, base_config
+                ne, lev_min, lev_max, deg_max, ansatz_mode, base_config, ext_sector
             );
 
             // Collect solution summaries and export as single unified file
@@ -668,7 +716,7 @@ int main(int argc, char* argv[]) {
             // Export single unified file containing ALL results
             string unifiedFilename = "AllRelations_" + family + "_k" + to_string(order) + ".m";
             exportAllResultsToMMA_SingleFile(all_results, ne, order,
-                static_cast<int>(FFInt::p), family, unifiedFilename);
+                static_cast<int>(FFInt::p), family, unifiedFilename, ansatz_mode);
 
             cout << "\n=== Solution Summary ===" << endl;
             cout << "Total configurations: " << solutions.size() << endl;

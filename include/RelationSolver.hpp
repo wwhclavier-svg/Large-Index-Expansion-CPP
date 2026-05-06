@@ -33,6 +33,16 @@ namespace detail {
 namespace RelationSolver {
 
 // ==========================================
+// Ansatz mode enumeration
+// ==========================================
+enum class AnsatzMode {
+    Pyramid         = 0,  // g(ν - α): non-negative seeds, boundary terms (ISP only)
+    DotPyramid      = 1,  // g(ν + α): non-negative seeds, one extra level
+    Star            = 2,  // g(ν + α): mixed-sign per-sector seeds
+    ExtendedPyramid = 3   // g(ν - α): Pyramid(lev+1) shifted by -e_i in each dir
+};
+
+// ==========================================
 // a.随机数生成（已适配 double 和 firefly::FFInt）
 // ==========================================
 template<typename T>
@@ -84,6 +94,237 @@ inline void generateAllIndices(int dim, int max_sum, std::vector<int>& current,
         if (current_sum <= max_sum)
             generateAllIndices(dim, max_sum, current, result, allow_neg);
         current.pop_back();
+    }
+}
+
+// ==========================================
+// 辅助：模式相关的 alpha level 计算和种子生成
+// ==========================================
+
+// 计算给定 alpha 向量的 "level": Pyramid/DotPyramid 用 L1-norm，Star 用 L1 of abs
+inline int alphaLevel(AnsatzMode mode, const std::vector<int>& alpha) {
+    int sum = 0;
+    if (mode == AnsatzMode::Star) {
+        for (int x : alpha) sum += std::abs(x);
+    } else {
+        for (int x : alpha) sum += x;  // non-negative for Pyramid/DotPyramid
+    }
+    return sum;
+}
+
+// 生成 alpha 种子列表，顺序与 MMA GenerateSeeds / SectorMO 对齐
+inline void generateAlphaSeeds(
+    AnsatzMode mode,
+    int ne, int lev,
+    const std::vector<int>& sector,  // 仅 Star 模式使用
+    std::vector<std::vector<int>>& result)
+{
+    std::vector<int> temp;
+    result.clear();
+
+    switch (mode) {
+    case AnsatzMode::Pyramid:
+        // 非负种子，L1 <= lev，MMA GenerateSeeds 顺序：按 L1 分组，组内 -Reverse 排序
+        generateAllIndices(ne, lev, temp, result, false);
+        std::sort(result.begin(), result.end(),
+            [](const std::vector<int>& a, const std::vector<int>& b) {
+                int sa = 0, sb = 0;
+                for (int x : a) sa += x;
+                for (int x : b) sb += x;
+                if (sa != sb) return sa < sb;
+                // MMA: -Reverse[#] — colexicographic descending
+                for (int i = static_cast<int>(a.size()) - 1; i >= 0; --i) {
+                    if (a[i] != b[i]) return a[i] > b[i];
+                }
+                return false;
+            });
+        break;
+
+    case AnsatzMode::DotPyramid:
+        // 非负种子，L1 <= lev+1 (多一层)，MMA GenerateSeeds 顺序
+        generateAllIndices(ne, lev + 1, temp, result, false);
+        std::sort(result.begin(), result.end(),
+            [](const std::vector<int>& a, const std::vector<int>& b) {
+                int sa = 0, sb = 0;
+                for (int x : a) sa += x;
+                for (int x : b) sb += x;
+                if (sa != sb) return sa < sb;
+                for (int i = static_cast<int>(a.size()) - 1; i >= 0; --i) {
+                    if (a[i] != b[i]) return a[i] > b[i];
+                }
+                return false;
+            });
+        break;
+
+    case AnsatzMode::Star: {
+        // 混合符号种子，per-sector 生成，MMA DotRankSeeds + SectorMO 顺序
+        int nVars = ne;
+        int subsets = 1 << nVars;
+        std::set<std::vector<int>> seen;
+
+        for (int mask = 0; mask < subsets; ++mask) {
+            std::vector<int> pdSet, ispSet;
+            for (int i = 0; i < nVars; ++i) {
+                if (mask & (1 << i)) pdSet.push_back(i);
+                else ispSet.push_back(i);
+            }
+            int nPd = static_cast<int>(pdSet.size());
+            int nIsp = static_cast<int>(ispSet.size());
+
+            // dotSeeds: 非负，L1 <= lev (生成 PD 侧的 +1.. 部分)
+            std::vector<std::vector<int>> dotSeeds;
+            {
+                std::vector<int> tmp;
+                generateAllIndices(nPd, lev, tmp, dotSeeds, false);
+                // MMA GenerateSeeds 排序
+                std::sort(dotSeeds.begin(), dotSeeds.end(),
+                    [](const std::vector<int>& a, const std::vector<int>& b) {
+                        int sa = 0, sb = 0;
+                        for (int x : a) sa += x;
+                        for (int x : b) sb += x;
+                        if (sa != sb) return sa < sb;
+                        for (int i = static_cast<int>(a.size()) - 1; i >= 0; --i) {
+                            if (a[i] != b[i]) return a[i] > b[i];
+                        }
+                        return false;
+                    });
+            }
+
+            // rankSeeds: 非负，L1 <= lev (生成 ISP 侧的 -(seed) 部分)
+            std::vector<std::vector<int>> rankSeeds;
+            {
+                std::vector<int> tmp;
+                generateAllIndices(nIsp, lev, tmp, rankSeeds, false);
+                std::sort(rankSeeds.begin(), rankSeeds.end(),
+                    [](const std::vector<int>& a, const std::vector<int>& b) {
+                        int sa = 0, sb = 0;
+                        for (int x : a) sa += x;
+                        for (int x : b) sb += x;
+                        if (sa != sb) return sa < sb;
+                        for (int i = static_cast<int>(a.size()) - 1; i >= 0; --i) {
+                            if (a[i] != b[i]) return a[i] > b[i];
+                        }
+                        return false;
+                    });
+            }
+
+            // Combine: seed[pd] = 1+dot, seed[isp] = -rank
+            std::vector<std::vector<int>> combined;
+            for (const auto& ds : dotSeeds) {
+                for (const auto& rs : rankSeeds) {
+                    std::vector<int> seed(nVars, 0);
+                    for (int pi = 0; pi < nPd; ++pi)
+                        seed[pdSet[pi]] = 1 + ds[pi];
+                    for (int ii = 0; ii < nIsp; ++ii)
+                        seed[ispSet[ii]] = -rs[ii];
+                    combined.push_back(seed);
+                }
+            }
+
+            // MMA SectorMO 排序 per sector
+            std::sort(combined.begin(), combined.end(),
+                [&](const std::vector<int>& a, const std::vector<int>& b) {
+                    // SectorMO: {Total[pd], -Total[isp], -isp, pd}
+                    int totA_pd = 0, totB_pd = 0;
+                    int totA_isp = 0, totB_isp = 0;
+                    for (int i : pdSet) { totA_pd += a[i]; totB_pd += b[i]; }
+                    for (int i : ispSet) { totA_isp += a[i]; totB_isp += b[i]; }
+                    if (totA_pd != totB_pd) return totA_pd < totB_pd;
+                    if (totA_isp != totB_isp) return -totA_isp < -totB_isp;  // negated
+                    for (int i : ispSet) {
+                        if (a[i] != b[i]) return -a[i] < -b[i];
+                    }
+                    for (int i : pdSet) {
+                        if (a[i] != b[i]) return a[i] < b[i];
+                    }
+                    return false;
+                });
+
+            for (const auto& s : combined) seen.insert(s);
+        }
+
+        result.assign(seen.begin(), seen.end());
+        // 最终按 L1 排序（MMA levelFilter: Total[Abs/@ (key - vlist)])
+        std::sort(result.begin(), result.end(),
+            [](const std::vector<int>& a, const std::vector<int>& b) {
+                int na = 0, nb = 0;
+                for (int x : a) na += std::abs(x);
+                for (int x : b) nb += std::abs(x);
+                if (na != nb) return na < nb;
+                return a < b;
+            });
+        break;
+    }
+
+    case AnsatzMode::ExtendedPyramid: {
+        // Pyramid(lev+1) shifted by -e_i only where sector[i] == 1.
+        // Default (empty sector) = top sector (all 1s) = shift in all directions.
+        // alpha = rk - e_i  where rk ∈ Pyramid(lev+1) (non-negative, |rk| ≤ lev+1)
+        std::set<std::vector<int>> seen;
+
+        // Determine active shift directions from sector (default: all directions)
+        std::vector<int> shift_dirs;
+        if (sector.empty() || static_cast<int>(sector.size()) != ne) {
+            for (int i = 0; i < ne; ++i) shift_dirs.push_back(i);
+        } else {
+            for (int i = 0; i < ne; ++i)
+                if (sector[i] == 1) shift_dirs.push_back(i);
+        }
+        // If no active directions, fall back to base Pyramid(lev) only
+        if (shift_dirs.empty()) {
+            // Just return Pyramid(lev) (non-negative, L1 ≤ lev)
+            std::vector<int> tmp;
+            generateAllIndices(ne, lev, tmp, result, false);
+            std::sort(result.begin(), result.end(),
+                [](const std::vector<int>& a, const std::vector<int>& b) {
+                    int sa = 0, sb = 0;
+                    for (int x : a) sa += x;
+                    for (int x : b) sb += x;
+                    if (sa != sb) return sa < sb;
+                    for (int i = static_cast<int>(a.size()) - 1; i >= 0; --i)
+                        if (a[i] != b[i]) return a[i] > b[i];
+                    return false;
+                });
+            break;
+        }
+
+        // Generate Pyramid(lev+1) in MMA order
+        std::vector<std::vector<int>> pyr_lev1;
+        {
+            std::vector<int> tmp;
+            generateAllIndices(ne, lev + 1, tmp, pyr_lev1, false);
+            std::sort(pyr_lev1.begin(), pyr_lev1.end(),
+                [](const std::vector<int>& a, const std::vector<int>& b) {
+                    int sa = 0, sb = 0;
+                    for (int x : a) sa += x;
+                    for (int x : b) sb += x;
+                    if (sa != sb) return sa < sb;
+                    for (int i = static_cast<int>(a.size()) - 1; i >= 0; --i)
+                        if (a[i] != b[i]) return a[i] > b[i];
+                    return false;
+                });
+        }
+
+        for (const auto& rk : pyr_lev1) {
+            for (int i : shift_dirs) {
+                std::vector<int> alpha = rk;
+                alpha[i] -= 1;  // shift by -e_i
+                seen.insert(std::move(alpha));
+            }
+        }
+
+        result.assign(seen.begin(), seen.end());
+        // Sort by Total (sum), then lexicographic — level filter = sum of components
+        std::sort(result.begin(), result.end(),
+            [](const std::vector<int>& a, const std::vector<int>& b) {
+                int sa = 0, sb = 0;
+                for (int x : a) sa += x;
+                for (int x : b) sb += x;
+                if (sa != sb) return sa < sb;
+                return a < b;
+            });
+        break;
+    }
     }
 }
 
@@ -330,6 +571,9 @@ public:
     int getKMax() const { return k_max_; }
     int getNb() const { return nb_; }
 
+    // 核符号：false = ν-α (Pyramid), true = ν+α (DotPyramid, Star)
+    void setNegatedKernel(bool neg) { negatedKernel_ = neg; }
+
 private:
     // step2: g[k] = coeff of 1/n^k in g(ν-α; n) = p(α) · h(ν-α; n)
     void step2_computeG(const std::vector<T>& nu, int nimax_idx);
@@ -365,6 +609,8 @@ private:
     std::unique_ptr<IndexStorage<T>> g_store_;           // 存储 g(alpha)
     std::unique_ptr<DualIndexStorage<T>> f1_store_;      // 存储 f1(alpha, beta)
     std::unique_ptr<DualIndexStorage<T>> f2_store_;      // 存储 f2(alpha, beta)
+
+    bool negatedKernel_ = false;                         // kernel sign: false=ν-α, true=ν+α
 };
 
 // ==========================================
@@ -526,7 +772,8 @@ public:
     // 初始化：传入全局参数
     void init(int k_max, int lev, int deg,
               const std::vector<std::vector<int>>& alphas,
-              const std::vector<std::vector<int>>& betas);
+              const std::vector<std::vector<int>>& betas,
+              bool kernel_negated = false);
     
     // 添加 regime（及其 nimax 列表）
     void addRegime(const RegimeData<T>& reg, const std::vector<int>& nimax_indices);
@@ -558,6 +805,7 @@ private:
     int k_max_ = 0;
     int lev_ = 0;
     int deg_ = 0;
+    bool kernel_negated_ = false;
     std::vector<std::vector<int>> alphas_;
     std::vector<std::vector<int>> betas_;
 };
@@ -596,7 +844,10 @@ public:
     // ne: 维度（用于采样器）
     BuildResult build(const std::vector<RegimeData<T>>& regimes,
                      const std::vector<std::vector<int>>& nimax_lists,
-                     int ne);
+                     int ne,
+                     bool kernel_negated = false,
+                     const std::vector<std::vector<int>>* ext_alphas = nullptr,
+                     const std::vector<std::vector<int>>* ext_betas = nullptr);
 
     // 设置列掩码（用于 RemoveSolvedVariables 变量过滤）
     // mask[j] = true 表示第 j 列活跃（保留）
@@ -778,10 +1029,11 @@ void RegimeEvaluator<T>::step2_computeG(const std::vector<T>& nu, int nimax_idx)
                 for (long long cid = 0; cid < states; ++cid) {
                     std::vector<int> gamma = readIndex(static_cast<int>(cid), l, ne_);
 
-                    // 计算 weight = (nu - alpha)^gamma
+                    // 计算 weight = (ν ± alpha)^gamma — sign per mode
                     T weight = T(1);
                     for (int m = 0; m < ne_; ++m) {
-                        T diff = nu[m] - static_cast<T>(alpha[m]);
+                        T diff = negatedKernel_ ? nu[m] + static_cast<T>(alpha[m])
+                                                : nu[m] - static_cast<T>(alpha[m]);
                         weight *= detail::power(diff, gamma[m]);
                     }
 
@@ -1361,11 +1613,13 @@ T IncrementalNullspaceSolver<T>::verifyBasis(
 template<typename T>
 void GlobalEquationAssembler<T>::init(int k_max, int lev, int deg,
                                        const std::vector<std::vector<int>>& alphas,
-                                       const std::vector<std::vector<int>>& betas)
+                                       const std::vector<std::vector<int>>& betas,
+                                       bool kernel_negated)
 {
     k_max_ = k_max;
     lev_ = lev;
     deg_ = deg;
+    kernel_negated_ = kernel_negated;
     alphas_ = alphas;
     betas_ = betas;
 }
@@ -1382,6 +1636,7 @@ void GlobalEquationAssembler<T>::addRegime(const RegimeData<T>& reg,
     // 创建并初始化 evaluator
     RegimeEvaluator<T> evaluator;
     evaluator.init(reg, k_max_, lev_, deg_, alphas_, betas_);
+    evaluator.setNegatedKernel(kernel_negated_);
     evaluators_.push_back(std::move(evaluator));
 }
 
@@ -1527,7 +1782,10 @@ typename AdaptiveEquationBuilder<T>::BuildResult
 AdaptiveEquationBuilder<T>::build(
     const std::vector<RegimeData<T>>& regimes,
     const std::vector<std::vector<int>>& nimax_lists,
-    int ne)
+    int ne,
+    bool kernel_negated,
+    const std::vector<std::vector<int>>* ext_alphas,
+    const std::vector<std::vector<int>>* ext_betas)
 {
     BuildResult result;
     
@@ -1558,12 +1816,21 @@ AdaptiveEquationBuilder<T>::build(
     int k_max = regimes[0].C->getKmax();
     
     // 生成 alphas, betas
+    // 使用外部提供的 alphas/betas（例如非 Pyramid 模式），否则从 config 生成
     std::vector<std::vector<int>> alphas, betas;
-    std::vector<int> temp;
-    generateAllIndices(ne, config_.lev_hint, temp, alphas, false);
-    temp.clear();
-    generateAllIndices(ne, config_.deg_hint, temp, betas, false);
-    
+    if (ext_alphas && !ext_alphas->empty()) {
+        alphas = *ext_alphas;
+    } else {
+        std::vector<int> temp;
+        generateAllIndices(ne, config_.lev_hint, temp, alphas, false);
+    }
+    if (ext_betas && !ext_betas->empty()) {
+        betas = *ext_betas;
+    } else {
+        std::vector<int> temp;
+        generateAllIndices(ne, config_.deg_hint, temp, betas, false);
+    }
+
     size_t num_vars_full = alphas.size() * betas.size();
     size_t num_vars = hasColumnMask() ? active_count_ : num_vars_full;
 
@@ -1573,7 +1840,7 @@ AdaptiveEquationBuilder<T>::build(
     IncrementalNullspaceSolver<T> solver(num_vars);  // 只在活跃列上求解
 
     // 初始化 assembler（始终使用完整 alphas/betas 以保持列索引一致）
-    assembler.init(k_max, config_.lev_hint, config_.deg_hint, alphas, betas);
+    assembler.init(k_max, config_.lev_hint, config_.deg_hint, alphas, betas, kernel_negated);
     for (size_t r = 0; r < regimes.size(); ++r) {
         assembler.addRegime(regimes[r], nimax_lists[r]);
     }
@@ -2178,7 +2445,9 @@ static std::vector<LevDegResult<T>> reconstructAllRelations(
     const std::vector<std::vector<std::vector<T>>>& A_list,
     const std::vector<std::vector<std::vector<T>>>& Ainv_list,
     int ne, int lev_min, int lev_max, int deg_max,
-    const AdaptiveSamplingConfig& config = {})
+    AnsatzMode mode = AnsatzMode::Pyramid,
+    const AdaptiveSamplingConfig& config = {},
+    const std::vector<int>& ext_sector = {})
 {
     std::vector<LevDegResult<T>> all_results;
     all_results.reserve((lev_max - lev_min + 1) * (deg_max + 1));
@@ -2199,15 +2468,47 @@ static std::vector<LevDegResult<T>> reconstructAllRelations(
 
     if (regimes.empty()) return all_results;
 
-    // ---- 预生成 lev_max 所需的所有 alphas ----
+    // ---- 预生成 lev_max 所需的所有 alphas（由 mode 决定生成方式） ----
     std::vector<int> temp;
     std::vector<std::vector<int>> alphas_max;
-    generateAllIndices(ne, lev_max, temp, alphas_max, false);
+    if (mode == AnsatzMode::Star) {
+        // Star: 使用第一个 sector 确定 pdSet/ispSet 划分
+        std::vector<int> first_sector = sector.empty() ? std::vector<int>(ne, 1) : sector[0];
+        generateAlphaSeeds(mode, ne, lev_max, first_sector, alphas_max);
+    } else if (mode == AnsatzMode::ExtendedPyramid) {
+        // ExtendedPyramid: 使用 ext_sector 确定哪些方向做 -e_i 平移
+        std::vector<int> use_sector;
+        if (!ext_sector.empty() && static_cast<int>(ext_sector.size()) == ne) {
+            use_sector = ext_sector;
+        } else if (!sector.empty()) {
+            // 默认：自动检测 top sector（max sum），即所有分量均为 1 的 sector
+            const std::vector<int>* best = &sector[0];
+            int best_sum = 0;
+            for (const auto& s : sector) {
+                int sum = 0;
+                for (int x : s) sum += x;
+                if (sum > best_sum) { best_sum = sum; best = &s; }
+            }
+            use_sector = *best;
+        } else {
+            use_sector = std::vector<int>(ne, 1);
+        }
+        generateAlphaSeeds(mode, ne, lev_max, use_sector, alphas_max);
+    } else {
+        generateAlphaSeeds(mode, ne, lev_max, {}, alphas_max);
+    }
 
     // ---- prepare 所有 regimes（使用最大 alphas 集） ----
     for (auto& reg : regimes) {
         reg.prepare(lev_max, alphas_max);
     }
+
+    // ---- 核符号：Pyramid/ExtendedPyramid 用 ν-α，DotPyramid/Star 用 ν+α ----
+    bool kernel_negated = (mode != AnsatzMode::Pyramid && mode != AnsatzMode::ExtendedPyramid);
+
+    // Star/DotPyramid 从 level 1 起步（无零种子）；Pyramid/ExtendedPyramid 可从 0 起步
+    int eff_lev_min = (mode == AnsatzMode::Pyramid || mode == AnsatzMode::ExtendedPyramid)
+                      ? lev_min : std::max(1, lev_min);
 
     // ---- 构建 nimax 列表（每个 RegimeData 已对应一个具体解，只需 nimax_idx=0）----
     std::vector<std::vector<int>> nimax_lists;
@@ -2215,16 +2516,21 @@ static std::vector<LevDegResult<T>> reconstructAllRelations(
         nimax_lists.push_back({0});
     }
 
+    std::cout << "Ansatz mode: "
+              << (mode == AnsatzMode::Pyramid ? "Pyramid" :
+                  mode == AnsatzMode::DotPyramid ? "DotPyramid" :
+                  mode == AnsatzMode::Star ? "Star" : "ExtendedPyramid")
+              << " (kernel: ν" << (kernel_negated ? "+α" : "-α") << ")"
+              << ", alphas_max=" << alphas_max.size() << std::endl;
+
     // ---- bindep[level] = 该层所有自由度下求解出的独立变量对 ----
     std::vector<std::vector<AlphaBeta>> bindep;
 
-    for (int lev = lev_min; lev <= lev_max; ++lev) {
-        // 当前 lev 的 alphas（从 alphas_max 中筛选 |alpha| <= lev）
+    for (int lev = eff_lev_min; lev <= lev_max; ++lev) {
+        // 当前 lev 的 alphas（从 alphas_max 中筛选 level <= lev）
         std::vector<std::vector<int>> alphas;
         for (const auto& a : alphas_max) {
-            int sum = 0;
-            for (int x : a) sum += x;
-            if (sum <= lev) alphas.push_back(a);
+            if (alphaLevel(mode, a) <= lev) alphas.push_back(a);
         }
 
         std::vector<AlphaBeta> levelBindep;  // 同层累积独立变量
@@ -2258,7 +2564,8 @@ static std::vector<LevDegResult<T>> reconstructAllRelations(
                 builder.setColumnMask(active_mask, active_count);
             }
 
-            auto build_result = builder.build(regimes, nimax_lists, ne);
+            auto build_result = builder.build(regimes, nimax_lists, ne, kernel_negated,
+                                                &alphas, &betas);
 
             // ---- 展开零空间基到完整变量空间 ----
             auto basis = build_result.nullspace.basis;
