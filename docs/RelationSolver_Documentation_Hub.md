@@ -50,7 +50,16 @@ High-level project overview:
 
 **Best for**: System design, module relationships, overall project context
 
-### 5. **Test Suite** ([../tests/test_relationFF.cpp](../tests/test_relationFF.cpp))
+### 5. **Ansatz Modes** ([AnsatzModes.md](./AnsatzModes.md))
+Multi-mode α-seed generation for LIE reduction:
+- Four ansatz modes: Pyramid, DotPyramid, Star, ExtendedPyramid
+- Per-mode kernel sign (ν−α vs ν+α), α generation, level filter
+- CLI usage with `--mode` and `--sector` flags
+- Test results and verification checklist
+
+**Best for**: Understanding ansatz types, choosing the right mode, CLI reference
+
+### 6. **Test Suite** ([../tests/test_relationFF.cpp](../tests/test_relationFF.cpp))
 **Living documentation** - practical, working examples:
 - Multi-regime setup
 - Adaptive config tuning (`adjustSamplingConfig`)
@@ -158,6 +167,7 @@ RelationSolver Module Files:
 └── docs/
     ├── RelationSolver_ComponentGuide.md  (Comprehensive API + algorithm)
     ├── RelationSolver_QuickReference.md  (Quick lookup)
+    ├── AnsatzModes.md                    (Multi-mode ansatz guide + test results)
     └── Reconstruct_Algorithm.md          (MMA vs C++ algorithm comparison)
 ```
 
@@ -201,8 +211,11 @@ struct AdaptiveSamplingConfig {
 ### Run the Tests
 ```bash
 cd build
-./test_relationFF          # Main finite field test (build with CMakeLists.txt)
-# test_RelationNew         -- archived in tests/archive/, not in current build
+./test_relationFF bub00 4 1 2 2          # Pyramid (default)
+./test_relationFF bub00 4 1 2 2 --mode 1 # DotPyramid
+./test_relationFF bub00 4 1 2 2 --mode 2 # Star
+./test_relationFF bub00 4 0 2 2 --mode 3 # ExtendedPyramid
+# test_RelationNew                         -- archived in tests/archive/, not in current build
 ```
 
 ### Expected Output
@@ -276,6 +289,7 @@ IncrementalRelationSolver (for multi-level problems)
 ## 📚 Additional Resources
 
 - **Algorithm Theory**: [Reconstruct_Algorithm.md](Reconstruct_Algorithm.md) — MMA vs C++ comparison, per-point evaluation
+- **Ansatz Modes**: [AnsatzModes.md](AnsatzModes.md) — Pyramid/DotPyramid/Star/ExtendedPyramid guide
 - **Project Architecture**: [AGENTS.md](../AGENTS.md)
 - **Build System**: [CMakeLists.txt](../CMakeLists.txt)
 - **Example Code**: [tests/test_relationFF.cpp](../tests/test_relationFF.cpp)
@@ -294,6 +308,6 @@ This documentation hub provides multiple perspectives on RelationSolver:
 
 ---
 
-*Last updated: 2026-05-05 (order-stability detection added)*  
-*Documentation version: 1.2*  
-*Covers: RelationSolver.hpp, test_relationFF.cpp*
+*Last updated: 2026-05-07 (multi-mode ansatz + test results added)*  
+*Documentation version: 1.3*  
+*Covers: RelationSolver.hpp, test_relationFF.cpp, AnsatzModes.md*

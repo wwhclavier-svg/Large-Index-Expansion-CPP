@@ -20,8 +20,8 @@
 ### 1.1 架构概览
 
 ```
-FamilyDatabase(.json)  →  [B] IBPEqGenerator  →  [C] RegionSolver  →  .bin 输出
-                              (Singular 子进程)     (Singular 子进程)
+families/*.json  →  [B] IBPEqGenerator  →  [C] RegionSolver  →  .bin 输出
+                     (Singular 子进程)      (Singular 子进程)
 ```
 
 全管线为 header-only C++17，通过 `SingularRunner` 模板类调用 Singular 子进程。管线总代码量约 8500 行。
@@ -53,19 +53,23 @@ FamilyDatabase(.json)  →  [B] IBPEqGenerator  →  [C] RegionSolver  →  .bin
 7. **Ring 矩阵**：`RingBuilder` 计算 A/Ainv
 8. **写出**：IBP1 格式的 IBPMat_*.bin + RingData_*.bin
 
-### 1.4 已完成 Family
+### 1.4 已完成 Family（C++ 管线）
 
-| Family | L | ne | Regions | 状态 |
-|--------|---|----|---------|------|
-| bub00 | 1 | 2 | 1 | ✅ |
-| bub10 | 1 | 2 | 3 | ✅ |
-| bub11 | 1 | 2 | 5 | ✅ |
-| Tri | 1 | 3 | 2 | ✅ |
-| Box | 1 | 4 | 15 | ✅ |
-| SR | 2 | 5 | 6 | ✅ |
-| SR3m | 2 | 5 | 8 | ✅ |
-| SR5m | 2 | 5 | 45 | ✅ |
-| TB123 | 2 | 7 | 未完成 | ⏳ Singular 超时 |
+| Family | L | ne | Regions | JSON | 状态 |
+|--------|---|----|---------|------|------|
+| bub00 | 1 | 2 | 1 | ✅ | ✅ |
+| bub10 | 1 | 2 | 3 | ✅ | ✅ |
+| bub11 | 1 | 2 | 5 | ✅ | ✅ |
+| Tri | 1 | 3 | 2 | ✅ | ✅ |
+| Box | 1 | 4 | 15 | ✅ | ✅ |
+| SR212 | 2 | 5 | 6 | ✅ | ✅ |
+| SR212-3m | 2 | 5 | 8 | ✅ | ✅ |
+| SR212-5m | 2 | 5 | 45 | ✅ | ✅ |
+| TB123 | 2 | 7 | 37 | ✅ | ⏳ Singular 超时 |
+| TB123m | 2 | 7 | — | ❌ | 无 JSON |
+| DB313 | 2 | 7 | — | ❌ | 无 JSON |
+| NP222 | 2 | 7 | — | ❌ | 无 JSON |
+| NP322 | 2 | 8 | — | ❌ | 无 JSON |
 
 ### 1.5 关键问题：A/B 方程符号不一致
 
@@ -79,8 +83,8 @@ C++ 和 MMA 的 IBP 组装采用不同中间约定：
 
 - [ ] Lorentz Invariance (LI) 方程生成
 - [ ] A/B 方程符号对齐（达成 .bin 逐字节一致）
-- [ ] TB123 超时问题（需优化 Groebner 基计算或换用更高效的基算法）
-- [ ] DB313 / NP222 / NP322 / SR212 变体的 JSON config
+- [ ] TB123 超时问题（需优化 Groebner 基计算）
+- [ ] DB313 / NP222 / NP322 / NP322m / TB123m 的 JSON config
 
 ---
 
@@ -88,60 +92,103 @@ C++ 和 MMA 的 IBP 组装采用不同中间约定：
 
 ### 2.1 MMA 参考实现（VerifyUtility）
 
-`commit 33b3e14` — 将 MMA 参考管线从原工作区迁入版本库，共 17 个 .wl 文件，约 6000 行：
+`commit 33b3e14` — 将 MMA 参考管线从原工作区迁入版本库。经后续清理，当前共 **20 个 .wl 脚本**（约 6500 行），按功能分组：
+
+**核心管线（LIE 系列，7 个）：**
+
+| 文件 | 行数 | 功能 |
+|------|------|------|
+| `LIEFamilyDefine.wl` | 119 | Family 定义 → 内部数据 |
+| `LIEUtility.wl` | 147 | sectorLimitIBP、导数、系数替换 |
+| `LIECoreAlgebra.wl` | 295 | expRegSolve2、Groebner/准素分解 |
+| `LIERegions.wl` | 231 | regionsBySectors 主入口（含 sector 级计时） |
+| `LIEExpand.wl` | 519 | 膨胀系数计算 |
+| `LIEReconstruct.wl` | 1022 | 关系重构 |
+| `LIEWorkflow.wl` | 570 | 完整管线编排 |
+
+**Singular 接口与导出（3 个）：**
 
 | 文件 | 功能 |
 |------|------|
-| `LIEFamilyDefine.wl` | Family 定义 → 内部数据 |
-| `LIEUtility.wl` | sectorLimitIBP、导数、系数替换 |
-| `LIECoreAlgebra.wl` | expRegSolve2、Groebner/准素分解 |
-| `LIERegions.wl` | regionsBySectors 主入口 |
-| `LIEExpand.wl` | 膨胀系数计算 |
-| `LIEReconstruct.wl` | 关系重构 |
-| `LIEWorkflow.wl` | 完整管线编排 |
-| `SingularInterface.wl` | Singular 调用接口 |
+| `SingularInterface.wl` | Singular 子进程调用（新增 `SingularTimeout` 超时选项） |
 | `ExportBinary_IBPMatrix.wl` | .bin 导出 |
 | `M2Kira.wl` | Kira 格式互转 |
-| `VerifyExpand-*.wl` (4个) | 膨胀系数验证 |
-| `VerifyRelation-SeriesVerify.wl` | 关系验证 |
-| `KiraRuleLoader.wl` | Kira IBP 规则导入 |
 
-### 2.2 对比工具（Compare-* 系列）
+**膨胀系数验证（VerifyExpand 系列，4 个）：**
 
-`commit baa0534` — 5 个对比脚本：
-
-| 脚本 | 用途 |
+| 文件 | 功能 |
 |------|------|
-| `Compare-Expand.wl` | 膨胀系数对比 |
-| `Compare-FamilyGenerate.wl` | 全管线 .bin 对比 |
-| `Compare-Results.wl` | 最终结果对比 |
-| `Compare-Reconstruct-bub00.wl` | 关系重构对比（bub00 专用） |
+| `VerifyExpand-Prepare.wl` | C++ .bin → MMA 加载准备 |
+| `VerifyExpand-Compare.wl` | C++ vs MMA 膨胀系数逐项对比 |
+| `VerifyExpand-MMAExpand.wl` | MMA 独立膨胀计算 |
+| `VerifyExpand-SeriesVerify.wl` | 级数自洽性验证 |
+
+**Kira 交叉验证与通用工具（6 个）：**
+
+| 文件 | 功能 |
+|------|------|
+| `KiraRuleLoader.wl` | Kira IBP 规则导入 |
+| `Verify-Blade.wl` | Blade 张量验证 |
+| `Verify-Kira.wl` | Kira 约化对比验证 |
+| `Verify-MMACompare.wl` | C++ vs MMA 通用对比框架 |
+| `Verify-Series.wl` | 级数验证工具 |
+| `Debug-DumpFamilyGenerate-v2.wl` | 中间步骤调试 dump（IBP 方程 / FTable / A/B 方程） |
 | `Compare-VerifyLog.wl` | 验证日志对比 |
 
-### 2.3 MMA 参考 .bin 文件
+> **已删除**（commit 99ec194）：`Compare-Expand.wl`、`Compare-FamilyGenerate.wl`、`Compare-Results.wl`、`Compare-Reconstruct-bub00.wl`、`VerifyRelation-SeriesVerify.wl`。功能已收敛到上述统一验证框架。
 
-`verify/<family>/` 目录下已有部分 MMA 生成的参考 .bin 和元数据：
+### 2.2 Kira 验证缓存
 
-| Family | .bin 存在 | RegionInfo | Timing |
-|--------|----------|------------|--------|
-| bub00 | ✅ | ✅ | ✅ |
-| bub10 | ✅ | ✅ | ✅ |
-| bub11 | ❌ | ❌ | ❌ |
-| Tri | ❌ | ❌ | ❌ |
-| Box | ✅ | ✅ | ✅ |
-| SR/SR3m/SR5m | ❌ | ❌ | ❌ |
+`VerifyUtility/cache/` 目录包含 bub00、SR212、Tri 的 Kira 约化缓存数据（sector mappings + IBP rule ID），用于 Kira 交叉验证流程：
+
+```
+VerifyUtility/cache/
+├── bub00_reduce_1/       # bub00: ibps/nids/zidpos 映射 + topology
+├── bub00_sectormappings/  # bub00: maximal cut masters
+├── SR212_reduce_1/        # SR212: 同上 + Map/SR/SubSym 规则
+├── SR212_sectormappings/
+├── Tri_reduce_1/          # Tri: 同上 + LI 规则
+└── Tri_sectormappings/
+```
+
+### 2.3 MMA 参考 .bin 文件与元数据
+
+`verify/<family>/` 目录下 MMA 生成的参考 .bin 和时序/区域信息。当前覆盖 **12 个 family**：
+
+| Family | L | ne | .bin | Timing | RegionInfo | Checkpoint |
+|--------|---|---|------|--------|------------|------------|
+| bub00 | 1 | 2 | ✅ | ✅ | ✅ | ✅ |
+| bub10 | 1 | 2 | ✅ | ✅ | ✅ | ✅ |
+| bub11 | 1 | 2 | ✅ | ✅ | ✅ | ✅ |
+| Tri | 1 | 3 | ✅ | ✅ | ✅ | ✅ |
+| Box | 1 | 4 | ✅ | ✅ | ✅ | ✅ |
+| SR212 | 2 | 5 | ✅ | ✅ | ✅ | ✅ |
+| SR212-3m | 2 | 5 | ✅ | ✅ | ✅ | ✅ |
+| SR212-5m | 2 | 5 | ✅ | ✅ | ✅ | ✅ |
+| TB123 | 2 | 7 | ✅ | ✅ | ✅ | ✅ |
+| TB123m | 2 | 7 | ✅ | ✅ | ✅ | ✅ |
+| DB313 | 2 | 7 | ✅ | ✅ | ✅ | ✅ |
+| NP222 | 2 | 7 | ✅ | ✅ | ✅ | ✅ |
+
+> bub00 目录额外包含 `resCache_Expansion_bub00.bin`（膨胀系数缓存）和 `Compare-CPPResult-bub00.m`。
 
 ### 2.4 test_relationFF 验证
 
-- bub00：膨胀系数逐字节一致，6 个 (lev,deg) 配置 sol_dim 完全匹配
-- 其余 family 待测
+- **bub00**：膨胀系数逐字节一致，6 个 (lev,deg) 配置 sol_dim 完全匹配
+- **Box / SR212 / SR212-3m / SR212-5m / TB123 / NP222**：性能基准完成，relation 重构 sol_dim 验证通过（见 [§3](#3-性能建模singular-求解-region-的时间消耗)）
+- 其余 family 待覆盖
 
 ### 2.5 验证文档
 
-位于 `verify/docs/`：
-- `Test-Expand.md` — 膨胀系数验证结果
-- `Test-Relation.md` — 关系重构结果
-- 已清理过时文档（`IBPVerification.md`、`Verify-MMA-KIRA-Guide.md` 等 5 个文档）
+`verify/docs/` 经大幅整理，保留 3 个核心文档：
+
+| 文件 | 内容 |
+|------|------|
+| `Test-Expand.md` | 膨胀系数验证结果 |
+| `Test-Relation.md` | 关系重构验证结果（大幅精简重写） |
+| `CPP-KiraVerify-Debugger.md` | C++ / Kira 交叉调试指南 |
+
+> 已删除：`IBPVerification.md`、`Verify-MMA-KIRA-Guide.md`（commit 99ec194）。
 
 ---
 
@@ -149,7 +196,7 @@ C++ 和 MMA 的 IBP 组装采用不同中间约定：
 
 ### 3.1 测试结果
 
-`docs/Benchmark_Results.md` (712 行) 记录了三类基准测试：
+`docs/Benchmark_Results.md` (712+ 行) 记录了三类基准测试：
 
 **Region 求解性能（C++ FamilyGenerate vs MMA）：**
 
@@ -158,7 +205,7 @@ C++ 和 MMA 的 IBP 组装采用不同中间约定：
 | bub00 | 2 | 0.11s | 3.4s | 31x |
 | Box | 4 | 0.62s | 4.5s | 7x |
 | Tri | 3 | 0.25s | 3.7s | 15x |
-| SR | 5 | 1.2s | — | — |
+| SR212 | 5 | 1.2s | — | — |
 
 **test_relationFF 算法优化效果（Incremental RREF + nimax 削减，commit 8391228）：**
 
@@ -174,9 +221,14 @@ C++ 和 MMA 的 IBP 组装采用不同中间约定：
 
 ### 3.2 关键发现
 
-- **C++ FamilyGenerate 比 MMA 快 7-34x**（wall clock），主要原因是 C++ 内联计算 IBP 组装，而 MMA 走符号计算 + 字符串解析
-- **Singular Groebner 基是瓶颈**：更大的 family（TB123, ne=7）在 Groebner 基步骤超时
-- **Expand-vs-Solve crossover 分析**已记录在 Benchmark_Results 中
+- **C++ FamilyGenerate 比 MMA 快 7-34x**（wall clock）：C++ 内联计算 IBP 组装，MMA 走符号计算 + 字符串解析
+- **Singular Groebner 基是瓶颈**：TB123 (ne=7) 在 Groebner 基步骤超时
+- **Expand-vs-Solve crossover 分析**已记录在 Benchmark_Results 中（含 ne=7 family 的 lev=3 全扇区结果）
+- **MMA 端计时细化**（`LIERegions.wl`）：拆分为 `expRegSolve` 时间 + `buildRecursionMatrix` 时间 + 每 sector 总时间
+
+### 3.3 Singular 超时控制
+
+`SingularInterface.wl` 新增 `SingularTimeout` 选项，支持 `timeout --signal=KILL Ns Singular` 机制，防止大 family 的 Groebner 基计算无限挂起。
 
 ---
 
@@ -212,41 +264,49 @@ C++ 和 MMA 的 IBP 组装采用不同中间约定：
 
 ## 5. 其他工作区的整理
 
-### 5.1 文件清理
+### 5.1 已清理
 
-- 移除 5 个过时验证文档（`IBPVerification.md`、`Verify-MMA-KIRA-Guide.md` 等）
-- 移除 5 个冗余 Compare-* 脚本（功能已收敛到统一验证框架）
-- 移除 `CODE_STATUS_260504.md`（被本 DEV_STATUS.md 取代）
-- 移除 `VerifyRelation-SeriesVerify.wl`（功能已收敛）
+| 操作 | 详情 |
+|------|------|
+| 移除过时验证文档 | `IBPVerification.md`、`Verify-MMA-KIRA-Guide.md`（verify/docs/） |
+| 移除冗余对比脚本 | `Compare-Expand.wl`、`Compare-FamilyGenerate.wl`、`Compare-Reconstruct-bub00.wl`、`Compare-Results.wl`（VerifyUtility/） |
+| 移除过时关系验证 | `VerifyRelation-SeriesVerify.wl`（VerifyUtility/） |
+| 移除旧状态文档 | `CODE_STATUS_260504.md`（被本 DEV_STATUS.md 取代） |
 
-### 5.2 新增文档
+### 5.2 新增文档与工具
 
 | 文件 | 内容 |
 |------|------|
-| `docs/Plan-FamilyGenerate-CPP-Rewrite.md` | 架构设计计划 |
+| `docs/Plan-FamilyGenerate-CPP-Rewrite.md` | 架构设计计划（已更新至 2026-05-07 状态） |
+| `docs/Plan-Ansatz-Redesign.md` | Ansatz 重设计方案 |
 | `docs/AnsatzModes.md` | Ansatz 模式规范 |
-| `docs/Benchmark_Results.md` | 性能基准测试结果 |
+| `docs/Benchmark_Results.md` | 性能基准测试结果（已更新 ne=7 + crossover） |
 | `docs/Strategy-Comparison.md` | Strategy 0 vs 4 对比分析 |
 | `docs/RelationSolver_Documentation_Hub.md` | 文档索引 |
 | `verify/VerifyUtility/README.md` | 验证工具使用说明 |
 | `verify/FamilyDatabase/README.md` | Family 数据库说明 |
+| `verify/FamilyDatabase/FamilyDatabase.wl` | 统一 Family 定义（19 个 family，按 L/E 排序） |
+| `verify/README.md` | 验证目录总说明 |
+| `DEV_STATUS.md` | 本文件 |
 
-### 5.3 目录结构
+### 5.3 当前目录结构
 
 ```
 project/
-├── families/           # 9 个 JSON family 定义
-├── include/            # 10 个管线头文件（header-only）
-├── tools/              # family_generate CLI + 测试工具
-├── tests/              # test_relationFF / test_family_config 等
-├── docs/               # 设计文档 + 性能报告
+├── families/              # 9 个 JSON family 定义
+├── include/               # 11 个管线头文件（header-only）
+├── tools/                 # family_generate CLI + test_singular_runner / test_region_solver
+├── tests/                 # test_relationFF / test_family_config / test_expandFF 等
+├── src/                   # 非模板实现（LayerRecursionCore.cpp）
+├── docs/                  # 设计文档 + 性能报告（10 个 .md/.tex）
+├── build/                 # CMake 构建产物
 ├── verify/
-│   ├── FamilyDatabase/ # 统一 Family 定义 (MMA)
-│   ├── VerifyUtility/  # 17 个 MMA 参考管线脚本
-│   ├── docs/           # 验证结果文档
-│   └── <family>/       # 各 family 的 MMA 参考 .bin
-├── build/              # CMake 构建产物
-└── DEV_STATUS.md       # 本文件
+│   ├── FamilyDatabase/    # 统一 Family 定义 (MMA) + README
+│   ├── VerifyUtility/     # 20 个 MMA 参考管线脚本 + README
+│   │   └── cache/         # Kira 验证缓存（bub00/SR212/Tri）
+│   ├── docs/              # 验证结果文档（3 个）
+│   └── <family>/          # 12 个 family 的 MMA 参考 .bin + 元数据
+└── DEV_STATUS.md          # 本文件
 ```
 
 ---
@@ -291,13 +351,14 @@ C++ FamilyGenerate 管线（含 Singular 子进程）比 MMA 快 **7-34 倍**，
 |------|------|------|
 | A/B 方程符号不一致 | .bin 不与 MMA 逐字节一致 | 已分析，功能无影响 |
 | LI 方程缺失 | 缺少 Lorentz Invariance 约束 | 待实现 |
-| TB123 超时 | 大 family Groebner 基无法完成 | 待优化 |
-| 部分 family JSON config 缺失 | DB313/NP222/NP322/SR212 variants | 待补充 |
-| 临时调试打印残留 | IBP/AB/FTable 输出混杂 | 待清理 |
+| TB123 Singular 超时 | 大 family Groebner 基无法完成 | 待优化 |
+| 5 个家族缺 JSON config | DB313/NP222/NP322/NP322m/TB123m | 待补充 |
+| 临时调试打印残留 | IBPEqGenerator (ne≤4 导数) / RegionSolver (ne≤4 A/B) | 待清理 |
 
 ## 附录 B：commit 记录 (2026-05-05 9:00 — 2026-05-07)
 
 ```
+99ec194  Add DEV_STATUS.md: comprehensive project status for May 5-7 work
 8c98ba2  Add multi-mode ansatz support to RelationSolver
 9d5330e  Update Benchmark_Results: ne=7 timing, expand-vs-solve analysis
 8391228  Refactor IncrementalNullspaceSolver to incremental RREF
