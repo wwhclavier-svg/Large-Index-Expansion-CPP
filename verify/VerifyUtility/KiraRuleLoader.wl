@@ -18,9 +18,10 @@ LoadKiraRules[kiraBaseDir_String, OptionsPattern[]] := Module[
   modulus = OptionValue["Modulus"] /. Automatic -> Prime[10000000];
   dVal = OptionValue["d"] /. Automatic -> 1/3;
   nprop = OptionValue["NProp"] /. Automatic -> 2;
+  familyName = OptionValue["FamilyName"] /. Automatic -> "bub00";
 
   (* 1. 加载 Kira 显式约化规则 *)
-  kiraFile = FileNameJoin[{kiraBaseDir, "results", "bub00", "kira_integrals.m"}];
+  kiraFile = FileNameJoin[{kiraBaseDir, "results", familyName, "kira_integrals.m"}];
   If[!FileExistsQ[kiraFile],
     Print["ERROR: Kira rules file not found: ", kiraFile];
     Return[{$Failed, $Failed}]
@@ -28,7 +29,7 @@ LoadKiraRules[kiraBaseDir_String, OptionsPattern[]] := Module[
   (* 加载 Kira 规则文件，确保 bub00 被正确替换为 j *)
   (* 使用字符串替换避免上下文问题 *)
   kiraText = Import[kiraFile, "Text"];
-  kiraText = StringReplace[kiraText, "bub00" -> "j"];
+  kiraText = StringReplace[kiraText, familyName -> "j"];
   kiraExplicit = ToExpression[kiraText];
 
   (* 2. 精确零指标规则 *)
@@ -37,7 +38,7 @@ LoadKiraRules[kiraBaseDir_String, OptionsPattern[]] := Module[
 
   (* 3. Kira 平凡 sector 规则 *)
   (* 从 Kira 的 sectormappings 目录读取 trivial sector 信息 *)
-  trivialFile = FileNameJoin[{kiraBaseDir, "sectormappings", "bub00", "trivialsector"}];
+  trivialFile = FileNameJoin[{kiraBaseDir, "sectormappings", familyName, "trivialsector"}];
   trivialRules = {};
   If[FileExistsQ[trivialFile],
     trivialSectors = ToExpression[StringSplit[Import[trivialFile, "Text"], ","]];
@@ -63,9 +64,9 @@ LoadKiraRules[kiraBaseDir_String, OptionsPattern[]] := Module[
             j[a_, b_] /; a <= 0 && b > 0 -> 0
           ],
           (* 通用 nprop 规则 *)
-          Module[{vars = Table[Symbol["a" <> ToString[i] <> "_"], {i, nprop}]},
-            j[Sequence @@ vars] /; And @@ Table[
-              If[secVec[[i]] == 1, Symbol["a" <> ToString[i]] > 0, Symbol["a" <> ToString[i]] <= 0],
+          Module[{vars = Table[ToExpression["a" <> ToString[i]], {i, nprop}]},
+            j[Sequence @@ (Pattern[#, Blank[]] & /@ vars)] /; And @@ Table[
+              If[secVec[[i]] == 1, ToExpression["a" <> ToString[i]] > 0, ToExpression["a" <> ToString[i]] <= 0],
               {i, nprop}
             ] -> 0
           ]
@@ -110,7 +111,8 @@ LoadKiraRules[kiraBaseDir_String, OptionsPattern[]] := Module[
 Options[LoadKiraRules] = {
   "Modulus" -> Automatic,
   "d" -> Automatic,
-  "NProp" -> Automatic
+  "NProp" -> Automatic,
+  "FamilyName" -> Automatic
 };
 
 End[]

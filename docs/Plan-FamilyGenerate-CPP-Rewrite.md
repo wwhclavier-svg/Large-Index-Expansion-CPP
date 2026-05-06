@@ -1,5 +1,17 @@
 # FamilyGenerate C++ Rewrite — Architecture Plan
 
+## Current Status (2026-05-06)
+
+| Phase | Module | Status |
+|-------|--------|--------|
+| Phase 0 | A: FamilyConfig, D: BinaryIBPWriter, E: BinaryRingWriter | ✅ DONE |
+| Phase 1 | F: CLI `family_generate.cpp` | ✅ DONE (full pipeline, not just stub) |
+| Phase 2 | B: IBPEqGenerator | ✅ DONE (LI equations still missing) |
+| Phase 3 | C: RegionSolver + aux modules | ✅ IMPLEMENTED, ⏳ PARTIALLY VALIDATED |
+| Phase 4 | Integration & cross-validation | ⏳ IN PROGRESS |
+
+**Remaining work:** (1) LI equation generation, (2) generate MMA reference .bin for all families and cross-validate, (3) `test_relationFF` integration test.
+
 ## Context
 
 The Large Index Expansion pipeline is split across two languages:
@@ -149,7 +161,7 @@ struct RegionData {
 - [x] Stub Step 1-2: `generateIBPEquations()` loads from stub (Phase 1); Phase 2b replaces with real computation
 - [x] `tools/test_singular_runner.cpp` — Singular subprocess runner test
 - [x] `tools/test_region_solver.cpp` — region solver test (stub)
-- [ ] Integration test: family.json → .bin → test_relationFF (pending Phase 4)
+- [ ] Integration test: family.json → .bin → test_relationFF (pending Phase 4 validation)
 
 ### Phase 2: IBP Equation Generation (Week 3-4) — SINGULAR SUBPROCESS ✅ CORE DONE (2026-05-05)
 - [x] **Module B**: `include/IBPEqGenerator.hpp` — complete implementation
@@ -159,8 +171,15 @@ struct RegionData {
 - [x] **IBP identity assembly + mon2F**: `assembleIBPFromDerivatives()` — formula `d*δ_jk - Σ_i n_i * deriv[i,j,k]/z_i` multiplied by ∏z_m → g-operator form
 - [x] **`generateIBPEquations()`**: orchestrates SP2PD → derivatives → IBP assembly, returns g-operator equations
 - [x] **Verified**: all 8 families pass (bub00: 2eq/11terms, Tri: 3eq/26terms, Box: 4eq/41terms, SR: 6eq/56terms, SR3m: 6eq/64terms, SR5m: 6eq/60terms)
+- [x] **Large-index conversion**: ν_i → θ_i·n + v_i substitution — implemented via `gShift` mechanism in `assembleIBPFromDerivatives()` and `IBPAnalyzer::buildABEquations()` (2026-05-06)
 - [ ] Lorentz Invariance (LI) equations: `genLI` from MMA — not yet implemented
-- [ ] Large-index conversion: ν_i → θ_i·n + v_i substitution — not yet implemented
+
+**Fixed (2026-05-06)**: Issues causing diff failures:
+1. `generateSubsectors` generated all 2^n subsets (including empty); fixed to match MMA's `Subsets[activeIndices, {nl, ne}]` (sizes nl..ne only).
+2. **Critical: A/B equation coefficient scaling** — C++ used ×2 for active n_i terms (wrong). MMA's `regionsBySectors` first does `ibpeqs /. "n" -> 0` (removes all n-dependence), then reintroduces it via `v_i → sector[i]*"n" + v_i`. After `Coefficient[ibpeqs, "n"]`: active indices contribute `coeff × 1` (the `n` coefficient after n→0), inactive indices contribute 0 (no `n` in term). C++ now matches: skip inactive terms entirely, use coeff as-is for active terms. See `IBPAnalyzer::buildABEquations()` lines 171-186.
+3. Large-index conversion (ν_i → θ_i·n + v_i) confirmed working: `gShift` mechanism in `assembleIBPFromDerivatives()` produces g-operator form; `IBPAnalyzer::buildABEquations()` converts g-shifts to A/B exponents with correct standard shift formula `s_i = 2*v_i - gShift_i`.
+
+**Result**: bub00 and bub11 verified byte-identical against MMA reference (verify/bub00/, verify/bub11/). All 8 families run without errors (bub00, bub10, bub11, Box, SR, SR3m, SR5m, Tri). TB123 times out (larger CAS computation).
 
 **Key design decisions:**
 - Singular subprocess (Option A): C++ writes `.sing` script → `Singular -q -t < script` → parses pipe-delimited output
@@ -170,12 +189,27 @@ struct RegionData {
 - All finite field arithmetic modulo 179424673; Singular ring characteristic matches modulus
 - Families with ne ≠ nSP are skipped (SP2PD requires square C matrix)
 
-### Phase 3: Region Solver (Week 5-8) — SINGULAR SUBPROCESS
-- [ ] **Module C**: `include/RegionSolver.hpp` — stub exists, real implementation pending
-- [ ] Groebner basis computation via Singular
-- [ ] Primary decomposition → monomial basis extraction
-- [ ] Recursion matrix construction from coefficient tables
-- [ ] Coordinate ring data (VarDep/VarIndep/MonomialBasis)
+### Phase 3: Region Solver (Week 5-8) — SINGULAR SUBPROCESS ✅ IMPLEMENTED, ⏳ UNVALIDATED (2026-05-06)
+- [x] **Module C**: `include/RegionSolver.hpp` (809 lines) — full implementation: `solveRegion()`, `solveAllSectors()`, `computeGroebnerBasis()`, `computeMonomialBasisIndex()`, `solveVarRule()`, `computeFractionRule()`, `computeMonomialBasisMatrix()`
+- [x] **Module C-aux**: `include/IBPAnalyzer.hpp` (367 lines) — `buildABEquations()` with LargeIndexIBP coefficient scaling
+- [x] **Module C-aux**: `include/RecursionBuilder.hpp` (511 lines) — `buildRecursionMatrices()` from fraction rules
+- [x] **Module C-aux**: `include/RingBuilder.hpp` (193 lines) — `computeRingMatrices()` for A/Ainv
+- [x] **Module C-aux**: `include/PolyArith.hpp` (437 lines) — polynomial arithmetic in finite field
+- [x] Groebner basis computation via Singular subprocess
+- [x] Primary decomposition → monomial basis extraction
+- [x] Recursion matrix construction from coefficient tables
+- [x] Coordinate ring data (VarDep/VarIndep/MonomialBasis)
+- [ ] **End-to-end validation**: bub00, bub11 byte-identical with MMA; remaining families need MMA reference generation
+- [x] All 8 families run without errors (bub00, bub10, bub11, Box, SR, SR3m, SR5m, Tri); TB123 times out
+
+**Implementation notes (2026-05-06):**
+- All modules are header-only (`inline` functions), compiled into `family_generate` CLI
+- `solveRegion()` mirrors MMA's `expRegSolve2` inner loop: GB → primdecGTZ → per-component GB → VarRule → FractionRule → monomial basis matrix
+- `solveAllSectors()` mirrors the outer loop: iterate subsectors, build A/B equations, call `solveRegion()`, collect results
+- `PolyArith.hpp` provides finite field polynomial arithmetic (add, mul, mod) used by IBP analyzer and recursion builder
+- Recursion matrices (M1, N1, K1, F0, F2, etc.) are built from FractionRule entries via `RecursionBuilder`
+- Ring matrices (A, Ainv) computed via `RingBuilder` then serialized via `BinaryRingWriter`
+- Full pipeline wired in `tools/family_generate.cpp`: parse JSON → generate IBP → solve sectors → build matrices → write .bin → optional byte diff
 
 ### Phase 4: Integration & Validation (Week 9-10)
 - [ ] End-to-end: family.json → .bin files → test_relationFF verification
@@ -192,6 +226,11 @@ struct RegionData {
 | `include/BinaryRingWriter.hpp` | Module E: RingData binary writer |
 | `include/IBPEqGenerator.hpp` | Module B: IBP identity generation |
 | `include/RegionSolver.hpp` | Module C: Algebraic region decomposition |
+| `include/IBPAnalyzer.hpp` | Module C-aux: A/B equation builder with LargeIndex scaling |
+| `include/RecursionBuilder.hpp` | Module C-aux: Recursion matrix construction from fraction rules |
+| `include/RingBuilder.hpp` | Module C-aux: Ring matrix (A/Ainv) computation |
+| `include/PolyArith.hpp` | Module C-aux: Finite field polynomial arithmetic |
+| `include/SingularRunner.hpp` | Singular subprocess runner (shared by B and C) |
 | `tools/family_generate.cpp` | Module F: CLI entry point |
 | `tests/test_family_generate.cpp` | Integration test |
 

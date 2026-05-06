@@ -190,13 +190,13 @@ regionsBySectors[ibpeqslim_, sectorlist_, Alist_, vlist_, OptionsPattern[]] :=
   ne = Length @ Alist;
   
   expregdata = Association @ Table[
-      sec = sectorlist[[i]]; 
+      sec = sectorlist[[i]];
       Print["\n      +++  sector:  ", sec, "  (", i, "/", Length @ sectorlist, ")  +++ "];
-      
-      ibpeqssub = sectorLimitIBP[ibpeqs, sec, vlist]; 
-      
-      (* \:83b7\:53d6\:4ee3\:6570\:533a\:57df\:4fe1\:606f *)
-      expregsub = TimeConstrained[
+
+      ibpeqssub = sectorLimitIBP[ibpeqs, sec, vlist];
+
+      (* \:83b7\:53d6\:4ee3\:6570\:533a\:57df\:4fe1\:606f — \:5e26\:8ba1\:65f6 *)
+      {regTime, expregsub} = AbsoluteTiming @ TimeConstrained[
         expRegSolve2[ibpeqssub, Alist, vlist, "LimitSector" -> sec, Modulus -> char,Verbose -> OptionValue[Verbose]],
         OptionValue["Timeout"],
         $Failed
@@ -207,15 +207,18 @@ regionsBySectors[ibpeqslim_, sectorlist_, Alist_, vlist_, OptionsPattern[]] :=
         ,
         (* \:8fc7\:6ee4\:5e73\:51e1\:533a\:57df *)
         expregsub = Select[expregsub, Join[#["VarDep"], #["VarIndep"]] =!= {} &];
-        
-        If[OptionValue["EnableFieldExtension"] == False, 
+
+        If[OptionValue["EnableFieldExtension"] == False,
           expregsub = Select[expregsub, #["VarIndep"] == {} &]
         ];
-        
+
         If[expregsub =!= {},
+          nRegs = Length[expregsub];
+          Print["  >> ", nRegs, " region(s) in ", Round[regTime, 0.001], " s  (", If[nRegs>0, Round[regTime/nRegs, 0.001], 0], " s/region)"];
           (* \:83b7\:53d6\:77e9\:9635\:5316\:9012\:5f52\:5173\:7cfb *)
           sec -> Table[buildRecursionMatrix[ibpeqs, reg, ne, "LimitSector" -> sec, Modulus -> char], {reg, expregsub}]
           ,
+          Print["  >> 0 regions (all trivial) in ", Round[regTime, 0.001], " s"];
           Nothing
         ]
       ]

@@ -15,10 +15,11 @@ private:
     int incre;
     int ne;    // 向量指标维数
     int nb;    // 矩阵 block 维度 (nb*nb，针对 nb=1 优化)
-    int nimax; // 通解个数
+    int nimax; // 通解个数（分配容量）
+    int active_i_max = 0; // 实际使用到的最大 i
 
 public:
-    seriesCoefficient()  : kmax(0), incre(0), ne(0), nb(0), nimax(0) {}
+    seriesCoefficient()  : kmax(0), incre(0), ne(0), nb(0), nimax(0), active_i_max(0) {}
     /**
      * @param kmax  最大 Order
      * @param incre 每级 Order 对应的 Level 增量 (lmax = incre * k)
@@ -108,6 +109,8 @@ public:
     int getNe() const { return ne; }
     int getNb() const { return nb; }
     int getNimax() const { return nimax; }
+    int getActiveIMax() const { return active_i_max; }
+    void setActiveIMax(int i) { if (i > active_i_max) active_i_max = i; }
 };
 
 // ==========================================

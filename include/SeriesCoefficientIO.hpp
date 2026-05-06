@@ -13,7 +13,7 @@ namespace SeriesIO {
 
 // 魔数用于文件格式识别
 constexpr char MAGIC[] = "SERCOEF";
-constexpr uint32_t VERSION = 1;
+constexpr uint32_t VERSION = 2;
 
 // 写入单个 seriesCoefficient 对象（内部使用）
 template<typename T>
@@ -24,11 +24,13 @@ void writeCoefficient(std::ofstream& out, const seriesCoefficient<T>& coeff) {
     int32_t ne = coeff.getNe();
     int32_t nb = coeff.getNb();
     int32_t nimax = coeff.getNimax();
+    int32_t active_i_max = coeff.getActiveIMax();
     out.write(reinterpret_cast<const char*>(&kmax), sizeof(kmax));
     out.write(reinterpret_cast<const char*>(&incre), sizeof(incre));
     out.write(reinterpret_cast<const char*>(&ne), sizeof(ne));
     out.write(reinterpret_cast<const char*>(&nb), sizeof(nb));
     out.write(reinterpret_cast<const char*>(&nimax), sizeof(nimax));
+    out.write(reinterpret_cast<const char*>(&active_i_max), sizeof(active_i_max));
 
     // 写入数据长度
     uint64_t dataSize = coeff.total_size();
@@ -56,14 +58,19 @@ void writeCoefficient(std::ofstream& out, const seriesCoefficient<T>& coeff) {
 
 // 读取单个 seriesCoefficient 对象（内部使用）
 template<typename T>
-seriesCoefficient<T> readCoefficient(std::ifstream& in) {
+seriesCoefficient<T> readCoefficient(std::ifstream& in, uint32_t version) {
     // 读取元数据
-    int32_t kmax, incre, ne, nb, nimax;
+    int32_t kmax, incre, ne, nb, nimax, active_i_max;
     in.read(reinterpret_cast<char*>(&kmax), sizeof(kmax));
     in.read(reinterpret_cast<char*>(&incre), sizeof(incre));
     in.read(reinterpret_cast<char*>(&ne), sizeof(ne));
     in.read(reinterpret_cast<char*>(&nb), sizeof(nb));
     in.read(reinterpret_cast<char*>(&nimax), sizeof(nimax));
+    if (version >= 2) {
+        in.read(reinterpret_cast<char*>(&active_i_max), sizeof(active_i_max));
+    } else {
+        active_i_max = nimax; // 旧格式：假设全部 i 都活跃
+    }
     if (!in) throw std::runtime_error("Failed to read coefficient metadata");
 
     // 读取数据长度
@@ -73,6 +80,7 @@ seriesCoefficient<T> readCoefficient(std::ifstream& in) {
 
     // 构造 seriesCoefficient 对象（自动计算 offsets 并分配零初始化内存）
     seriesCoefficient<T> coeff(kmax, incre, ne, nb, nimax, BINOM);
+    coeff.setActiveIMax(active_i_max);
 
     // 确保数据大小一致
     if (coeff.total_size() != dataSize)
@@ -143,8 +151,8 @@ std::vector<std::vector<seriesCoefficient<T>>> loadAllResults(const std::string&
 
     uint32_t version;
     in.read(reinterpret_cast<char*>(&version), sizeof(version));
-    if (version != VERSION)
-        throw std::runtime_error("Unsupported file version");
+    if (version < 1 || version > VERSION)
+        throw std::runtime_error("Unsupported file version: " + std::to_string(version));
 
     uint32_t nOuter;
     in.read(reinterpret_cast<char*>(&nOuter), sizeof(nOuter));
@@ -155,7 +163,7 @@ std::vector<std::vector<seriesCoefficient<T>>> loadAllResults(const std::string&
         in.read(reinterpret_cast<char*>(&nInner), sizeof(nInner));
         result[i].reserve(nInner);
         for (uint32_t j = 0; j < nInner; ++j) {
-            result[i].push_back(readCoefficient<T>(in));
+            result[i].push_back(readCoefficient<T>(in, version));
         }
     }
 

@@ -483,28 +483,111 @@ NP322 (ne=9):
 
 ---
 
-## 十、.bin 生成管线（MMA + Singular）
+## 十、.bin 生成管线（MMA + Singular）— 全量 Benchmark
 
 ### 测试环境
 
-- 管道: Mathematica → Singular CAS (Groebner 基 + 准素分解)
-- 脚本: `verify/VerifyUtility/Compare-FamilyGenerate.wl`
-- 运行方式: `wolframscript -file Compare-FamilyGenerate.wl <famname>`
-- 注: 需将 `verify/` 复制到纯 ASCII 路径以绕过中文编码问题
+- **日期**: 2026-05-07
+- **管道**: Mathematica 13.1 → Singular 4.3.2 CAS (Groebner 基 + primdecGTZE 准素分解)
+- **脚本**: `verify/VerifyUtility/VerifyExpand-Prepare.wl`
+- **运行方式**: `wolframscript -file VerifyExpand-Prepare.wl <famname>`
+- **模数**: 179424673 (Prime[10000000])
+- **测量**: MMA `AbsoluteTiming` (各步骤) + `/usr/bin/time -v` (wall clock, Max RSS)
+- **注**: Max RSS 仅测量 wolframscript/MathKernel 进程，**不含 Singular 子进程**
 
-### 计时分解
+### 全量计时分解（12 families, 按 L + ne 排序）
 
-| Family | ne | #总扇区 | #非平凡扇区 | 族定义 (s) | Singular 区域求解 (s) | **总计 (s)** | #regimes | #root |
-|--------|----|---------|------------|-----------|---------------------|-------------|----------|-------|
-| TB123 | 7 | 57 | 21 | 0.66 | 128.90 | **129.6** | 37 | 70 |
-| NP222 | 7 | — | 47 | 0.66 | 15.96 | **16.6** | 92 | 113 |
+| Family | L | ne | NIBP | #非平凡扇区 | #Regions | 族定义 (s) | Region求解 (s) | MMA总计 (s) | Wall (s) | Max RSS (MB) |
+|--------|---|----|------|------------|----------|-----------|---------------|------------|----------|-------------|
+| bub00 | 1 | 2 | 2 | 1 | 1 | 0.71 | 0.50 | 1.21 | 3.75 | 98 |
+| bub10 | 1 | 2 | 2 | 2 | 2 | 0.65 | 0.54 | 1.19 | 3.39 | 98 |
+| bub11 | 1 | 2 | 2 | 3 | 5 | 0.65 | 0.67 | 1.32 | 3.65 | 98 |
+| Tri | 1 | 3 | 3 | 3 | 4 | 0.62 | 0.66 | 1.27 | 3.67 | 98 |
+| Box | 1 | 4 | 4 | 9 | 15 | 0.64 | 1.52 | 2.16 | 4.50 | 98 |
+| SR212 | 2 | 5 | 6 | 6 | 6 | 0.70 | 1.67 | 2.37 | 4.78 | 98 |
+| SR212-3m | 2 | 5 | 6 | 2 | 8 | 0.70 | 0.93 | 1.63 | 3.98 | 98 |
+| SR212-5m | 2 | 5 | 6 | 24 | 45 | 0.68 | 4.66 | 5.34 | 7.92 | 98 |
+| **TB123** | 2 | 7 | 8 | 21 | 37 | 0.70 | **128.59** | **129.29** | 133.75 | 98 |
+| **TB123m** | 2 | 7 | 8 | 49 | 182 | 0.69 | **519.68** | **520.37** | 558.67 | 98 |
+| NP222 | 2 | 7 | 8 | 47 | 92 | 0.70 | 16.32 | 17.03 | 21.64 | 98 |
+| DB313 | 2 | 9 | 10 | 41 | 63 | 0.68 | 19.90 | 20.58 | 25.63 | 98 |
+
+**未完成（超时/跳过）**: NP322 (Region求解 >500s 被终止), NP322m, DP323, BN3L, BN3L1P, BN3L1Pm
+
+### 单位成本分析 — 揭示扇区多项式复杂度
+
+| Family | ne | RegSolve/Sector (s) | RegSolve/Region (s) | 特征 |
+|--------|----|--------------------|--------------------|------|
+| bub00 | 2 | 0.50 | 0.50 | 基准 (1 sector) |
+| bub10 | 2 | 0.27 | 0.27 | 1-massive，略快于 massless |
+| bub11 | 2 | 0.22 | 0.13 | 2-massive，每 sector 更轻 |
+| Tri | 3 | 0.22 | 0.16 | 3 props，低复杂度 |
+| Box | 4 | 0.17 | 0.10 | 15 regions，平均每 region 极轻 |
+| SR212 | 5 | 0.28 | 0.28 | massless sunrise |
+| SR212-3m | 5 | 0.46 | 0.12 | 3-massive：sector 少但 region 多 |
+| SR212-5m | 5 | 0.19 | 0.10 | all-massive：45 regions，单 region 极轻 |
+| **TB123** | 7 | **6.12** | **3.48** | 最贵的非平凡扇区！ |
+| **TB123m** | 7 | **10.61** | **2.86** | massive 使 per-sector 再涨 1.7x |
+| NP222 | 7 | 0.35 | 0.18 | 与 TB123 同为 ne=7，但 **17x 更快** |
+| DB313 | 9 | 0.49 | 0.32 | ne=9 但比 TB123 (ne=7) 快 **12x** |
+
+### Regime 间差异分析
+
+**TB123 vs NP222 — 同为 ne=7, L=2, massless，但 cost 差 17x**:
+
+| 维度 | TB123 | NP222 | 比率 |
+|------|-------|-------|------|
+| 非平凡扇区数 | 21 | 47 | 0.45x |
+| Region 总数 | 37 | 92 | 0.40x |
+| Region 求解总时间 | 128.6s | 16.3s | **7.9x** |
+| Per-sector 平均时间 | 6.12s | 0.35s | **17.5x** |
+| Per-region 平均时间 | 3.48s | 0.18s | **19.3x** |
+
+TB123 的每个扇区 Groebner 基计算重得多。原因：
+- TB123 是 Tri-Box 拓扑（平面），NP222 是非平面拓扑
+- TB123 的 A/B 极限方程组变量更多、次数更高，导致 Groebner 基/准素分解计算量指数级增长
+- 这与 #regions (37 vs 92) 和 #root (70 vs 113) 反向，说明 **扇区多项式复杂度而非 regime 数量决定成本**
+
+**massless vs massive — 同一拓扑的成本差异**:
+
+| Family | 类型 | 非平凡扇区 | Regions | Region求解 (s) | Per-sector (s) | 增幅 |
+|--------|------|-----------|---------|---------------|----------------|------|
+| bub00 | massless | 1 | 1 | 0.50 | 0.50 | 1.0x |
+| bub10 | 1-massive | 2 | 2 | 0.54 | 0.27 | 0.5x |
+| bub11 | 2-massive | 3 | 5 | 0.67 | 0.22 | 0.4x |
+| SR212 | massless | 6 | 6 | 1.67 | 0.28 | 1.0x |
+| SR212-3m | 3-massive | 2 | 8 | 0.93 | 0.46 | 1.6x |
+| SR212-5m | all-massive | 24 | 45 | 4.66 | 0.19 | 0.7x |
+| TB123 | massless | 21 | 37 | 128.59 | 6.12 | 1.0x |
+| TB123m | massive | 49 | 182 | 519.68 | 10.61 | **1.7x** |
+
+**结论**: Massive propagators 同时增加扇区数和每扇区成本，但每扇区增幅通常 ≤2x。TB123→TB123m 是最坏情况，每扇区成本从 6.12s 涨到 10.61s（1.7x），扇区数从 21 涨到 49（2.3x），总成本 4x。
 
 ### 关键发现
 
-1. **族定义与拓扑无关** — 两个 family 均为 0.66s（仅 IBP 方程代数生成，不涉及 Singular）
-2. **Singular 耗时与 #regimes / #root 无直接关系** — NP222 的 #regimes (92) 和 #root (113) 均大于 TB123 (37, 70)，但 Singular 快 8 倍 (16s vs 129s)
-3. **真正的成本驱动因素是扇区多项式复杂度** — 每个扇区的 Groebner 基计算复杂度取决于极限方程组的变量数、次数和方程结构，而非最终产出的 region 数量
-4. **二进制导出不计时** — IBPMat/RingData 写入为纯 I/O，远小于 1s
+1. **族定义与拓扑无关** — 所有 family 的 FamilyDefinition 在 0.62-0.71s 之间（均值 0.68s, std 0.03s），仅涉及 IBP 方程代数生成，不涉及 Singular 重计算
+2. **Singular 耗时与 #regimes / #root 无直接关系** — NP222 (92 regimes, 113 root) 比 TB123 (37 regimes, 70 root) 快 **8x**
+3. **真正的成本驱动因素是扇区多项式复杂度** — 每个扇区的 Groebner 基 + primdecGTZE 计算复杂度取决于极限方程组的变量数、次数和方程结构
+4. **TB123 是最贵的小 ne (≤7) 可完成家族**: 128.6s (21 sectors)，per-sector cost = 6.12s
+5. **TB123m 全扇区是测量的最重 benchmark**: 519.7s (49 sectors)，per-sector = 10.61s
+6. **NP322 (ne=9, non-planar) 预计 >500s/sector，不可行**: 605 regimes / 1537 root 的全扇区模式不可计算
+7. **内存 (MathKernel RSS) 恒定 ~98 MB**: 所有家族 MathKernel 内存几乎相同，Singular 子进程内存单独计算
+8. **二进制导出不计时** — IBPMat/RingData 写入为纯 I/O，远小于 1s
+
+### NP322 及更大规模家族的估计
+
+基于 per-sector 成本外推：
+
+| Family | L | ne | 估计非平凡扇区 | Per-sector 估计范围 | 预估总 RegionSolve | 可行性 |
+|--------|---|----|--------------|--------------------|--------------------|--------|
+| NP322 | 2 | 9 | ~100 | 1-10s | 100-1000s | 边界 (实测 >500s) |
+| NP322m | 2 | 9 | ~200 | 2-20s | 400-4000s | 不可行 |
+| DP323 | 2 | 11 | ~200 | 5-50s | 1000-10000s | 不可行 |
+| BN3L | 3 | 6 | ~20 | 0.5-5s | 10-100s | 可能可行 |
+| BN3L1P | 3 | 9 | ~50 | 2-20s | 100-1000s | 边界 |
+| BN3L1Pm | 3 | 9 | ~100 | 5-50s | 500-5000s | 不可行 |
+
+**策略建议**: NP322 及以上规模应使用 `--topsector` 模式单独处理顶扇区（已知可行：NP322 topsector order=2 耗时 164s），通过 C++ 侧 RemoveSolvedVariables 利用已有子扇区结果消去冗余。
 
 ---
 

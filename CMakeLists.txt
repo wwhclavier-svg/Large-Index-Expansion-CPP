@@ -4,6 +4,11 @@ project(IBP_FF_Test)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# 默认启用 Release 优化，除非显式指定
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Release)
+endif()
+
 # ============================================================
 # 依赖项查找（可移植设计）
 # ============================================================
@@ -29,11 +34,30 @@ if(NOT DEFINED FIREFLY_ROOT)
 endif()
 set(FIREFLY_ROOT "${FIREFLY_ROOT}" CACHE PATH "FireFly library root directory")
 
-set(FIREFLY_INCLUDE_DIRS
-    "${FIREFLY_ROOT}/source/include"
-    "${FIREFLY_ROOT}/build/include"
-)
-set(FIREFLY_LIBRARY "${FIREFLY_ROOT}/build/libfirefly.a")
+# Try source-tree layout first, then system-installed layout
+set(_FF_LIB "${FIREFLY_ROOT}/build/libfirefly.a")
+if(NOT EXISTS "${_FF_LIB}")
+    find_library(_FF_LIB_FOUND NAMES firefly)
+    if(_FF_LIB_FOUND)
+        set(_FF_LIB "${_FF_LIB_FOUND}")
+    endif()
+endif()
+set(FIREFLY_LIBRARY "${_FF_LIB}")
+unset(_FF_LIB)
+
+if(NOT DEFINED FIREFLY_INCLUDE_DIRS)
+    # Check for system-installed headers
+    find_path(_FF_INC_FOUND NAMES firefly/FFInt.hpp)
+    if(_FF_INC_FOUND)
+        set(FIREFLY_INCLUDE_DIRS "${_FF_INC_FOUND}")
+        message(STATUS "Using system-installed FireFly: ${_FF_LIB_FOUND}")
+    else()
+        set(FIREFLY_INCLUDE_DIRS
+            "${FIREFLY_ROOT}/source/include"
+            "${FIREFLY_ROOT}/build/include"
+        )
+    endif()
+endif()
 
 if(NOT EXISTS "${FIREFLY_LIBRARY}")
     message(FATAL_ERROR
@@ -95,6 +119,30 @@ target_link_libraries(test_singular_runner pthread)
 
 add_executable(test_region_solver tools/test_region_solver.cpp)
 target_link_libraries(test_region_solver pthread)
+
+add_executable(test_ibp_analyzer tests/test_ibp_analyzer.cpp)
+target_link_libraries(test_ibp_analyzer pthread)
+
+add_executable(test_recursion_builder tests/test_recursion_builder.cpp)
+target_link_libraries(test_recursion_builder pthread)
+
+add_executable(test_recursion_builder_tri tests/test_recursion_builder_tri.cpp)
+target_link_libraries(test_recursion_builder_tri pthread)
+
+add_executable(test_ring_builder tests/test_ring_builder.cpp)
+target_link_libraries(test_ring_builder pthread)
+
+add_executable(verify_ring_builder tests/verify_ring_builder.cpp)
+target_link_libraries(verify_ring_builder pthread)
+
+add_executable(test_region_solver_full tests/test_region_solver_full.cpp)
+target_link_libraries(test_region_solver_full pthread)
+
+add_executable(diagnose_ibp tools/diagnose_ibp.cpp)
+target_link_libraries(diagnose_ibp pthread)
+
+# add_executable(diagnostic_dump tools/diagnostic_dump.cpp)
+# target_link_libraries(diagnostic_dump pthread)
 
 # --- 可选测试（仅在源文件存在时构建）---
 if(EXISTS "${CMAKE_SOURCE_DIR}/tests/test_compare_MMA.cpp")

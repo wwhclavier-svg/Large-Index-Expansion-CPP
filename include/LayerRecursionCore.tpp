@@ -225,6 +225,9 @@ void updateSeriesCoefficient(
         }
     }
 
+    // 追踪实际使用的最大 i
+    C.setActiveIMax(new_nindep);
+
     // --- 3. 更新 indepSet (基底替换) ---
     indepSet.clear();
     for (int i = 0; i < new_nindep; ++i) {
@@ -260,6 +263,7 @@ void migrateAllTables(
         // --- 逻辑 A: 迁移历史阶级 (prev_k < k) ---
         // 只有常数分量 (i=0) 需要承载历史 Order 的完整级数信息
         if (i == 0) {
+            target_C.setActiveIMax(C.getActiveIMax());
             for (int prev_k = 0; prev_k < k; ++prev_k) {
                 for (int l = 0; l <= incre * prev_k; ++l) {
                     int states = (int)BINOM[l + ne - 1][ne - 1];
