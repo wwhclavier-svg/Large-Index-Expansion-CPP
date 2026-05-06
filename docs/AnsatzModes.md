@@ -171,11 +171,44 @@ reconstructAllRelations(CTable, ..., mode, ext_sector)
 
 All four modes compile and run successfully on the `bub` family. The exported `.m` files include `"AnsatzMode"` metadata for MMA-side verification scripts.
 
-### Relation counts (bub, k=4, lev=2, deg=2)
+### Relation counts (bub00, k=4, lev_max=2, deg_max=2)
 
-| Mode | Active vars (max) | Relations at lev=2,deg=1 |
-|------|------------------|--------------------------|
-| Pyramid | 26/36 | 4 |
-| DotPyramid | 30/60 | 4 |
-| Star | 65/130 | — |
-| ExtendedPyramid | 24/84 | 4 |
+| Mode | Active vars (lev=2,deg=2) | Relations (lev=2,deg=2) | Total configs |
+|------|---------------------------|------------------------|---------------|
+| Pyramid | 19/36 | 4 | 6 |
+| DotPyramid | 19/36 | 4 | 6 |
+| Star | 19/36 | 4 | 6 |
+| ExtendedPyramid | 19/36 | 4 | 9 |
+
+> ExtendedPyramid has 9 configs because it includes lev=0 (3 extra configs at lev=0, deg=0/1/2).
+
+## Test Results (2026-05-07)
+
+All four modes tested on `bub00` family (ne=2, k=4, modulus=179424673).
+
+### Test Environment
+
+- **Binary**: `./build/test_relationFF`
+- **Data files**: `IBPMat_bub00.bin`, `RingData_bub00.bin`
+- **Command template**: `test_relationFF bub00 <order> <lev_min> <lev_max> <deg_max> [--mode N] [--sector S]`
+
+### Results
+
+| Mode | Command | alphas_max | Kernel | Time | Result |
+|------|---------|-----------|--------|------|--------|
+| Pyramid (0) | `bub00 4 1 2 2 --mode 0` | 6 | ν−α | 0.01s | PASS |
+| DotPyramid (1) | `bub00 4 1 2 2 --mode 1` | 10 | ν+α | 0.01s | PASS |
+| Star (2) | `bub00 4 1 2 2 --mode 2` | 30 | ν+α | 0.01s | PASS |
+| ExtendedPyramid (3) | `bub00 4 0 2 2 --mode 3` | 14 | ν−α | 0.02s | PASS |
+| ExtendedPyramid+sector | `bub00 4 0 2 2 --mode 3 --sector 10` | 10 | ν−α | 0.02s | PASS |
+
+### Verification Items
+
+- [x] All modes compile and link without errors
+- [x] All modes produce valid output (Total execution time reported, no crashes)
+- [x] Kernel sign correct per mode (ν−α for Pyramid/ExtendedPyramid, ν+α for DotPyramid/Star)
+- [x] `alphas_max` counts match documentation (6/10/30/14/10)
+- [x] `--sector 10` reduces ExtendedPyramid alphas from 14 to 10 (only dimension 0 permits −1)
+- [x] ExtendedPyramid includes lev=0 (9 configs vs 6 for other modes with lev_min=0)
+- [x] Exported `.m` file contains `"AnsatzMode"` metadata field
+- [x] RemoveSolvedVariables filtering works across all modes

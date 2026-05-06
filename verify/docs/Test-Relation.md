@@ -8,10 +8,10 @@ Unified verification for C++ `AllRelations_*.m` output. Single entry point, four
 
 ```bash
 cd /home/ykm/Large-Index-Expansion-CPP
-wolframscript -file BladeFamilyVerify.wl <famname>                 # all modules
-wolframscript -file BladeFamilyVerify.wl <famname> --skip M1,M2    # skip modules
+wolframscript -file VerifyRelation.wl <famname>                 # all modules
+wolframscript -file VerifyRelation.wl <famname> skip M1,M2       # skip modules
 
-# Individual module invocation (can also be loaded via Get[] from BladeFamilyVerify):
+# Individual module invocation (can also be loaded via Get[] from VerifyRelation):
 cd verify/VerifyUtility
 wolframscript -file Verify-Blade.wl    <famname> [nuSample]
 wolframscript -file Verify-Series.wl   <famname>
@@ -19,7 +19,7 @@ wolframscript -file Verify-Kira.wl     <famname>
 wolframscript -file Verify-MMACompare.wl <famname>
 ```
 
-Each module auto-skips if its data files are missing. BladeFamilyVerify runs all 4 in-process, sharing a single AllRelations load.
+Each module auto-skips if its data files are missing. VerifyRelation runs all 4 in-process, sharing a single AllRelations load.
 
 ---
 
@@ -30,7 +30,7 @@ Each module auto-skips if its data files are missing. BladeFamilyVerify runs all
 Sum_{alpha,beta} b_{alpha,beta} * nu^beta * BLReduce[ BL[family, nu-alpha] ] == 0 (mod p)
 ```
 
-**Run:** Always runs when you call `BladeFamilyVerify.wl <famname>`. No extra flags.
+**Run:** Always runs when you call `VerifyRelation.wl <famname>`. No extra flags.
 
 **Prerequisites:**
 | File | Purpose |
@@ -109,7 +109,7 @@ kiraReduce[jExpr] == 0 (mod p)
 **Run:** Auto-runs if Kira rules and loader exist in expected locations.
 ```bash
 cd /home/ykm/Large-Index-Expansion-CPP
-wolframscript -file BladeFamilyVerify.wl <famname> --skip BladeVerify,SeriesVerify,MMACompare
+wolframscript -file VerifyRelation.wl <famname> skip BladeVerify,SeriesVerify,MMACompare
 ```
 
 **Prerequisites:**
@@ -250,7 +250,7 @@ The C++ binary also runs EquationVerify internally and prints per-config residua
 
 | File | Role |
 |------|------|
-| `BladeFamilyVerify.wl` | Unified entry point (project root) |
+| `VerifyRelation.wl` | Unified entry point (project root) |
 | `verify/VerifyUtility/Verify-Blade.wl` | BladeVerify module |
 | `verify/VerifyUtility/Verify-Series.wl` | SeriesVerify module |
 | `verify/VerifyUtility/Verify-Kira.wl` | KiraVerify module |
@@ -258,4 +258,4 @@ The C++ binary also runs EquationVerify internally and prints per-config residua
 | `verify/FamilyDatabase/FamilyDatabase.wl` | Family configs (19 families) |
 | `verify/VerifyUtility/KiraRuleLoader.wl` | Kira rule loader |
 | `verify/docs/Test-Expand.md` | Expansion verification docs |
-| `/home/ykm/blade-main/Blade.wl` | Blade IBP library |
+| `/home/ykm/blade-workspace/Blade.wl` | Blade IBP library |

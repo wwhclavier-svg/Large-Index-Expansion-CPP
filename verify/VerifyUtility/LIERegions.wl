@@ -192,6 +192,7 @@ regionsBySectors[ibpeqslim_, sectorlist_, Alist_, vlist_, OptionsPattern[]] :=
   expregdata = Association @ Table[
       sec = sectorlist[[i]];
       Print["\n      +++  sector:  ", sec, "  (", i, "/", Length @ sectorlist, ")  +++ "];
+      secStart = AbsoluteTime[];
 
       ibpeqssub = sectorLimitIBP[ibpeqs, sec, vlist];
 
@@ -214,14 +215,16 @@ regionsBySectors[ibpeqslim_, sectorlist_, Alist_, vlist_, OptionsPattern[]] :=
 
         If[expregsub =!= {},
           nRegs = Length[expregsub];
-          Print["  >> ", nRegs, " region(s) in ", Round[regTime, 0.001], " s  (", If[nRegs>0, Round[regTime/nRegs, 0.001], 0], " s/region)"];
-          (* \:83b7\:53d6\:77e9\:9635\:5316\:9012\:5f52\:5173\:7cfb *)
-          sec -> Table[buildRecursionMatrix[ibpeqs, reg, ne, "LimitSector" -> sec, Modulus -> char], {reg, expregsub}]
+          {buildTime, result} = AbsoluteTiming @ Table[buildRecursionMatrix[ibpeqs, reg, ne, "LimitSector" -> sec, Modulus -> char], {reg, expregsub}];
+          Print["  >> ", nRegs, " region(s): expReg=", Round[regTime,0.001], "s  build=", Round[buildTime,0.001], "s"];
+          sec -> result
           ,
-          Print["  >> 0 regions (all trivial) in ", Round[regTime, 0.001], " s"];
+          Print["  >> 0 regions (all trivial): expReg=", Round[regTime,0.001], "s"];
           Nothing
         ]
-      ]
+      ];
+      secElapsed = AbsoluteTime[] - secStart;
+      Print["  [sector total: ", Round[secElapsed, 0.001], "s]"];
     , {i, Length @ sectorlist}];
 
   Print["#Non-triv Sectors = ", Length @ Keys @ expregdata, "\n"];
