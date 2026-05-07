@@ -473,6 +473,68 @@ void exportAllResultsToMMA_SingleFile(
     std::cout << "\nExported all " << all_results.size() << " results to: " << filename << std::endl;
 }
 
+template<typename T>
+void exportRelationMeta(
+    const std::vector<AlgebraData::RingCell<T>>& ringData,
+    int ne, int modulus,
+    const std::string& family,
+    const std::string& filename)
+{
+    std::ofstream out(filename);
+    if (!out) throw std::runtime_error("Cannot open file for writing: " + filename);
+
+    auto writeFF = [&out](const T& val) {
+        if constexpr (std::is_same_v<T, firefly::FFInt>) {
+            out << val.n;
+        } else {
+            out << val;
+        }
+    };
+
+    out << "(* Relation Metadata: A_i values and theta for SeriesVerify *)\n";
+    out << "(* Family: " << family << ", NE: " << ne
+        << ", Modulus: " << modulus << " *)\n";
+    out << "$RelationMeta = <|\n";
+    out << "  \"Family\" -> \"" << family << "\",\n";
+    out << "  \"NE\" -> " << ne << ",\n";
+    out << "  \"Modulus\" -> " << modulus << ",\n";
+    out << "  \"Regimes\" -> {\n";
+
+    for (size_t r = 0; r < ringData.size(); ++r) {
+        const auto& ring = ringData[r];
+        out << "    <|\n";
+        out << "      \"Sector\" -> {";
+        for (int i = 0; i < ne; ++i) {
+            if (i > 0) out << ", ";
+            out << ring.limitSector[i];
+        }
+        out << "},\n";
+
+        out << "      \"A\" -> {";
+        for (int i = 0; i < ne; ++i) {
+            if (i > 0) out << ", ";
+            writeFF(ring.A_list[0][i]);
+        }
+        out << "},\n";
+
+        out << "      \"Ainv\" -> {";
+        for (int i = 0; i < ne; ++i) {
+            if (i > 0) out << ", ";
+            writeFF(ring.Ainv_list[0][i]);
+        }
+        out << "}\n";
+
+        out << "    |>";
+        if (r < ringData.size() - 1) out << ",";
+        out << "\n";
+    }
+
+    out << "  }\n";
+    out << "|>;\n";
+    out.close();
+    std::cout << "Exported relation meta to: " << filename << std::endl;
+}
+
 int main(int argc, char* argv[]) {
     if (argc < 2) {
         cerr << "Usage: " << argv[0] << " <family_name> [order] [lev_min] [lev_max] [deg_max] [--topsector] [--mode <0|1|2>]" << endl;
@@ -619,6 +681,14 @@ int main(int argc, char* argv[]) {
             auto t1 = chrono::high_resolution_clock::now();
             double dt = chrono::duration<double>(t1 - t0).count();
             cout << "Recursion completed in " << fixed << setprecision(3) << dt << "s" << endl;
+            string mmaCacheFile = "ExpansionMMA_" + family + ".m";
+            SeriesIO::exportAllResultsToMMA(allResults, mmaCacheFile);
+            cout << "Exported to MMA format: " << mmaCacheFile << endl;
+            string verifyDir = "verify/" + family;
+            (void)system(("mkdir -p " + verifyDir).c_str());
+            string cppResultFile = verifyDir + "/Compare-CPPResult-" + family + ".m";
+            SeriesIO::exportAllResultsToMMA(allResults, cppResultFile);
+            cout << "Exported Compare-CPPResult to: " << cppResultFile << endl;
         } else {
             // ---- 原有流程：全量加载 ----
             // ---- 第1a步：加载 IBP 矩阵 ----
@@ -644,6 +714,11 @@ int main(int argc, char* argv[]) {
                 string mmaCacheFile = "ExpansionMMA_" + family + ".m";
                 SeriesIO::exportAllResultsToMMA(allResults, mmaCacheFile);
                 cout << "Exported to MMA format: " << mmaCacheFile << endl;
+                string verifyDir = "verify/" + family;
+                (void)system(("mkdir -p " + verifyDir).c_str());
+                string cppResultFile = verifyDir + "/Compare-CPPResult-" + family + ".m";
+                SeriesIO::exportAllResultsToMMA(allResults, cppResultFile);
+                cout << "Exported Compare-CPPResult to: " << cppResultFile << endl;
             }
             cout << "Total branches: " << allResults.size() << " matrices" << endl;
 
@@ -671,6 +746,10 @@ int main(int argc, char* argv[]) {
             }
             cout << "]" << endl;
         }
+
+        cout << "\nExporting relation metadata (A_i, theta)..." << endl;
+        string metaFile = "RelationMeta_" + family + ".m";
+        exportRelationMeta(ringData, ne, static_cast<int>(FFInt::p), family, metaFile);
 
         auto start = chrono::high_resolution_clock::now();
         cout << "\n=== Relation Solving (RemoveSolvedVariables strategy) ===" << endl;

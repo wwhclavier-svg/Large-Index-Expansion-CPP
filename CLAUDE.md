@@ -316,7 +316,6 @@ namespace SeriesIO { /* serialization */ }
 ### Extended Documentation
 
 - `AGENTS.md` — Extended bilingual (Chinese/English) guide with exhaustive module specs, testing strategy, and dependency details. Consult for deeper context.
-- `docs/ComprehensiveReport.tex` — Canonical theory write-up of the Large Index Expansion method: asymptotic-solution completeness theorem, block-recursive structure, geometric classification of solution spaces, and C++ finite-field implementation. Consult for theoretical principles.
 
 ### Adding New Tests
 
@@ -350,13 +349,12 @@ Required data files in working directory:
 
 ## Documentation
 
-- `docs/Core_Working.md` — Module index: theory, workflow, and test cross-reference
 - `docs/LayerRecursion_Algorithm.md` — Layer recursion algorithm details
 - `docs/RelationSolver_ComponentGuide.md` — RelationSolver component guide
 - `docs/RelationSolver_QuickReference.md` — Quick reference for RelationSolver API
 - `docs/RelationSolver_Documentation_Hub.md` — Documentation hub/index
 - `docs/ReconstructReductionRelation_Documentation.md` — Mathematica package docs
-- `docs/Reconstruct_Algorithm.md` — Reconstruction algorithm: MMA vs C++ implementation comparison, verification methods
+- `docs/ReconstructAlgorithm.md` — Reconstruction algorithm: MMA vs C++ implementation comparison, verification methods
 
 ### Verification (`verify/`)
 
@@ -369,14 +367,15 @@ verify/
 │   ├── FamilyDatabase.wl        # Unified integral family definitions (1L + 2L + 3L, 19 families, sorted by L then E)
 │   └── README.md
 ├── docs/
-│   ├── Test-Expand.md           # Expansion verification results
-│   ├── Test-Relation.md         # Relation reconstruction results
-│   ├── IBPVerification.md       # Three verification methods: CompareVerify, EquationVerify, SeriesVerify
-│   ├── Verify-MMA-KIRA-Guide.md # Kira cross-validation guide
+│   ├── Test-Expand.md           # Expand verification workflow
+│   ├── Test-Relation.md         # Relation verification (4 methods)
 │   └── CPP-KiraVerify-Debugger.md
-├── scripts/
-│   └── NuVerify-Relations.wl    # ν-sampling Kira verification of C++ relations
-└── results/bub00/               # Verified result snapshots (.m files for MMA consumption)
+├── VerifyUtility/               # All verification scripts (22 .wl)
+│   ├── VerifyExpand-*.wl        # Expand pipeline (4 scripts)
+│   ├── Verify-*.wl              # Relation modules (4 scripts)
+│   ├── LIE*.wl, *Interface.wl   # Core libraries
+│   └── KiraRuleLoader.wl, M2Kira.wl
+└── <famname>/                   # Per-family data (14 families)
 ```
 
 ## External References
