@@ -12,6 +12,7 @@
 #include "LayerRecursionCore.hpp"
 #include "Combinatorics.hpp"
 #include "LinearSolver.hpp"
+#include "IncrementDetector.hpp"
 
 
 /**
@@ -28,6 +29,13 @@
 template<typename T>
 auto layerRecursion(const struct IBPMatrixE<T> &ibpmat, int ne, int nb, int nibp, int order, int incre=2)
 {
+    // auto-detect optimal increment if default
+    if (incre == 2) {
+        int detected = detectIncrement(ibpmat);
+        // only override if we get a clear signal
+        if (detected == 1 || detected == 3) incre = detected;
+    }
+
     // initialize coefficient: C[order][level][index][symb][nsol]
     // Dynamically compute nimax to avoid buffer overruns in large problems.
     int nimax = 4;
@@ -137,8 +145,15 @@ auto layerRecursion(const struct IBPMatrixE<T> &ibpmat, int ne, int nb, int nibp
  * @return 每个矩阵对应的所有解列表
  */
 template<typename T>
-std::vector<std::vector<seriesCoefficient<T>>> batchProcessRecursion(const std::vector<IBPMatrixE<T>>& allMatrices, int order, int incre=2) 
+std::vector<std::vector<seriesCoefficient<T>>> batchProcessRecursion(const std::vector<IBPMatrixE<T>>& allMatrices, int order, int incre_hint=2) 
 {
+    // auto-detect increment from first matrix (if using default)
+    int incre = incre_hint;
+    if (incre == 2 && !allMatrices.empty()) {
+        int detected = detectIncrement(allMatrices[0]);
+        if (detected == 1 || detected == 3) incre = detected;
+    }
+
     std::vector<std::vector<seriesCoefficient<T>>> allResults;
     allResults.reserve(allMatrices.size());
 

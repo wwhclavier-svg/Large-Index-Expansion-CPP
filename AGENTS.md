@@ -124,12 +124,10 @@
 │   │   ├── Compare-*.wl           # 对比工具系列
 │   │   ├── ExportBinary_IBPMatrix.wl # 二进制导出
 │   │   └── README.md
-│   ├── docs/
-│   │   ├── IBPVerification.md     # 三种验证方法
-│   │   ├── Test-Expand.md         # 展开验证结果
-│   │   ├── Test-Relation.md       # 关系重建结果
-│   │   ├── Verify-MMA-KIRA-Guide.md # Kira交叉验证指南
-│   │   └── CPP-KiraVerify-Debugger.md
+    │   ├── docs/
+    │   │   ├── Test-Expand.md         # 展开验证工作流（通用化，family参数化）
+    │   │   ├── Test-Relation.md       # 关系验证手册（4种方法）
+    │   │   └── CPP-KiraVerify-Debugger.md # Kira验证调试备忘
 │   └── bub00/                     # bub00族验证结果快照
 │       ├── IBPMat_bub00.bin
 │       ├── RingData_bub00.bin
@@ -555,10 +553,8 @@ verify/
 │   ├── FamilyDatabase.wl        # 统一积分族定义（19族，1L+2L+3L，按 L 和 E 排序）
 │   └── README.md
 ├── docs/
-│   ├── Test-Expand.md           # 展开验证结果
-│   ├── Test-Relation.md         # 关系重建验证结果
-│   ├── IBPVerification.md       # 三种验证方法：CompareVerify, EquationVerify, SeriesVerify
-│   ├── Verify-MMA-KIRA-Guide.md # Kira 交叉验证指南
+│   ├── Test-Expand.md           # 展开验证工作流
+│   ├── Test-Relation.md         # 关系验证手册
 │   └── CPP-KiraVerify-Debugger.md
 ├── VerifyUtility/               # MMA 验证工具集脚本
 │   ├── LIECoreAlgebra.wl, LIEExpand.wl, LIEReconstruct.wl, LIERegions.wl
@@ -682,7 +678,5 @@ target_link_libraries(test_MyFeature ${FIREFLY_LIBRARY} ${GMP_LIBRARY} ${GMPXX_L
 - **FireFly Library**: https://github.com/firefly-library/firefly
 - **Eigen Documentation**: https://eigen.tuxfamily.org/
 - **IBP Method**: Integration-by-parts identities for Feynman integral reduction (physics)
-- **docs/ComprehensiveReport.tex**: LIE 方法的完整理论报告：asymptotic-solution completeness, block-recursive structure, geometric classification of solution spaces, finite-field implementation
-- **verify/README.md**: 完整验证流程文档（逐步命令）
 - **verify/docs/**: 展开与关系重建的验证方法文档
 - **docs/ReconstructAlgorithm.md**: 重建算法 MMA vs C++ 实现对比
