@@ -1,5 +1,16 @@
 # Large Index Expansion — 文档索引
 
+### mma/ — MMA 算法源码与参考展开数据
+
+| 路径 | 说明 | 能否清理 |
+|---|---|---|
+| `mma/ReconstructReductionRelation.wl` | Stage 3 关系重构 MMA 参考实现 | ❌ 核心源码 |
+| `mma/AllRelationsToNuFormat.wl` | 关系格式转换工具 | ❌ 核心工具 |
+| `mma/reference/ExpansionMMA_*.m` (9个) | 各家族 MMA 展开系数参考 | ❌ 参考数据 |
+| `mma/reference/VerifyAllRelations.wl` | 旧版验证脚本（已由 `VerifyUtility/` 中的新版替代） | ✅ 可删除 |
+| `mma/reference/VerifyRelation.wl` | 旧版验证脚本（同上） | ✅ 可删除 |
+| `mma/ExpansionMMA_bub00_debug.m` | bub00 调试转储 | ✅ 可清理 |
+
 ## 目录结构
 
 ```
