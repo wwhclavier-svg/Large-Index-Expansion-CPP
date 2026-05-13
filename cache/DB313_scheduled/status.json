@@ -493,28 +493,28 @@
     "State": "running",
     "Time": 0,
     "Regions": 0,
-    "Tier": "Quick"
+    "Tier": "Fast"
   },
   "110101100": {
-    "State": "running",
+    "State": "Quick-timeout",
     "Time": 0,
-    "Regions": 0,
-    "Tier": "Quick"
+    "Regions": 0
   },
   "110011100": {
-    "State": "pending",
+    "State": "done",
     "Time": 0,
     "Regions": 0
   },
   "101111000": {
-    "State": "pending",
+    "State": "done",
     "Time": 0,
     "Regions": 0
   },
   "101110100": {
-    "State": "pending",
+    "State": "running",
     "Time": 0,
-    "Regions": 0
+    "Regions": 0,
+    "Tier": "Quick"
   },
   "101101100": {
     "State": "pending",
