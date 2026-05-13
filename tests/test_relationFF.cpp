@@ -543,6 +543,7 @@ int main(int argc, char* argv[]) {
         cerr << "  lev_min    : min |alpha| (default: 1)" << endl;
         cerr << "  lev_max    : max |alpha| (default: 2)" << endl;
         cerr << "  deg_max    : max |beta| (default: 2)" << endl;
+        cerr << "  --output <dir> : output directory (default: relations/)" << endl;
         cerr << "  --topsector: load only top sector (max-sum limitSector)" << endl;
         cerr << "  --mode <n> : ansatz mode: 0=Pyramid 1=DotPyramid 2=Star 3=ExtendedPyramid (default: 0)" << endl;
         cerr << "  --sector <s>: ExtendedPyramid sector (e.g. \"1101\"), default=auto top sector" << endl;
@@ -564,7 +565,9 @@ int main(int argc, char* argv[]) {
     bool top_sector_only = false;
     RelationSolver::AnsatzMode ansatz_mode = RelationSolver::AnsatzMode::Pyramid;
     std::vector<int> ext_sector;  // ExtendedPyramid sector override
+    string outDir = "relations";  // default to project-level output
     for (int i = 1; i < argc; ++i) {
+        if (string(argv[i]) == "--output" && i + 1 < argc) { outDir = argv[++i]; }
         if (string(argv[i]) == "--topsector") { top_sector_only = true; }
         else if (string(argv[i]) == "--mode" && i + 1 < argc) {
             int m = stoi(argv[++i]);
@@ -748,7 +751,7 @@ int main(int argc, char* argv[]) {
         }
 
         cout << "\nExporting relation metadata (A_i, theta)..." << endl;
-        string metaFile = "relations/RelationMeta_" + family + ".m";
+        string metaFile = outDir + "/RelationMeta_" + family + ".m";
         exportRelationMeta(ringData, ne, static_cast<int>(FFInt::p), family, metaFile);
 
         auto start = chrono::high_resolution_clock::now();
@@ -793,7 +796,7 @@ int main(int argc, char* argv[]) {
             }
 
             // Export single unified file containing ALL results
-            string unifiedFilename = "relations/AllRelations_" + family + "_k" + to_string(order) + ".m";
+            string unifiedFilename = outDir + "/AllRelations_" + family + "_k" + to_string(order) + ".m";
             exportAllResultsToMMA_SingleFile(all_results, ne, order,
                 static_cast<int>(FFInt::p), family, unifiedFilename, ansatz_mode);
 
