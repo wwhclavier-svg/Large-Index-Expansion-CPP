@@ -60,12 +60,12 @@ workspace/
 - 源代码目录重组（`include/` `src/` `tools/` 等移入 `src/`）
 - `build/` 中 `generating_cone.cpp` 源文件移出
 
-### mma-refs/（共享 MMA 参考数据，原 verify/）
+### workspace/shared/mma-refs/（共享 MMA 参考数据，原 verify/）
 
 ```
-mma-refs/Box/  bub00/  bub10/  bub11/  Tri/
-mma-refs/DP323/  DP323_recompute/  NP222/  TB123m/
-mma-refs/Penta1L/  SR212/  SR212-3m/
+workspace/shared/mma-refs/Box/  bub00/  bub10/  bub11/  Tri/
+workspace/shared/mma-refs/DP323/  NP222/  TB123m/
+workspace/shared/mma-refs/Penta1L/  SR212/  SR212-3m/
 ```
 
 这些是各家族的 MMA 参考对比数据，由 T 系列任务和验证流程共用。
