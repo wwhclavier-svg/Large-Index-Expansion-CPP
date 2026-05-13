@@ -1,5 +1,5 @@
 (* run_scheduled.wl -- Run ScheduledRegionSolve for DB313 *)
-(* Usage: wolframscript -file verify/DB313/run_scheduled.wl *)
+(* Usage: wolframscript -file workspace/C004-DB313-region-solve/run_scheduled.wl *)
 
 $ProjectRoot = DirectoryName[DirectoryName[DirectoryName[$InputFileName]]];
 $VerifyUtilityPath = FileNameJoin[{$ProjectRoot, "verify", "VerifyUtility"}];
@@ -65,9 +65,9 @@ scheduleConfig = <|
     <|"Name" -> "Retry",  "Timeout" -> 86400, "Order" -> "FIFO",  "MaxParallel" -> 1|>
   },
   "MaxRetriesPerTier" -> 1,
-  "CacheDir" -> FileNameJoin[{$ProjectRoot, "verify", "DB313", "cache"}],
+  "CacheDir" -> FileNameJoin[{$ProjectRoot, "workspace", "C004-DB313-region-solve", "cache"}],
   "OutputDir" -> $ProjectRoot,
-  "LogDir" -> FileNameJoin[{$ProjectRoot, "verify", "DB313", "cache"}],
+  "LogDir" -> FileNameJoin[{$ProjectRoot, "workspace", "C004-DB313-region-solve", "cache"}],
   "ScheduleMode" -> "Interleaved",
   "MaxParallelJobs" -> 2,
   "CheckpointInterval" -> 1,

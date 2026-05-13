@@ -1,5 +1,5 @@
 (* run_scheduled.wl -- Run ScheduledRegionSolve for NP322 with SingularCoordinateRing acceleration *)
-(* Usage: wolframscript -file verify/NP322/run_scheduled.wl *)
+(* Usage: wolframscript -file workspace/C002-NP322-region-solve/run_scheduled.wl *)
 
 $ProjectRoot = DirectoryName[DirectoryName[DirectoryName[$InputFileName]]];
 $VerifyUtilityPath = FileNameJoin[{$ProjectRoot, "verify", "VerifyUtility"}];
@@ -65,9 +65,9 @@ scheduleConfig = <|
     <|"Name" -> "Long",   "Timeout" -> 96400, "Order" -> "FIFO",  "MaxParallel" -> 1|>
   },
   "MaxRetriesPerTier" -> 1,
-  "CacheDir" -> FileNameJoin[{$ProjectRoot, "verify", "NP322", "cache"}],
+  "CacheDir" -> FileNameJoin[{$ProjectRoot, "workspace", "C002-NP322-region-solve", "cache"}],
   "OutputDir" -> $ProjectRoot,  (* Output .bin to project root for C++ tests *)
-  "LogDir" -> FileNameJoin[{$ProjectRoot, "verify", "NP322", "cache"}],
+  "LogDir" -> FileNameJoin[{$ProjectRoot, "workspace", "C002-NP322-region-solve", "cache"}],
   "ScheduleMode" -> "Interleaved",
   "MaxParallelJobs" -> 4,
   "CheckpointInterval" -> 1,

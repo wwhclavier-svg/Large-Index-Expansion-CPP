@@ -2,8 +2,8 @@
 (* Usage: wolframscript -file verify/SR212-5m/run_scheduled.wl *)
 
 $ProjectRoot = DirectoryName[DirectoryName[DirectoryName[$InputFileName]]];
-$VerifyUtilityPath = FileNameJoin[{$ProjectRoot, "verify", "VerifyUtility"}];
-$FamilyDBPath = FileNameJoin[{$ProjectRoot, "verify", "FamilyDatabase", "FamilyDatabase.wl"}];
+$VerifyUtilityPath = FileNameJoin[{$ProjectRoot, "workspace", "shared", "VerifyUtility"}];
+$FamilyDBPath = FileNameJoin[{$ProjectRoot, "families", "FamilyDatabase.wl"}];
 
 SetDirectory[$VerifyUtilityPath];
 Get["LIEWorkflow.wl"];
@@ -21,7 +21,7 @@ scheduleConfig = <|
   },
   "MaxRetriesPerTier" -> 1,
   "ParallelJobs" -> 8,
-  "CacheDir" -> "verify/SR212-5m/cache/",
+  "CacheDir" -> "workspace/C012-SR212-5m-region-solve/cache/",
   "OutputDir" -> "verify/SR212-5m/"
 |>;
 
