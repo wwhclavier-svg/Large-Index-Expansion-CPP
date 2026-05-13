@@ -1,0 +1,40 @@
+=== FamilyGenerate ===
+Family: DB313 (L=2 E=3 N=9)
+Modulus: 179424673
+
+[Step 1] Generating IBP equations...
+[IBPEqGenerator] Family DB313: ne=9 nl=2 nE=3 nIBP=10 subsectors=120
+[IBPEqGenerator] Step 1: Running SP2PD...
+[IBPEqGenerator] SP2PD OK: 9 scalar products → z-basis
+[IBPEqGenerator] Step 2: Computing derivatives...
+[IBPEqGenerator] Derivatives OK: 90 polynomials computed
+[IBPEqGenerator] Step 3: Assembling IBP equations (mon2F)...
+[IBPEqGenerator] Generated 10 IBP equations with 159 total g-operator terms.
+  ne=9 nibp=10 subsectors=120
+  [TIMING] Step 1: 0.08 s
+
+[Step 2] Extracting FTable...
+  nibp=10 ne=9
+  [TIMING] Step 2: 0 s
+
+[Step 3] Solving sectors...
+  Filtering: sector = 100010100
+  Solving sector [100010100]
+  [2026-05-13 19:33:56] Singular minAssGTZ starting...
+  [Singular minAssGTZ] 0.0129706 s, kept=0
+  [2026-05-13 19:33:56] Singular minAssGTZ done
+  -> 0 region(s) in 0.013 s
+  Found 0 region(s) total
+  [TIMING] Step 3: 0.013 s
+  No regions found. Writing empty output.
+
+[Step 5] Writing .bin files...
+Written 0 regime(s) to /home/ykm/Large-Index-Expansion-CPP/cache/DB313_scheduled/SectorCache/IBPMat_DB313_sector_100010100.bin
+Written 0 ring cell(s) to /home/ykm/Large-Index-Expansion-CPP/cache/DB313_scheduled/SectorCache/RingData_DB313_sector_100010100.bin
+  [TIMING] Step 5: 0 s
+
+[TIMING] Total wall-clock: 0.101 s
+
+Done. Output:
+  /home/ykm/Large-Index-Expansion-CPP/cache/DB313_scheduled/SectorCache/IBPMat_DB313_sector_100010100.bin
+  /home/ykm/Large-Index-Expansion-CPP/cache/DB313_scheduled/SectorCache/RingData_DB313_sector_100010100.bin
