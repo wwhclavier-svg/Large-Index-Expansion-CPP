@@ -1,0 +1,24 @@
+CalcLoop: a tool for automated multiloop calculation in quantum field theory.
+Version 2022/07/10.
+Number of defined symbols=45. Please see ?CalcLoop`* for help.
+"BladeIBP: a package for generating IBP, LI and Symmetry relations."
+
+FrontEndObject::notavail: A front end is not available; certain operations require a front end.
+Number of Families = 1. Number of Sectors = 2.
+"4 zero sectors found, 4 nonzero sectors found."
+"2 unique sectors found, 2 mapped sectors found, 0 extmapped sectors found."
+"1 subgraph-unique sectors found, 0 subgraph-mapped sectors found"
+"From remote kernel:"
+"{1, 0, 1, 0, 0}\" done in: \"0.037477`5.025309812222074\"s.\"\n"
+"From remote kernel:"
+"{1, 0, 0, 0, 1}\" done in: \"0.040681`5.060936613487682\"s.\"\n"
+"From remote kernel:"
+"{0, 0, 1, 0, 1}\" done in: \"0.040809`5.062300946274563\"s.\"\n"
+"From remote kernel:"
+"\"sectors involved: \"{{1, 0, 1, 0, 1}}\n"
+"From remote kernel:"
+"\"#Symmetry Relations:  \"96\n"
+"From remote kernel:"
+"{1, 0, 1, 0, 1}\" done in: \"0.160124`5.6560014240186565\"s.\"\n"
+"fast determineMI done in: "1.207419`6.533402999144813
+"# rawmasters(nomap): "5", # rawmasters: "3

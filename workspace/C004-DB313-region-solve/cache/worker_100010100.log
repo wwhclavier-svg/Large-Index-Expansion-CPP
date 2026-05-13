@@ -1,0 +1,23 @@
+
+      +++  sector:  {1, 0, 0, 0, 1, 0, 1, 0, 0}  (1/1)  +++ 
+                     SINGULAR                                 /  Development
+ A Computer Algebra System for Polynomial Computations       /   version 4.3.2
+                                                           0<
+ by: W. Decker, G.-M. Greuel, G. Pfister, H. Schoenemann     \   Feb 2023
+FB Mathematik der Universitaet, D-67653 Kaiserslautern        \  Debian 1:4.3.2-p10+ds-1.1build1
+compute hilbert series with std in ring (ZZ/179424673),(x18,x17,x16,x15,x14,x13,x12,x11,x10,x9,x8,x7,x6,x5,x4,x3,x2,x1,@),(dp(19),C)
+weights used for hilbert series: 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+[65535:5]2(18)s(17)s(16)s(15)s(14)s(13)s(12)s(11)s(10)s(9)s(10)s(11)s(13)s(15)s(18)s(23)s(24)s(27)s(30)s3(34)s(38)s(40)s(45)s(50)s(59)s(62)s(69)s(75)s(83)s(91)s(95)s(100)s(111)-s(116)s(124)s(132)s(141)s(149)s(157)s(163)s(173)-s(182)s(192)-s(201)s(210)-s(219)---s(223)4-----------------------(200)----s(205)-----(200)-----------------------------------------s(173)------------------------------------------------s(136)s(146)s(157)----s(165)-s(172)s(179)---s(187)s(197)s(204)---s(208)--s(216)s(226)------s(232)-------s(234)-----s(239)--s(245)--------------------------------------5-------(200)----------------------------------------------------------------------------------s(128)s(139)-s(147)--------------------------------s(125)-s(132)---------s(133)-------------------------------s(112)s(121)s(132)---------s(133)s(144)--s(152)------s(156)-s(166)-----6-------------------------------------------------------------(100)----------------s(92)-s(101)s(113)s(121)--------------s(119)s(130)-------------s(126)--------------------------(100)---------------------7-------------------------------------------s(45)------------------s(36)----------------8--------------------
+product criterion:1420 chain criterion:1545
+std with hilb in (ZZ/179424673),(x18,x17,x16,x15,x14,x13,x12,x11,x10,x9,x8,x7,x6,x5,x4,x3,x2,x1,@),(lp(18),dp(1),C)
+[65535:5]2(86)s(85)ss(84)s(83)s(82)s(83)s(82)s(81)s(80)s(79)s(80)s(81)s(82)s(84)s(88)s(92)s(96)s(101)s3(104)s(106)s(111)s(117)s(125)s(127)s(129)s(137)s(145)-s(148)s(153)s(160)s(167)s(175)s(182)s(190)s(198)s(206)s(214)s(223)s(232)s(240)s(247)s(256)s(266)s(272)s(282)s(292)s(304)----(300)shhhhhhhhhhhhhhhhhhhhhhhhhhhhhh4(281)---------s(283)-------s(285)-------------s(280)----s(286)--------------s(280)------------s(277)s(287)--------------------s(277)-------s(279)------------s(274)s(283)s(292)-s(305)-s(315)s(326)-s(335)-s(345)-s(356)-----------------------s(342)------------------------------------------(300)-------s(305)--shhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh5(263)------------s(261)--s(270)---s(278)----------------s(277)----s(288)----s(294)-s(309)--s(317)-----s(324)s(336)s(346)s(357)---------------------------------------------------------(300)------------------------------------s(275)---------------shhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh6(195)-----------------------s(182)s(193)--s(203)-s(214)-------s(219)s(232)shhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh7(92)---------s(94)--------------------shhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh
+product criterion:1595 chain criterion:1785
+hilbert series criterion:397
+dehomogenization
+simplification
+imap to ring (ZZ/179424673),(x18,x17,x16,x15,x14,x13,x12,x11,x10,x9,x8,x7,x6,x5,x4,x3,x2,x1),(lp(18),C)
+Auf Wiedersehen.
+  >> 0 regions (all trivial): expReg=0.509s
+  [sector total: 0.517s]
+#Non-triv Sectors = 0
+

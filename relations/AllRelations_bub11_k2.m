@@ -1,0 +1,98 @@
+(* C++ Relation Export: All Results *)
+(* Family: bub11, Order: 2, NE: 2, Modulus: 179424673 *)
+(* Total configurations: 3, with solution: 3 *)
+$AllRelations = {
+  <|
+    "Family" -> "bub11",
+    "Lev" -> 1,
+    "Deg" -> 0,
+    "NE" -> 2,
+    "AnsatzMode" -> "Pyramid",
+    "Modulus" -> 179424673,
+    "Order" -> 2,
+    "StableOrder" -> 0,
+    "NumRelations" -> 0,
+    "ActiveVars" -> 3,
+    "TotalVars" -> 3,
+    "Alphas" -> {{0,0}, {0,1}, {1,0}},
+    "Betas" -> {{0,0}},
+    "Coefficients" -> {
+      {0},
+      {0},
+      {0}
+    },
+    "IndependentPairs" -> {},
+    "HasSolution" -> True,
+    "NumVariables" -> 3,
+    "NumSolutions" -> 0
+  |>,
+  <|
+    "Family" -> "bub11",
+    "Lev" -> 1,
+    "Deg" -> 1,
+    "NE" -> 2,
+    "AnsatzMode" -> "Pyramid",
+    "Modulus" -> 179424673,
+    "Order" -> 2,
+    "StableOrder" -> 0,
+    "NumRelations" -> 0,
+    "ActiveVars" -> 9,
+    "TotalVars" -> 9,
+    "Alphas" -> {{0,0}, {0,1}, {1,0}},
+    "Betas" -> {{0,0}, {0,1}, {1,0}},
+    "Coefficients" -> {
+      {0},
+      {0},
+      {0},
+      {0},
+      {0},
+      {0},
+      {0},
+      {0},
+      {0}
+    },
+    "IndependentPairs" -> {},
+    "HasSolution" -> True,
+    "NumVariables" -> 9,
+    "NumSolutions" -> 0
+  |>,
+  <|
+    "Family" -> "bub11",
+    "Lev" -> 1,
+    "Deg" -> 2,
+    "NE" -> 2,
+    "AnsatzMode" -> "Pyramid",
+    "Modulus" -> 179424673,
+    "Order" -> 2,
+    "StableOrder" -> 1,
+    "NumRelations" -> 0,
+    "ActiveVars" -> 18,
+    "TotalVars" -> 18,
+    "Alphas" -> {{0,0}, {0,1}, {1,0}},
+    "Betas" -> {{0,0}, {0,1}, {0,2}, {1,0}, {1,1}, {2,0}},
+    "Coefficients" -> {
+      {0},
+      {0},
+      {0},
+      {0},
+      {0},
+      {0},
+      {0},
+      {0},
+      {0},
+      {0},
+      {0},
+      {0},
+      {0},
+      {0},
+      {0},
+      {0},
+      {0},
+      {0}
+    },
+    "IndependentPairs" -> {},
+    "HasSolution" -> True,
+    "NumVariables" -> 18,
+    "NumSolutions" -> 0
+  |>
+};

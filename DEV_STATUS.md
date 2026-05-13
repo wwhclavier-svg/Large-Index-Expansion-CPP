@@ -1,6 +1,6 @@
 # DEV_STATUS — Large Index Expansion C++ 项目工程状态
 
-> 更新于 2026-05-07，覆盖 2026-05-05 9:00 至今的改动。
+> 更新于 2026-05-10，覆盖 2026-05-05 9:00 至今的改动。
 
 ---
 
@@ -12,6 +12,7 @@
 4. [Ansatz 设计与积分约化：AnsatzMode](#4-ansatz-设计与积分约化ansatzmode)
 5. [其他工作区的整理](#5-其他工作区的整理)
 6. [效率优化：Strategy 设计](#6-效率优化strategy-设计)
+7. [约化规则产生：SymbolicRule 管线设计](#7-约化规则产生symbolicrule-管线设计)
 
 ---
 
@@ -19,12 +20,20 @@
 
 ### 1.1 架构概览
 
+全管线四阶段：
+
 ```
-families/*.json  →  [B] IBPEqGenerator  →  [C] RegionSolver  →  .bin 输出
-                     (Singular 子进程)      (Singular 子进程)
+families/*.json → [B] IBPEqGenerator → [C] RegionSolver → .bin 输出 (IBPMat + RingData)
+                  (Singular 子进程)     (Singular 子进程)
+                                                           ↓
+                                              [D] LayerRecursion → resCache
+                                                           ↓
+                                              [E] RelationSolver → AllRelation_*.m
+                                                           ↓
+                                              [F] SymbolicRule (planned) → 完备约化规则
 ```
 
-全管线为 header-only C++17，通过 `SingularRunner` 模板类调用 Singular 子进程。管线总代码量约 8500 行。
+Stage A–C 为 header-only C++17，通过 `SingularRunner` 调用 Singular 子进程。管线总代码量约 8500 行（不含 LayerRecursion / RelationSolver / SymbolicRule）。
 
 ### 1.2 模块清单
 
@@ -282,10 +291,11 @@ VerifyUtility/cache/
 | `docs/AnsatzModes.md` | Ansatz 模式规范 |
 | `docs/Benchmark_Results.md` | 性能基准测试结果（已更新 ne=7 + crossover） |
 | `docs/Strategy-Comparison.md` | Strategy 0 vs 4 对比分析 |
+| `docs/SymbolicRuleAlgorithm.md` | 约化规则产生：模 Gröbner 基三锥算法设计与 C++ 实现计划（T005） |
 | `docs/RelationSolver_Documentation_Hub.md` | 文档索引 |
 | `verify/VerifyUtility/README.md` | 验证工具使用说明 |
-| `verify/FamilyDatabase/README.md` | Family 数据库说明 |
-| `verify/FamilyDatabase/FamilyDatabase.wl` | 统一 Family 定义（19 个 family，按 L/E 排序） |
+| `families/README.md` | Family 数据库说明 |
+| `families/FamilyDatabase.wl` | 统一 Family 定义（19 个 family，按 L/E 排序） |
 | `verify/README.md` | 验证目录总说明 |
 | `DEV_STATUS.md` | 本文件 |
 
@@ -298,7 +308,12 @@ project/
 ├── tools/                 # family_generate CLI + test_singular_runner / test_region_solver
 ├── tests/                 # test_relationFF / test_family_config / test_expandFF 等
 ├── src/                   # 非模板实现（LayerRecursionCore.cpp）
-├── docs/                  # 设计文档 + 性能报告（10 个 .md/.tex）
+├── data/                  # 工作二进制数据（IBPMat_*.bin, RingData_*.bin, ExpansionCache_*.bin）
+├── relations/             # 导出的关系结果（AllRelations_*.m, RelationMeta_*.m）
+├── scripts/               # Shell脚本（compare_relation_*.sh）
+├── checkpoint/            # 会话存档和检查点文件
+├── mma/reference/         # MMA参考输出（ExpansionMMA_*.m, VerifyAllRelations.wl等）
+├── docs/                  # 设计文档 + 性能报告（11 个 .md/.tex）
 ├── build/                 # CMake 构建产物
 ├── verify/
 │   ├── FamilyDatabase/    # 统一 Family 定义 (MMA) + README
@@ -345,15 +360,70 @@ C++ FamilyGenerate 管线（含 Singular 子进程）比 MMA 快 **7-34 倍**，
 
 ---
 
+## 7. 约化规则产生：SymbolicRule 管线设计
+
+### 7.1 背景
+
+当前 §4 (`RelationSolver`) 使用纯高斯消元重构线性关系，等价于 **TopFlag1** 完备性。但 MMA `setupGeneratingCone` (SymbolicBTForm.wl) 揭示了更深层问题：约化系数的分母可能依赖于 ISP 变量 ($\nu$)，在分母零点上规则退化。
+
+需要实现基于 **模 Gröbner 基**（position-over-term 排序）的完备约化规则生成，区分五级完备性（TopFlag1/2, FullFlag1/2, GlobalFlag），通过三锥结构（B1/B2/B3）逐层级消去目标积分。
+
+### 7.2 设计文档
+
+`docs/SymbolicRuleAlgorithm.md` — 完整算法设计文档，涵盖：
+
+- 输入/输出接口定义（AllRelation + 目标积分 S → ν-符号规则 / 逐积分具体规则）
+- 两种完备性检验对比（高斯消元 vs 模 Gröbner 基）
+- 三锥结构（B1 高秩锥 → B2 中秩锥 → B3 近角落锥）递归流程
+- 核心子程序 `eliminatedRule` + `sectorBlockReducible` 步骤拆解
+- C++ 数据结构设计（`ConeRule`, `GeneratingConeResult`, `CompletenessFlags`）
+- 7 步实现计划（P0–P7）、Singular 接口要点、验证策略
+
+### 7.3 算法管道
+
+```
+RegionSolverAlgorithm  → Groebner → 准素分解 → RingData (.bin)
+        ↓
+LayerRecursionAlgorithm → IBP 矩阵级数展开 → resCache (.bin)
+        ↓
+ReconstructAlgorithm   → 高斯消元重构关系 → AllRelation (.m)
+        ↓
+SymbolicRuleAlgorithm  → 模 Gröbner 三锥规则 → 完备约化规则
+```
+
+### 7.4 当前状态 (2026-05-12)
+
+- [x] `include/SymbolicRule.hpp` — 三锥结构主逻辑（~900 行）
+  - [x] `buildBlockMatrix` 简化版（高斯消元用）
+  - [x] `eliminatedRule` 高斯消元 + 模 Gröbner 基 (ν-多项式生成元)
+  - [x] `setupGeneratingCone` B1/B2/B3 锥体迭代
+  - [x] `generateSymbolicRules` 从 ConeRule 提取约化规则
+  - [x] ν-多项式模 GB：β 向量编码 ν 指数，gen(i) 稀疏格式
+  - [x] 无 ν 结构时跳过 Singular（β 全零 → 全对角元系数=1）
+- [x] `include/RelationLoader.hpp` — AllRelation_*.m 解析器
+- [x] `tests/test_generating_cone.cpp` — 5/5 PASS
+- [ ] `tools/generating_cone.cpp` — CLI 入口
+- [ ] SR212 全族 B1/B2/B3 与 MMA 对比验证
+- [ ] 参数扫描：增大 coefdeg/rank 探索 TopFlag2 通过条件
+
+### 7.5 相关任务
+
+| Task | 内容 | 状态 |
+|------|------|------|
+| T005 | C++ SymbolicRule 实现 | 骨架完成，5/5 PASS |
+
+---
+
 ## 附录 A：已知问题摘要
 
 | 问题 | 影响 | 状态 |
 |------|------|------|
-| A/B 方程符号不一致 | .bin 不与 MMA 逐字节一致 | 已分析，功能无影响 |
+| A/B 方程符号不一致 | .bin 不与 MMA 逐字节一致 | 已分析，T004 进行中 |
 | LI 方程缺失 | 缺少 Lorentz Invariance 约束 | 待实现 |
 | TB123 Singular 超时 | 大 family Groebner 基无法完成 | 待优化 |
 | 5 个家族缺 JSON config | DB313/NP222/NP322/NP322m/TB123m | 待补充 |
 | 临时调试打印残留 | IBPEqGenerator (ne≤4 导数) / RegionSolver (ne≤4 A/B) | 待清理 |
+| SymbolicRule 管线缺失 | 约化规则仅 TopFlag1，无 Gröbner 完备性检验和三锥规则生成 | T005 设计中 |
 
 ## 附录 B：commit 记录 (2026-05-05 9:00 — 2026-05-07)
 

@@ -1,0 +1,204 @@
+{
+  "checkpoint_id": "large-index-cpp-20260510",
+  "task_name": "large-index-cpp-20260510",
+  "fields": {
+    "前提": "IBP矩阵(bub00等)已生成",
+    "目标": "完成有限域展开和关系重建验证",
+    "计划": "layerRecursion→reconstructAllRelations→验证",
+    "完成状态": "核心完成，验证框架搭建中",
+    "测试结果": "bub00 k2 lev1/deg1 PASS",
+    "下一步": "IncrementDetector联调+NP322大矩阵",
+    "预期测试": "EquationVerify+CompareVerify PASS",
+    "workspace": "/home/ykm/Large-Index-Expansion-CPP"
+  },
+  "auto_extracted": {
+    "git_branch": "master",
+    "git_log": "e90e9a2 Add IncrementDetector (rank-based incre auto-detection) + verification pipeline restructure\n81e124c Update DEV_STATUS and verification docs: reflect May 5-7 project state\n99ec194 Add DEV_STATUS.md: comprehensive project status for May 5-7 work\n8c98ba2 Add multi-mode ansatz support to RelationSolver\n9d5330e Update Benchmark_Results: add ne=7 families (TB123/NP222) timing, expand-vs-solve crossover analysis, and lev=3 full-sector results\n8391228 Refactor IncrementalNullspaceSolver to incremental RREF maintenance and simplify nimax_lists\nbaa0534 Fix .gitignore and add Compare-* utility scripts\n8f0df6b Fix VerifyExpand-Prepare: binary export shadowed by package context",
+    "git_status": "M CMakeLists.txt\n M include/RegionSolver.hpp\n M include/SingularRunner.hpp\n M verify/VerifyUtility/LIECoreAlgebra.wl\n M verify/VerifyUtility/LIERegions.wl\n M verify/VerifyUtility/VerifyExpand-Compare.wl\n?? .aether/\n?? .hermes/\n?? AllRelations_Box_k2.m\n?? AllRelations_NP222_k2.m\n?? AllRelations_SR212_k4.m\n?? AllRelations_TB123_k2.m\n?? AllRelations_Tri_k2.m\n?? AllRelations_bub00_k2.m\n?? AllRelations_bub00_k4.m\n?? AllRelations_bub10_k2.m\n?? AllRelations_bub11_k2.m\n?? RelationMeta_Box.m\n?? RelationMeta_NP222.m\n?? RelationMeta_SR212.m\n?? RelationMeta_TB123.m\n?? RelationMeta_Tri.m\n?? RelationMeta_bub00.m\n?? RelationMeta_bub10.m\n?? RelationMeta_bub11.m\n?? cache/\n?? checkpoint_large-index-cpp-session-20260510.json\n?? docs/Progress_Report_April_May_2026.tex\n?? docs/RegionSolver-Debug-Plan.md\n?? docs/Strategy-Comparison.md\n?? families/DB313.json\n?? families/DP2L5P.json\n?? families/HB2L5P.json\n?? families/LA3L4Pm.json\n?? families/LB3L4Pm.json\n?? families/NP222.json\n?? families/NP322.json\n?? families/NP322m.json\n?? families/PB2L5P.json\n?? families/Penta1L.json\n?? families/README_Literature.md\n?? families/SR212.json\n?? families/TB123.json\n?? families/TB123m.json\n?? include/IBPAnalyzer.hpp\n?? include/ParallelSolver.hpp\n?? include/PolyArith.hpp\n?? include/RecursionBuilder.hpp\n?? include/RingBuilder.hpp\n?? mma/AllRelationsToNuFormat.wl\n?? scripts/\n?? session-checkpoint.skill\n?? task-cppregsol-debug.md\n?? test_relationFF\n?? tests/compare_ringdata_detailed.cpp\n?? tests/debug_region_solver.cpp\n?? tests/test_compare_MMA.cpp\n?? tests/test_ibp_analyzer.cpp\n?? tests/test_poly_arith.cpp\n?? tests/test_recursion_builder.cpp\n?? tests/test_recursion_builder_tri.cpp\n?? tests/test_region_solver_full.cpp\n?? tests/test_ring_builder.cpp\n?? tests/verify_MMA_lev1_deg1.cpp\n?? tests/verify_ring_builder.cpp\n?? tools/diagnose_ibp.cpp\n?? tools/diagnose_ibp_reference.cpp\n?? tools/dump_mma_equations.wl\n?? verify/Box/\n?? verify/DB313/\n?? verify/DP323/\n?? verify/DP323_recompute/\n?? verify/NP222/\n?? verify/Penta1L/\n?? verify/SR212-3m/\n?? verify/SR212-5m/\n?? verify/SR212/\n?? verify/TB123m/\n?? verify/TestBoxSingular_Fix.wl\n?? verify/Tri/\n?? verify/VerifyUtility/SingularCoordinateRing.wl\n?? verify/bub00/\n?? verify/bub10/\n?? verify/bub11/\n?? verify/logs/\n?? verify/timing/",
+    "structure": {
+      "/": [
+        "[.agents/]",
+        "[.claude/]",
+        "[archive/]",
+        "[docs/]",
+        "[families/]",
+        "[include/]",
+        "[mma/]",
+        "[scripts/]",
+        "[src/]",
+        "[tests/]",
+        "[tools/]",
+        "[verify/]"
+      ],
+      "tools": [
+        "diagnose_ibp.cpp",
+        "diagnose_ibp_reference.cpp",
+        "family_generate.cpp",
+        "test_ff_verify.cpp",
+        "test_firefly_simple.cpp",
+        "test_region_solver.cpp",
+        "test_singular_runner.cpp"
+      ],
+      "src": [
+        "LayerRecursionCore.cpp",
+        "layerRecursion.cpp",
+        "main.cpp"
+      ],
+      ".claude": [
+        "[skills/]"
+      ],
+      ".claude/skills": [
+        "[blade/]",
+        "[large-index-expansion/]"
+      ],
+      "include": [
+        "[firefly/]",
+        "BinaryIBPWriter.hpp",
+        "BinaryRingWriter.hpp",
+        "Combinatorics.hpp",
+        "FamilyConfig.hpp",
+        "IBPAnalyzer.hpp",
+        "IBPEqGenerator.hpp",
+        "IBPMatrixLoader.hpp",
+        "IBPMatrixLoader_Binary.hpp",
+        "IncrementDetector.hpp",
+        "IncrementalRelationSolver.hpp",
+        "LayerRecursion.hpp",
+        "LayerRecursionCore.hpp",
+        "LayerRecursionCore.tpp",
+        "LinearSolver.hpp",
+        "LinearSolver_Eigen.hpp",
+        "LinearSolver_FF.hpp",
+        "ParallelSolver.hpp",
+        "PolyArith.hpp",
+        "RecursionBuilder.hpp",
+        "RegionSolver.hpp",
+        "RelationSolver.hpp",
+        "RingBuilder.hpp",
+        "RingDataLoader.hpp",
+        "SeriesCoefficient.hpp"
+      ],
+      "include/firefly": [
+        "FFInt.hpp"
+      ],
+      "verify": [
+        "[Box/]",
+        "[DB313/]",
+        "[DP323/]",
+        "[DP323_recompute/]",
+        "[FamilyDatabase/]",
+        "[NP222/]",
+        "[NP322/]",
+        "[Penta1L/]",
+        "[SR212/]",
+        "[SR212-3m/]",
+        "[SR212-5m/]",
+        "[TB123/]",
+        "[TB123m/]",
+        "[Tri/]",
+        "[VerifyUtility/]",
+        "[bub00/]",
+        "[bub10/]",
+        "[bub11/]",
+        "[docs/]",
+        "[logs/]",
+        "[timing/]",
+        "benchmark_prepare.sh"
+      ],
+      "verify/DP323": [
+        "[SingularTempFile/]",
+        "[backup_before_recompute/]"
+      ],
+      "verify/VerifyUtility": [
+        "[SingularTempFile/]"
+      ],
+      "verify/DP323_recompute": [
+        "[SingularTempFile/]",
+        "[output/]"
+      ],
+      "tests": [
+        "IBPVerification.hpp",
+        "compare_ringdata_detailed.cpp",
+        "debug_region_solver.cpp",
+        "test_IBPVerification.cpp",
+        "test_compare_MMA.cpp",
+        "test_expandFF.cpp",
+        "test_expand_family.cpp",
+        "test_family_config.cpp",
+        "test_family_generate.cpp",
+        "test_ibp_analyzer.cpp",
+        "test_load_bub.cpp",
+        "test_poly_arith.cpp",
+        "test_recursion_builder.cpp",
+        "test_recursion_builder_tri.cpp",
+        "test_region_solver_full.cpp",
+        "test_relationFF.cpp",
+        "test_ring_builder.cpp",
+        "verify_MMA_lev1_deg1.cpp",
+        "verify_ring_builder.cpp"
+      ],
+      ".agents": [
+        "[skills/]"
+      ],
+      ".agents/skills": [
+        "[expand-verify/]",
+        "[large-index-expansion/]",
+        "[relation-verify/]"
+      ]
+    },
+    "build_targets": [
+      "test_expandFF",
+      "test_IBPVerification",
+      "test_relationFF",
+      "test_load_bub",
+      "test_expand_family",
+      "test_ff_verify",
+      "test_family_generate",
+      "test_family_config",
+      "family_generate",
+      "test_singular_runner",
+      "test_region_solver",
+      "test_ibp_analyzer",
+      "test_recursion_builder",
+      "test_recursion_builder_tri",
+      "test_ring_builder",
+      "verify_ring_builder",
+      "test_region_solver_full",
+      "debug_region_solver",
+      "compare_ringdata_detailed",
+      "diagnose_ibp",
+      "diagnostic_dump",
+      "test_compare_MMA",
+      "verify_MMA_lev1_deg1"
+    ],
+    "recent_tests": [
+      "test_IBPVerification.cpp",
+      "test_compare_MMA.cpp",
+      "test_expandFF.cpp",
+      "test_expand_family.cpp",
+      "test_family_config.cpp",
+      "test_family_generate.cpp",
+      "test_ibp_analyzer.cpp",
+      "test_load_bub.cpp",
+      "test_poly_arith.cpp",
+      "test_recursion_builder.cpp",
+      "test_recursion_builder_tri.cpp",
+      "test_region_solver_full.cpp",
+      "test_relationFF.cpp",
+      "test_ring_builder.cpp"
+    ],
+    "docs": [
+      "Plan-FamilyGenerate-CPP-Rewrite.md",
+      "RelationSolver_Documentation_Hub.md",
+      "LayerRecursion_Algorithm.md",
+      "AnsatzModes.md",
+      "RelationSolver_ComponentGuide.md",
+      "RelationSolver_QuickReference.md",
+      "Strategy-Comparison.md",
+      "RegionSolver-Debug-Plan.md",
+      "Benchmark_Results.md",
+      "ReconstructAlgorithm.md",
+      "ReconstructReductionRelation_Documentation.md"
+    ]
+  }
+}

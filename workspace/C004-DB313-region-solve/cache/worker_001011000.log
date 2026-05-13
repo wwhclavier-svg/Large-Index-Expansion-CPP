@@ -1,0 +1,23 @@
+
+      +++  sector:  {0, 0, 1, 0, 1, 1, 0, 0, 0}  (1/1)  +++ 
+                     SINGULAR                                 /  Development
+ A Computer Algebra System for Polynomial Computations       /   version 4.3.2
+                                                           0<
+ by: W. Decker, G.-M. Greuel, G. Pfister, H. Schoenemann     \   Feb 2023
+FB Mathematik der Universitaet, D-67653 Kaiserslautern        \  Debian 1:4.3.2-p10+ds-1.1build1
+compute hilbert series with std in ring (ZZ/179424673),(x18,x17,x16,x15,x14,x13,x12,x11,x10,x9,x8,x7,x6,x5,x4,x3,x2,x1,@),(dp(19),C)
+weights used for hilbert series: 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+[65535:5]2(18)s(17)s(16)s(15)s(14)ss(15)ss(17)s(16)s(15)s(18)s(21)ssss(24)s(27)s(32)s3(31)----s--s(33)-s(34)---s(36)--s(44)-s(50)s(57)--s(61)s(67)s(72)------4----------------------s(52)--s(62)----------s(59)s(66)----------s(64)s(71)-----------5---------------s(51)-----s-------------------------------------6--------------
+product criterion:388 chain criterion:80
+std with hilb in (ZZ/179424673),(x18,x17,x16,x15,x14,x13,x12,x11,x10,x9,x8,x7,x6,x5,x4,x3,x2,x1,@),(lp(18),dp(1),C)
+[65535:5]2(36)s(35)s(34)ss(33)s(32)s(31)sss(30)ss(31)ss(30)s(33)s(37)s(39)s(41)s(44)s3(49)s(54)-s(59)s(66)-s(72)-----ss(79)-s(90)-----------s(86)s(93)---shhhhhhhhhh4(86)----------s(88)s(100)--s(106)s(114)--------------(100)-----s(102)--(100)--------shhhhhhhhhhhhhhhhhhhhhhhhh5(75)------------s(72)-----------s(71)----shhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh6(31)-------------------shhhhhhhhhhhhhhhhhhhhh
+product criterion:418 chain criterion:109
+hilbert series criterion:100
+dehomogenization
+simplification
+imap to ring (ZZ/179424673),(x18,x17,x16,x15,x14,x13,x12,x11,x10,x9,x8,x7,x6,x5,x4,x3,x2,x1),(lp(18),C)
+Auf Wiedersehen.
+  >> 0 regions (all trivial): expReg=0.505s
+  [sector total: 0.513s]
+#Non-triv Sectors = 0
+

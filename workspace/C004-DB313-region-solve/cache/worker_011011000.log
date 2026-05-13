@@ -1,0 +1,23 @@
+
+      +++  sector:  {0, 1, 1, 0, 1, 1, 0, 0, 0}  (1/1)  +++ 
+                     SINGULAR                                 /  Development
+ A Computer Algebra System for Polynomial Computations       /   version 4.3.2
+                                                           0<
+ by: W. Decker, G.-M. Greuel, G. Pfister, H. Schoenemann     \   Feb 2023
+FB Mathematik der Universitaet, D-67653 Kaiserslautern        \  Debian 1:4.3.2-p10+ds-1.1build1
+compute hilbert series with std in ring (ZZ/179424673),(x18,x17,x16,x15,x14,x13,x12,x11,x10,x9,x8,x7,x6,x5,x4,x3,x2,x1,@),(dp(19),C)
+weights used for hilbert series: 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+[65535:5]2(18)s(17)s(16)s(15)s(14)ss(15)ss(17)s(16)s(15)s(18)s(21)ssss(24)s(27)s(32)s3(33)s(37)s(42)s(44)s(47)s(52)s(58)s(62)s(67)s(71)s(77)s(82)s(87)s(93)-s(103)-s(110)s(118)s(127)s(137)s(143)s(151)s(159)s(170)s(179)-s(186)s(194)s(202)--(200)--s4(204)----(200)----------------------------------------------------------------------------------------------------(100)--------------s(95)--s(102)--(100)s(112)----s(120)--------s(125)s(135)--s(142)-s(153)---s(160)s(167)--------------------------------5-----s(138)-------------s-s(149)--s(156)---s(162)--------s(165)--s(176)--s(183)-----------s(185)---s(195)-------------------------------------------s(162)------------------6--------------------------------------------(100)-----------------s(94)------------------------------------------------------------------------------7----------------
+product criterion:1082 chain criterion:668
+std with hilb in (ZZ/179424673),(x18,x17,x16,x15,x14,x13,x12,x11,x10,x9,x8,x7,x6,x5,x4,x3,x2,x1,@),(lp(18),dp(1),C)
+[65535:5]2(67)s(66)s(65)s(64)s(63)sss(62)s(61)ss(60)s(61)s(63)s(66)ss(67)s(69)s(73)s(77)s3(82)s(86)s(88)s(93)s(100)s(105)s(108)s(111)s(115)s(121)s(125)s(130)s(135)s(143)s(149)s(160)s(168)-s(175)s(185)s(195)s(207)--s(212)-s(219)s(227)s(236)s(249)s(255)-shhhhhhhhhhhhhhhhhhhhhhhhhhhhh4(231)-------------------------------(200)----------------s(197)s(206)-s(215)s(224)-s(235)s(246)-----------s(244)-----------------------s(229)---------s(230)-----s(233)s(240)----------------------------------------(200)---shhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh5(156)---s(165)s(178)-s(190)---s(200)-s(212)s(223)s(236)s(247)----s(254)s(264)---------------s(258)-s(268)-----s(273)-----------s(271)---------------------------------s(250)-----shhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh6(201)-(200)-----------------------------s(184)------------------------------------------------------------s(135)shhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh
+product criterion:1335 chain criterion:980
+hilbert series criterion:279
+dehomogenization
+simplification
+imap to ring (ZZ/179424673),(x18,x17,x16,x15,x14,x13,x12,x11,x10,x9,x8,x7,x6,x5,x4,x3,x2,x1),(lp(18),C)
+Auf Wiedersehen.
+  >> 0 regions (all trivial): expReg=0.513s
+  [sector total: 0.521s]
+#Non-triv Sectors = 0
+

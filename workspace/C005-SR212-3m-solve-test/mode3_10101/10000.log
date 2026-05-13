@@ -1,0 +1,116 @@
+=== sector 10000 ===
+=== Configuration ===
+Family: SR212-3m
+Order: 4
+lev range: [1, 2]
+deg range: [0, 2]
+Ansatz Mode: ExtendedPyramid (3)
+Ext sector: [1,0,0,0,0]
+Files: IBPMat_SR212-3m.bin, RingData_SR212-3m.bin
+
+=== Test: Reconstruction of Linear Relations (Finite Field) ===
+Loading IBP matrices from IBPMat_SR212-3m.bin ...
+Loaded 8 IBP regime(s): ne=5, nb=1, mod=179424673
+Loaded coefficients from cache.
+Total branches: 8 matrices
+
+Loading ring data from RingData_SR212-3m.bin ...
+Loaded 8 regimes.
+Extracted 8 sectors.
+  Sector 0: [1, 0, 1, 0, 0]
+  Sector 1: [1, 0, 1, 0, 1]
+  Sector 2: [1, 0, 1, 0, 1]
+  Sector 3: [1, 0, 1, 0, 1]
+  Sector 4: [1, 0, 1, 0, 1]
+  Sector 5: [1, 0, 1, 0, 1]
+  Sector 6: [1, 0, 1, 0, 1]
+  Sector 7: [1, 0, 1, 0, 1]
+
+Exporting relation metadata (A_i, theta)...
+Exported relation meta to: RelationMeta_SR212-3m.m
+
+=== Relation Solving (RemoveSolvedVariables strategy) ===
+Ansatz mode: ExtendedPyramid (kernel: ν-α), alphas_max=56
+
+  --- (lev=1, deg=0) --- vars=21 active=21
+    [ν-sampling] vars=21 eq/sample=40 min_req=1 eff_max=30
+    ν points: {1,0,0,0,0}, {0,1,0,0,0}, {0,0,1,0,0}, {0,0,0,1,0}, {0,0,0,0,1}, {1,1,1,1,1}, {1,2,0,0,0}, {0,1,2,0,0}, {0,0,1,2,0}, {0,0,0,1,2} (+0 more, converged)
+    sol_dim=0 independent=0 stable_order=0
+
+  --- (lev=1, deg=1) --- vars=126 active=126
+    [ν-sampling] vars=126 eq/sample=40 min_req=4 eff_max=30
+    ν points: {1,0,0,0,0}, {0,1,0,0,0}, {0,0,1,0,0}, {0,0,0,1,0}, {0,0,0,0,1}, {1,1,1,1,1}, {1,2,0,0,0}, {0,1,2,0,0}, {2,0,0,0,0}, {0,2,0,0,0}, {0,0,2,0,0}, {0,0,0,2,0} (+3 more, converged)
+    sol_dim=0 independent=0 stable_order=1
+
+  --- (lev=1, deg=2) --- vars=441 active=441
+    [ν-sampling] vars=441 eq/sample=40 min_req=14 eff_max=50
+    ν points: {1,0,0,0,0}, {0,1,0,0,0}, {0,0,1,0,0}, {0,0,0,1,0}, {0,0,0,0,1}, {1,1,1,1,1}, {1,2,0,0,0}, {0,1,2,0,0}, {110852871,16975069,158533986,13196988,130991396}, {42039515,148907499,156214761,50052671,140709495} (+15 more, converged)
+    sol_dim=1 independent=1 stable_order=3
+
+  --- (lev=2, deg=0) --- vars=56 active=56
+    [ν-sampling] vars=56 eq/sample=40 min_req=2 eff_max=30
+    ν points: {1,0,0,0,0}, {0,1,0,0,0}, {0,0,1,0,0}, {0,0,0,1,0}, {0,0,0,0,1}, {1,1,1,1,1}, {1,2,0,0,0}, {0,1,2,0,0}, {0,0,0,1,2} (+1 more, converged)
+    sol_dim=6 independent=6 stable_order=0
+
+  --- (lev=2, deg=1) --- vars=336 active=300
+    [ν-sampling] vars=336 active=300 eq/sample=40 min_req=9 eff_max=45
+    ν points: {1,0,0,0,0}, {0,1,0,0,0}, {0,0,1,0,0}, {0,0,0,1,0}, {0,0,0,0,1}, {1,1,1,1,1}, {1,2,0,0,0}, {0,1,2,0,0} (+12 more, converged)
+    sol_dim=8 independent=8 stable_order=2
+
+  --- (lev=2, deg=2) --- vars=1176 active=1005
+    [ν-sampling] vars=1176 active=1005 eq/sample=40 min_req=31 eff_max=50
+    ν points: {1,0,0,0,0}, {0,1,0,0,0}, {0,0,1,0,0}, {0,0,0,1,0}, {0,0,0,0,1}, {1,1,1,1,1}, {1,2,0,0,0}, {0,1,2,0,0} (+42 more)
+    sol_dim=189 independent=189 stable_order=-2
+
+=== Stability bounds (lev x deg) ===
+           0       1       2
+  1        0       1       3
+  2        0       2      -2
+
+=== Relation counts (lev x deg) ===
+           0       1       2
+  1        0       0       1
+  2        6       8     189
+  (lev=1, deg=0): active=21/21 sol_dim=0 independent=0 stable_order=0
+  (lev=1, deg=1): active=126/126 sol_dim=0 independent=0 stable_order=1
+  (lev=1, deg=2): active=441/441 sol_dim=1 independent=1 stable_order=3
+  (lev=2, deg=0): active=56/56 sol_dim=6 independent=6 stable_order=0
+  (lev=2, deg=1): active=300/336 sol_dim=8 independent=8 stable_order=2
+  (lev=2, deg=2): active=1005/1176 sol_dim=189 independent=189 stable_order=-2
+
+Exported all 6 results to: AllRelations_SR212-3m_k4.m
+
+=== Solution Summary ===
+Total configurations: 6
+  ✗ (lev=1, deg=0): vars=21 sol_dim=0 sys=0x21 ratio=0.00 nu=0 time=0.00s
+  ✗ (lev=1, deg=1): vars=126 sol_dim=0 sys=0x126 ratio=0.00 nu=0 time=0.00s
+  ✓ (lev=1, deg=2): vars=441 sol_dim=1 sys=0x441 ratio=0.00 nu=0 time=0.00s
+  ✓ (lev=2, deg=0): vars=56 sol_dim=6 sys=0x56 ratio=0.00 nu=0 time=0.00s
+  ✓ (lev=2, deg=1): vars=300 sol_dim=8 sys=0x300 ratio=0.00 nu=0 time=0.00s
+  ✓ (lev=2, deg=2): vars=1005 sol_dim=189 sys=0x1005 ratio=0.00 nu=0 time=0.00s
+
+Total execution time: 72.02 seconds.
+Test completed successfully.
+	Command being timed: "./test_relationFF SR212-3m 4 1 2 2 --mode 3 --sector 10000"
+	User time (seconds): 54.95
+	System time (seconds): 0.15
+	Percent of CPU this job got: 76%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 1:12.16
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 116396
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 0
+	Minor (reclaiming a frame) page faults: 30295
+	Voluntary context switches: 1
+	Involuntary context switches: 36526
+	Swaps: 0
+	File system inputs: 0
+	File system outputs: 3640
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

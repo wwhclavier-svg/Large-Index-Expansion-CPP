@@ -1,0 +1,74 @@
+=== FamilyGenerate ===
+Family: TB123 (L=2 E=2 N=7)
+Modulus: 179424673
+
+[Step 1] Generating IBP equations...
+[IBPEqGenerator] Family TB123: ne=7 nl=2 nE=2 nIBP=8 subsectors=57
+[IBPEqGenerator] Step 1: Running SP2PD...
+[IBPEqGenerator] SP2PD OK: 7 scalar products → z-basis
+[IBPEqGenerator] Step 2: Computing derivatives...
+[IBPEqGenerator] Derivatives OK: 56 polynomials computed
+[IBPEqGenerator] Step 3: Assembling IBP equations (mon2F)...
+[IBPEqGenerator] Generated 8 IBP equations with 102 total g-operator terms.
+  ne=7 nibp=8 subsectors=57
+  [TIMING] Step 1: 0.061 s
+
+[Step 2] Extracting FTable...
+  nibp=8 ne=7
+  [TIMING] Step 2: 0 s
+
+[Step 3] Solving sectors...
+  Filtering: sector = 1111010
+  Solving sector [1111010]
+  [2026-05-13 07:38:47] Singular minAssGTZ starting...
+  [Singular minAssGTZ] 0.116975 s, kept=3
+  [2026-05-13 07:38:48] Singular minAssGTZ done
+  [2026-05-13 07:38:48] Component 0/3 (14 polys)
+  [2026-05-13 07:38:48] Component 1/3 (14 polys)
+  [2026-05-13 07:38:48] Component 2/3 (14 polys)
+
+[DEBUG solveVarRule] sector=[1,1,1,1,0,1,0] nb=2 VarIndep=[A7] VarDep=[A1,A2,A3,A4,A5,A6]
+  compGb:
+    [0] A7^2+3317058*A7+57763499
+    [1] A6+7757667*A7-73140950
+    [2] A5-77856018*A7+53870166
+    [3] A4+7757667*A7-73140950
+    [4] A3+46795585*A7+71427099
+    [5] A2-9337043*A7-11284945
+    [6] A1+9946696*A7+78276238
+    [7] B7+23325211*A7-70892476
+    [8] B6+57115572*A7-33201955
+    [9] B5-15247254*A7-78502723
+    [10] B4+57115572*A7-33201955
+    [11] B3+49037615*A7+46616853
+    [12] B2-18543107*A7-28764193
+    [13] B1+83736636*A7-43984686
+  VarRule result:
+    A1 -> 101148435+169477977*A7
+    A2 -> 11284945+9337043*A7
+    A3 -> 107997574+132629088*A7
+    A4 -> 73140950+171667006*A7
+    A5 -> 125554507+77856018*A7
+    A6 -> 73140950+171667006*A7
+    [2026-05-13 07:38:48] MBM reduction k=0/2 (2 products)...
+    [2026-05-13 07:38:48] MBM reduction k=1/2 (2 products)...
+  -> 3 region(s) in 0.159 s
+  Found 3 region(s) total
+  [TIMING] Step 3: 0.159 s
+
+[Step 4] Building recursion + ring matrices...
+  Region 0: nb=1
+  Region 1: nb=1
+  Region 2: nb=2
+  [TIMING] Step 4: 0.007 s
+
+[Step 5] Writing .bin files...
+Written 3 regime(s) to /home/ykm/Large-Index-Expansion-CPP/cache/TB123_scheduled/SectorCache/IBPMat_TB123_sector_1111010.bin
+Written 3 ring cell(s) to /home/ykm/Large-Index-Expansion-CPP/cache/TB123_scheduled/SectorCache/RingData_TB123_sector_1111010.bin
+  [TIMING] Step 5: 0 s
+
+[TIMING] Total wall-clock: 0.23 s
+
+Done. Output:
+  /home/ykm/Large-Index-Expansion-CPP/cache/TB123_scheduled/SectorCache/IBPMat_TB123_sector_1111010.bin
+  /home/ykm/Large-Index-Expansion-CPP/cache/TB123_scheduled/SectorCache/RingData_TB123_sector_1111010.bin

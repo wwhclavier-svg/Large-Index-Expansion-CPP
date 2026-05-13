@@ -1,0 +1,23 @@
+
+      +++  sector:  {1, 1, 0, 0, 0, 0, 0}  (1/1)  +++ 
+                     SINGULAR                                 /  Development
+ A Computer Algebra System for Polynomial Computations       /   version 4.3.2
+                                                           0<
+ by: W. Decker, G.-M. Greuel, G. Pfister, H. Schoenemann     \   Feb 2023
+FB Mathematik der Universitaet, D-67653 Kaiserslautern        \  Debian 1:4.3.2-p10+ds-1.1build1
+compute hilbert series with std in ring (ZZ/179424673),(x14,x13,x12,x11,x10,x9,x8,x7,x6,x5,x4,x3,x2,x1,@),(dp(15),C)
+weights used for hilbert series: 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+[65535:4]2(14)s(13)s(12)s(11)s(10)s(9)ss(8)ss(10)s(12)s-s(11)s(14)s3(17)---s(15)--s(18)s(21)-s(22)-------4---------s(12)----5--s(13)-----6-s(12)------7------
+product criterion:115 chain criterion:25
+std with hilb in (ZZ/179424673),(x14,x13,x12,x11,x10,x9,x8,x7,x6,x5,x4,x3,x2,x1,@),(lp(14),dp(1),C)
+[65535:4]2(20)s(19)s(18)s(17)s(16)ss(15)s(16)s(15)s(14)s(13)s(15)s(18)s(20)s3(24)--s(26)-s(28)--s(32)shhhhhhhhhhhhh4(25)----shhhhhhhhhhhhhhhhh5(10)shhhhhhhhh6(8)shhhhhhhhhhhhhhhhh
+product criterion:115 chain criterion:26
+hilbert series criterion:56
+dehomogenization
+simplification
+imap to ring (ZZ/179424673),(x14,x13,x12,x11,x10,x9,x8,x7,x6,x5,x4,x3,x2,x1),(lp(14),C)
+Auf Wiedersehen.
+  >> 0 regions (all trivial): expReg=0.452s
+  [sector total: 0.456s]
+#Non-triv Sectors = 0
+

@@ -1,0 +1,38 @@
+{
+    "name": "DP2L5P",
+    "description": "Non-Planar DoublePentagon 2L5P massless, s12=3,s23=2,s34=5,s45=7,s15=11",
+    "nLoop": 2,
+    "nExt": 4,
+    "nProp": 11,
+    "propagators": [
+        "-l1^2",
+        "-(l1 - p1)^2",
+        "-(l1 - p1 - p2)^2",
+        "-l2^2",
+        "-(l2 - p1 - p2 - p3)^2",
+        "-(l2 - p1 - p2 - p3 - p4)^2",
+        "-(l1 - l2)^2",
+        "-(l1 - l2 + p3)^2",
+        "-(l1 - p1 - p2 - p3 - p4)^2",
+        "-(l2 - p1)^2",
+        "-(l2 - p1 - p2)^2"
+    ],
+    "loopMomenta": ["l1", "l2"],
+    "externalMomenta": ["p1", "p2", "p3", "p4"],
+    "kinematicRules": {
+        "p1^2": "0",
+        "p2^2": "0",
+        "p3^2": "0",
+        "p4^2": "0",
+        "p1*p2": "s12/2",
+        "p2*p3": "s23/2",
+        "p3*p4": "s34/2",
+        "p1*p3": "(s45 - s12 - s23)/2",
+        "p2*p4": "(s15 - s23 - s34)/2",
+        "p1*p4": "(s23 - s45 - s15)/2"
+    },
+    "topSector": [1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0],
+    "numeric": {"s12": 3, "s23": 2, "s34": 5, "s45": 7, "s15": 11, "d": "1/13"},
+    "modulus": 179424673,
+    "source": "arXiv:2009.07803 Eq.(3.2) topology (d)"
+}

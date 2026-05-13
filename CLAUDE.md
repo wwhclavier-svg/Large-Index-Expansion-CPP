@@ -13,10 +13,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is a **C++17 scientific computing project** focused on **IBP (Integration By Parts) matrix series expansion** and **finite field arithmetic**. It implements algorithms for computing IBP matrix expansion coefficients and reconstructing linear reduction relations.
 
-Core functionality:
-- **Layer Recursion**: Computes IBP matrix series expansion coefficients order-by-order
-- **Finite Field Arithmetic**: Uses the FireFly library for computations over finite fields
-- **Linear Relation Reconstruction**: Solves linear relations among expansion coefficients
+Core functionality (4-stage pipeline):
+- **Region Solving**: Computes Groebner basis → primary decomposition → monomial basis (RegionSolverAlgorithm)
+- **Layer Recursion**: Computes IBP matrix series expansion coefficients order-by-order (LayerRecursionAlgorithm)
+- **Linear Relation Reconstruction**: Solves linear relations among expansion coefficients (ReconstructAlgorithm)
+- **Reduction Rule Generation**: Generates complete reduction rules via module Groebner basis three-cone structure (SymbolicRuleAlgorithm)
 
 The project uses heavy template metaprogramming to support both `double` (floating-point) and `firefly::FFInt` (finite field integers) simultaneously.
 
@@ -44,14 +45,14 @@ cd .. && ./build/test_expandFF
 - CMake 3.10+
 - Eigen3 (linear algebra)
 - GMP (multi-precision arithmetic)
-- FireFly (finite field, pre-built at `/root/firefly-2.0.3`)
+- FireFly (finite field, pre-built at `/home/ykm/firefly`)
 
 **Optional:**
 - Mathematica (for `.wl` data generation scripts)
 
 ### Key Build Notes
 
-- FireFly is pre-built at `/root/firefly-2.0.3` — not installed via package manager
+- FireFly is pre-built at `/home/ykm/firefly` — not installed via package manager
 - Tests are **standalone executables**, not managed by `ctest` or `add_test()`
 - Binary data files (`IBPMat_*.bin`, `RingData_*.bin`) must exist in the working directory for tests
 
@@ -87,23 +88,33 @@ A local minimal FFInt stub exists at `include/firefly/FFInt.hpp` for quick compi
 
 ### Module Hierarchy
 
+Four-stage pipeline (each stage consumes the previous stage's output):
+
 ```
-LayerRecursion.hpp                    RelationSolver.hpp
-       ↓                              (RegimeData<T>, RegimeEvaluator<T>,
-LayerRecursionCore.hpp                 AdaptiveEquationBuilder<T>,
-       ↓                               RelationCoefficient<T>)
-LayerRecursionCore.tpp                        ↓
-       ↓                              IncrementalRelationSolver.hpp
-LinearSolver.hpp                              ↓
-  (dispatches to ↓)                  UnifiedStorage.hpp
-LinearSolver_FF.hpp                  Combinatorics.hpp
-LinearSolver_Eigen.hpp               Utilities.hpp
-       ↓                              binomial.hpp / binomial2.hpp
-SeriesCoefficient.hpp
-SeriesCoefficientIO.hpp
-IBPMatrixLoader_Binary.hpp
-IBPMatrixLoader.hpp (JSON)
-RingDataLoader.hpp
+Stage 1: RegionSolver.hpp                  Stage 2: LayerRecursion.hpp
+  (Groebner → primary decomp → mono basis)    (IBP matrix series expansion)
+  IBPEqGenerator.hpp                          LayerRecursionCore.hpp
+  IBPAnalyzer.hpp                             LayerRecursionCore.tpp
+  SingularRunner.hpp                          LinearSolver.hpp
+  PolyArith.hpp                                 (dispatches to ↓)
+  RecursionBuilder.hpp                        LinearSolver_FF.hpp
+  RingBuilder.hpp                             LinearSolver_Eigen.hpp
+  BinaryIBPWriter.hpp                         SeriesCoefficient.hpp
+  BinaryRingWriter.hpp                        SeriesCoefficientIO.hpp
+       ↓                                      IBPMatrixLoader_Binary.hpp
+  RingData_*.bin + IBPMat_*.bin               RingDataLoader.hpp
+                                               ↓
+Stage 3: RelationSolver.hpp                 resCache_*.bin
+  (RegimeData<T>, RegimeEvaluator<T>,
+   AdaptiveEquationBuilder<T>,           Stage 4: SymbolicRule.hpp (planned)
+   RelationCoefficient<T>)                 (module Gröbner three-cone:
+  IncrementalRelationSolver.hpp             B1 high-rank → B2 mid-rank →
+  UnifiedStorage.hpp                        B3 near-corner)
+  Combinatorics.hpp                         RelationLoader.hpp
+  Utilities.hpp                             ↓
+  binomial.hpp / binomial2.hpp            Complete reduction rules
+       ↓
+  AllRelation_*.m
 ```
 
 **Note**: `RegimeData<T>`, `RegimeEvaluator<T>`, `AdaptiveEquationBuilder<T>`, and `RelationCoefficient<T>` are all defined within `RelationSolver.hpp` — they are not separate files.
@@ -341,20 +352,25 @@ target_link_libraries(test_MyFeature ${FIREFLY_LIBRARY} ${GMP_LIBRARY} ${GMPXX_L
 IBP matrix files use a custom binary format with magic number `"IBP1"`. See `IBPMatrixLoader_Binary.hpp` for details.
 
 Required data files in working directory:
-- `IBPMat_*.bin` — IBP matrix binary data
-- `RingData_*.bin` — Ring/algebra data
-- `resCache_*.bin` — Expansion result cache
+- `data/IBPMat_*.bin` — IBP matrix binary data
+- `data/RingData_*.bin` — Ring/algebra data
+- `data/ExpansionCache_*.bin` / `data/resCache_*.bin` — Expansion result cache
 
-**Important**: Tests must be run from the project root directory (where `.bin` files reside), not from the `build/` directory.
+**Important**: Tests must be run from the project root directory (not from `build/`), and load binary data from the `data/` subdirectory via relative paths (`data/IBPMat_*.bin`).
 
 ## Documentation
 
-- `docs/LayerRecursion_Algorithm.md` — Layer recursion algorithm details
+Algorithm pipeline (read in this order):
+- `docs/RegionSolverAlgorithm.md` — Region solving: Groebner → primary decomposition → monomial basis
+- `docs/LayerRecursion_Algorithm.md` — Layer recursion: IBP matrix series expansion coefficients
+- `docs/ReconstructAlgorithm.md` — Relation reconstruction: MMA vs C++ implementation, verification methods
+- `docs/SymbolicRuleAlgorithm.md` — Reduction rule generation: module Gröbner three-cone (B1/B2/B3), T005 design plan
+
+Component guides:
 - `docs/RelationSolver_ComponentGuide.md` — RelationSolver component guide
 - `docs/RelationSolver_QuickReference.md` — Quick reference for RelationSolver API
 - `docs/RelationSolver_Documentation_Hub.md` — Documentation hub/index
 - `docs/ReconstructReductionRelation_Documentation.md` — Mathematica package docs
-- `docs/ReconstructAlgorithm.md` — Reconstruction algorithm: MMA vs C++ implementation comparison, verification methods
 
 ### Verification (`verify/`)
 

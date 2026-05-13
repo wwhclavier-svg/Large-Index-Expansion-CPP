@@ -1,0 +1,67 @@
+========================================
+ScheduledRegionSolve TB123
+ProjectRoot: /home/ykm/Large-Index-Expansion-CPP/
+VerifyUtility: /home/ykm/Large-Index-Expansion-CPP/verify/VerifyUtility
+========================================
+
+[1/5] Loading packages...
+  Packages loaded.
+
+[2/5] Loading family config...
+=== Registered IBP Families (19) ===
+  bub00 — 1-loop bubble, msq=0
+  bub10 — 1-loop bubble, msq=1
+  bub11 — 1-loop bubble, msq=1
+  Tri — 1-loop triangle, 3 props, s1=3,s2=8,s3=0
+  Box — 1-loop box, 4 props, s=3,t=2,u=-5
+  SR212 — Sunrise 2L1P, massless, s=1
+  SR212-3m — Sunrise 2L1P, 3-massive (props 1,3,5), s=3/2
+  SR212-5m — Sunrise 2L1P, all-massive, s=0
+  NP222 — Non-Planar 2L2P, s=1,s2=0,m=0
+  NP222var — NP 2L2P triangle, arXiv:2305.13951, k=0(fam b)
+  TB123 — Tri-Box 2L3P, massless, s=3,s1=2,s2=4
+  TB123m — Tri-Box 2L3P, massive, s=3,s1=2,s2=5,m=1
+  DB313 — Double Box 2L4P, s=2,t=3
+  NP322 — Non-Planar 2L4P, massless, s=1,t=5
+  NP322m — Non-Planar 2L4P, massive, s=3,t=2,m1=1,m2=4,m=1
+  DP323 — Double Pentagon 2L5P, s12=4,s13=7,s14=8,s23=1,s24=2,m=3
+  BN3L — 3-Loop Banana, vacuum, msq=1
+  BN3L1P — 3-Loop Banana 1-Point, massless, s=1
+  BN3L1Pm — 3-Loop Banana 1-Point, massive, s=1,msq=1
+  Name: Tri-Box 2L3P, massless, s=3,s1=2,s2=4
+  Propagators: 7
+  Modulus: 179424673
+
+[3/5] Defining IBP family...
+[LIE-Workflow] Step 1: Defining IBP family...
+  - Propagators: 7
+  - Loops: 2
+  - External legs: 2
+#IBP&LI: 9
+[LIE-Workflow] Family defined in 0.04767s
+  - Total IBP relations: 8
+  - Sectors to analyze: 57
+  Family definition time: 0.874011 s
+  NE = 7
+  NIBP = 8
+  Sectors = 57
+
+[4/5] Running ScheduledRegionSolve...
+========================================
+ScheduledRegionSolve: TB123
+Sectors: 57
+Modulus: 179424673
+Cache:   /home/ykm/Large-Index-Expansion-CPP/verify/TB123/cache
+Output:  /home/ykm/Large-Index-Expansion-CPP/
+========================================
+
+Pending sectors: 6/57
+  Quick: 0  Fast(resume): 0  Retry(resume): 6
+  (Skipped 51 already-computed/trivial/cached sectors)
+
+========================================
+Interleaved Tier Pipeline: Quick + Fast + Retry
+Max parallel workers: 2
+========================================
+  [LAUNCH] 1101010 -> Retry tier (86400s)
+    [PID=1707060, active={0, 0, 1}, totalActive=1]

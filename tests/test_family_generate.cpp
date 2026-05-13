@@ -16,8 +16,8 @@ int main(int argc, char* argv[]) {
     }
 
     string family = argv[1];
-    string ibpFile  = "IBPMat_" + family + ".bin";
-    string ringFile = "RingData_" + family + ".bin";
+    string ibpFile  = "data/IBPMat_" + family + ".bin";
+    string ringFile = "data/RingData_" + family + ".bin";
 
     cout << "=== Binary Writer Round-Trip Verification ===" << endl;
     bool allPass = true;

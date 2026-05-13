@@ -1,0 +1,29 @@
+
+      +++  sector:  {0, 0, 0, 1, 0, 0, 1, 0, 0}  (1/1)  +++ 
+                     SINGULAR                                 /  Development
+ A Computer Algebra System for Polynomial Computations       /   version 4.3.2
+                                                           0<
+ by: W. Decker, G.-M. Greuel, G. Pfister, H. Schoenemann     \   Feb 2023
+FB Mathematik der Universitaet, D-67653 Kaiserslautern        \  Debian 1:4.3.2-p10+ds-1.1build1
+compute hilbert series with std in ring (ZZ/179424673),(x18,x17,x16,x15,x14,x13,x12,x11,x10,x9,x8,x7,x6,x5,x4,x3,x2,x1,@),(dp(19),C)
+weights used for hilbert series: 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+[65535:5]2(18)s(17)s(16)s(15)s(14)s(13)s(12)s(11)s(10)s(9)s(10)s(12)s(15)s(19)s(18)s(20)s(22)s(25)-s3(29)s(33)-s(38)s(47)-s(52)s(59)s(67)----------s(62)-s(66)--------4---------------s(51)---------s(50)-s(56)------s(57)-----s(60)------------5---------------------------------s(24)s(34)----s(39)------6-s(38)s(43)-------------s(41)--------------7-----------s(23)---------------8--------
+product criterion:325 chain criterion:136
+std with hilb in (ZZ/179424673),(x18,x17,x16,x15,x14,x13,x12,x11,x10,x9,x8,x7,x6,x5,x4,x3,x2,x1,@),(lp(18),dp(1),C)
+[65535:5]2(37)s(36)s(35)s(34)ss(33)s(32)ss(33)s(32)s(35)s(34)ss(33)s(37)s(39)s(41)s(45)s3(49)s(54)s(60)s(67)s(73)-s(82)---s(86)---s(90)-----shhhhhhhhhhhhhhhhhh4(75)--s(84)---s(90)s(100)----s(108)-------shhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh5(70)------------------s(61)s(71)-shhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh6(39)s(49)-s(59)--shhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh7(37)-shhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh
+product criterion:325 chain criterion:148
+hilbert series criterion:179
+dehomogenization
+simplification
+imap to ring (ZZ/179424673),(x18,x17,x16,x15,x14,x13,x12,x11,x10,x9,x8,x7,x6,x5,x4,x3,x2,x1),(lp(18),C)
+Auf Wiedersehen.
+
+StringJoin::string: String expected at position 2 in {x2-59808225,x4-3*x2,x5+x4,x6-x4,x9*x7*x3+3*x9*x7*x2+89712336*x9*x6*x3+89712336*x7*x4*x3,x10*x1-1,x11+89712335,x12*x3-1,x12*x9*x7+89712336*x11^2*x9*x7*x6+89712336*x11^2*x9*x7*x4+3*x11*x9*x7*x6+2*x11*x9*x7*x4-29904112*x11*x7*x6-29904112*x11*x7*x4-4*x9*x7*x6-2*x9*x7+89712336*x9-59808225*x7*x6+29904112*x7,x13-89712336*x11^2*x6-89712336*x11^2*x4-3*x11*x6-2*x11*x4+4*x6+2,x14-2*x13+x11,x15-x13*x11*x6-x13*x11*x4+4*x13*x6-2*x13*x4+x13,x16*x7-1,x16*x9-22428084*x15*x12*x9*x6-22428084*x15*x12*x9*x4-44856168*x15*x9-67284252*x13*x12*x9*x6-67284252*x13*x12*x9*x4+44856169*x13*x9-44856169*x12*x9*x6-44856169*x12*x9*x4+89712335*x9-89712336*x4,x17*x8-1,x18+x16*x13*x6-x13*x12*x6-x13*x12*x4-2*x13<>1<>}.
+
+StringReplace::strse: String or list of strings expected at position 1 in StringReplace[{x2-59808225,x4-3*x2,x5+x4,x6-x4,x9*x7*x3+3*x9*x7*x2+89712336*x9*x6*x3+89712336*x7*x4*x3,x10*x1-1,x11+89712335,x12*x3-1,x12*x9*x7+89712336*x11^2*x9*x7*x6+89712336*x11^2*x9*x7*x4+3*x11*x9*x7*x6+2*x11*x9*x7*x4-29904112*x11*x7*x6-29904112*x11*x7*x4-4*x9*x7*x6-2*x9*x7+89712336*x9-59808225*x7*x6+29904112*x7,x13-89712336*x11^2*x6-89712336*x11^2*x4-3*x11*x6-2*x11*x4+4*x6+2,x14-2*x13+x11,x15-x13*x11*x6-x13*x11*x4+4*x13*x6-2*x13*x4+x13,x16*x7-1,x16*x9-22428084*x15*x12*x9*x6-22428084*x15*x12*x9*x4-44856168*x15*x9-67284252*x13*x12*x9*x6-67284252*x13*x12*x9*x4+44856169*x13*x9-44856169*x12*x9*x6-44856169*x12*x9*x4+89712335*x9-89712336*x4,x17*x8-1,x18+x16*x13*x6-x13*x12*x6-x13*x12*x4-2*x13<>1<>}, {x18 -> "B"[1], x17 -> "B"[2], x16 -> "B"[3], x15 -> "B"[4], x14 -> "B"[5], x13 -> "B"[6], x12 -> "B"[7], x11 -> "B"[8], x10 -> "B"[9], x9 -> "A"[1], x8 -> "A"[2], x7 -> "A"[3], x6 -> "A"[4], x5 -> "A"[5], x4 -> "A"[6], x3 -> "A"[7], x2 -> "A"[8], x1 -> "A"[9]}].
+
+ToExpression::notstrbox: StringReplace[{x2-59808225,x4-3*x2,x5+x4,x6-x4,x9*x7*x3+3*x9*x7*x2+89712336*x9*x6*x3+89712336*x7*x4*x3,x10*x1-1,x11+89712335,x12*x3-1,x12*x9*x7+89712336*x11^2*x9*x7*x6+89712336*x11^2*x9*x7*x4+3*x11*x9*x7*x6+2*x11*x9*x7*x4-29904112*x11*x7*x6-29904112*x11*x7*x4-4*x9*x7*x6-2*x9*x7+89712336*x9-59808225*x7*x6+29904112*x7,x13-89712336*x11^2*x6-89712336*x11^2*x4-3*x11*x6-2*x11*x4+4*x6+2,x14-2*x13+x11,x15-x13*x11*x6-x13*x11*x4+4*x13*x6-2*x13*x4+x13,x16*x7-1,x16*x9-22428084*x15*x12*x9*x6-22428084*x15*x12*x9*x4-44856168*x15*x9-67284252*x13*x12*x9*x6-67284252*x13*x12*x9*x4+44856169*x13*x9-44856169*x12*x9*x6-44856169*x12*x9*x4+89712335*x9-89712336*x4,x17*x8-1,x18+x16*x13*x6-x13*x12*x6-x13*x12*x4-2*x13<>1<>}, {x18 -> "B"[1], x17 -> "B"[2], x16 -> "B"[3], x15 -> "B"[4], x14 -> "B"[5], x13 -> "B"[6], x12 -> "B"[7], x11 -> "B"[8], x10 -> "B"[9], x9 -> "A"[1], x8 -> "A"[2], x7 -> "A"[3], x6 -> "A"[4], x5 -> "A"[5], x4 -> "A"[6], x3 -> "A"[7], x2 -> "A"[8], x1 -> "A"[9]}] is not a string or a box. ToExpression can only interpret strings or boxes as Wolfram Language input.
+  >> 0 regions (all trivial): expReg=0.881s
+  [sector total: 0.89s]
+#Non-triv Sectors = 0
+

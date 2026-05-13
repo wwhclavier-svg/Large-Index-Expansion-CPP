@@ -1,0 +1,24 @@
+{
+  "checkpoint_id": "large-index-cpp-session-20260510",
+  "workspace": "/home/ykm/Large-Index-Expansion-CPP",
+  "git_branch": "master",
+  "recent_commits": "e90e9a2 Add IncrementDetector\n81e124c Update DEV_STATUS\n99ec194 Add DEV_STATUS.md\n8c98ba2 Add multi-mode ansatz\n9d5330e Update Benchmark_Results",
+  "git_status": "M CMakeLists.txt, include/RegionSolver.hpp, include/SingularRunner.hpp, verify/VerifyUtility/*.wl",
+  "directory_structure": {
+    "/": ["AGENTS.md", "CMakeLists.txt", "CMakeLists_test.txt", "DEV_STATUS.md", "CLAUDE.md"],
+    "include/": ["LayerRecursion.hpp", "LayerRecursionCore.hpp", "LayerRecursionCore.tpp", "RelationSolver.hpp", "LinearSolver.hpp", "SeriesCoefficient.hpp", "IBPMatrixLoader_Binary.hpp"],
+    "tests/": ["test_expandFF.cpp", "test_relationFF.cpp", "test_IBPVerification.cpp", "test_compare_MMA.cpp"],
+    "verify/": ["VerifyUtility/", "docs/", "FamilyDatabase/"],
+    "tools/": ["family_generate.cpp", "diagnose_ibp.cpp"]
+  },
+  "fields": {
+    "前提": "IBP矩阵(bub00/bub10/bub11/NP222/TB123等)已生成二进制文件；RingData已生成；CMakeLists.txt配置正确",
+    "目标": "完成IBP矩阵展开系数的有限域计算和线性关系重建，验证C++ vs MMA vs Kira三方一致性",
+    "计划": "1) layerRecursion计算展开系数 2) reconstructAllRelations求解线性关系 3) EquationVerify验证 M1*C+Total==0 4) CompareVerify对比MMA参考结果",
+    "目录设计": "include/(模板头文件) src/(非模板实现) tests/(独立测试exe) verify/(MMA验证工具) tools/(独立工具)",
+    "完成状态": "核心模块完成；RelationSolver支持多level/degree渐进求解；验证框架搭建中",
+    "测试结果": "test_expandFF / test_relationFF 可执行；bub00 k2 lev1/deg1 已验证通过；NP222/TB123/SR212 等正在验证",
+    "下一步": "完成IncrementDetector与RegionSolver联调；推进ne=7大矩阵(NP322)的IBP展开；完善Kira跨验证",
+    "预期测试": "EquationVerify(bub00)==PASS; CompareVerify(NP222/TB123)==PASS; Kira规则对比验证"
+  }
+}

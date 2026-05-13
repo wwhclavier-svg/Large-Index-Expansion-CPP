@@ -29,7 +29,7 @@ if(NOT DEFINED FIREFLY_ROOT)
     if(DEFINED ENV{FIREFLY_ROOT})
         set(FIREFLY_ROOT "$ENV{FIREFLY_ROOT}")
     else()
-        set(FIREFLY_ROOT "/root/firefly-2.0.3")
+        set(FIREFLY_ROOT "/home/ykm/firefly")
     endif()
 endif()
 set(FIREFLY_ROOT "${FIREFLY_ROOT}" CACHE PATH "FireFly library root directory")
@@ -138,6 +138,12 @@ target_link_libraries(verify_ring_builder pthread)
 add_executable(test_region_solver_full tests/test_region_solver_full.cpp)
 target_link_libraries(test_region_solver_full pthread)
 
+add_executable(debug_region_solver tests/debug_region_solver.cpp)
+target_link_libraries(debug_region_solver pthread)
+
+add_executable(compare_ringdata_detailed tests/compare_ringdata_detailed.cpp)
+target_link_libraries(compare_ringdata_detailed pthread)
+
 add_executable(diagnose_ibp tools/diagnose_ibp.cpp)
 target_link_libraries(diagnose_ibp pthread)
 
@@ -154,3 +160,10 @@ if(EXISTS "${CMAKE_SOURCE_DIR}/tests/verify_MMA_lev1_deg1.cpp")
     add_executable(verify_MMA_lev1_deg1 tests/verify_MMA_lev1_deg1.cpp ${COMMON_SOURCES})
     target_link_libraries(verify_MMA_lev1_deg1 ${FIREFLY_LIBRARY} ${GMP_LIBRARY} ${GMPXX_LIBRARY} Eigen3::Eigen pthread)
 endif()
+
+# T005: GeneratingCone 约化规则生成
+add_executable(generating_cone tools/generating_cone.cpp)
+target_link_libraries(generating_cone pthread)
+
+add_executable(test_generating_cone tests/test_generating_cone.cpp)
+target_link_libraries(test_generating_cone pthread)

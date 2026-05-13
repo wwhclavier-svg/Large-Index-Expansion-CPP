@@ -57,7 +57,7 @@ TestResult runFamilyTest(const string& family, int order) {
     res.ne = res.nb = res.nibp = -1;
 
     try {
-        string binFile = "IBPMat_" + family + ".bin";
+        string binFile = "data/IBPMat_" + family + ".bin";
         cout << "\n========================================\n";
         cout << "Testing family: " << family << "\n";
         cout << "  Matrix file: " << binFile << "\n";
@@ -170,13 +170,13 @@ int main(int argc, char* argv[]) {
         };
         
         // Add larger families if data available
-        if (ifstream("IBPMat_DB.bin").good()) {
+        if (ifstream("data/IBPMat_DB.bin").good()) {
             testCases.push_back({"DB", 1});  // Very large: 63 mats
         }
-        if (ifstream("IBPMat_Tri.bin").good()) {
+        if (ifstream("data/IBPMat_Tri.bin").good()) {
             testCases.push_back({"Tri", 4});  // Medium: 2 mats, ne=3
         }
-        if (ifstream("IBPMat_Box.bin").good()) {
+        if (ifstream("data/IBPMat_Box.bin").good()) {
             testCases.push_back({"Box", 4});  // Large: 7 mats, ne=4
         }
     }
@@ -184,8 +184,8 @@ int main(int argc, char* argv[]) {
     vector<TestResult> results;
     for (const auto& [family, order] : testCases) {
         // Check if binary exists
-        if (!ifstream("IBPMat_" + family + ".bin").good()) {
-            cout << "\n[SKIP] " << family << ": IBPMat_" << family 
+        if (!ifstream("data/IBPMat_" + family + ".bin").good()) {
+            cout << "\n[SKIP] " << family << ": data/IBPMat_" << family 
                  << ".bin not found\n";
             continue;
         }
