@@ -470,36 +470,36 @@
     "Regions": 0
   },
   "111011000": {
-    "State": "running",
+    "State": "done",
     "Time": 0,
-    "Regions": 0,
-    "Tier": "Quick"
+    "Regions": 0
   },
   "111010100": {
-    "State": "running",
+    "State": "done",
     "Time": 0,
-    "Regions": 0,
-    "Tier": "Quick"
+    "Regions": 0
   },
   "111001100": {
-    "State": "pending",
+    "State": "done",
     "Time": 0,
     "Regions": 0
   },
   "110111000": {
-    "State": "pending",
+    "State": "done",
     "Time": 0,
     "Regions": 0
   },
   "110110100": {
-    "State": "pending",
+    "State": "running",
     "Time": 0,
-    "Regions": 0
+    "Regions": 0,
+    "Tier": "Quick"
   },
   "110101100": {
-    "State": "pending",
+    "State": "running",
     "Time": 0,
-    "Regions": 0
+    "Regions": 0,
+    "Tier": "Quick"
   },
   "110011100": {
     "State": "pending",
