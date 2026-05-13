@@ -511,20 +511,20 @@
     "Regions": 0
   },
   "101110100": {
-    "State": "running",
+    "State": "Quick-timeout",
     "Time": 0,
-    "Regions": 0,
-    "Tier": "Quick"
+    "Regions": 0
   },
   "101101100": {
-    "State": "pending",
+    "State": "done",
     "Time": 0,
     "Regions": 0
   },
   "101011100": {
-    "State": "pending",
+    "State": "running",
     "Time": 0,
-    "Regions": 0
+    "Regions": 0,
+    "Tier": "Quick"
   },
   "100111100": {
     "State": "pending",
