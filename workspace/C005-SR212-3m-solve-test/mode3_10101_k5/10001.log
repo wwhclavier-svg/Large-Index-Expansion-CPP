@@ -1,0 +1,210 @@
+=== Configuration ===
+Family: SR212-3m
+Order: 5
+lev range: [1, 2]
+deg range: [0, 2]
+Ansatz Mode: ExtendedPyramid (3)
+Ext sector: [1,0,0,0,1]
+Files: IBPMat_SR212-3m.bin, RingData_SR212-3m.bin
+
+=== Test: Reconstruction of Linear Relations (Finite Field) ===
+Loading IBP matrices from IBPMat_SR212-3m.bin ...
+Loaded 8 IBP regime(s): ne=5, nb=1, mod=179424673
+Computing expansion coefficients (order=5, incre=2)...
+  IncrementDetector: M1_rank=5/5 full=Y incompat=N N1zero=N → incre=2
+开始批量计算，总计: 8 组数据...
+   ......   Reg. 1/8   nb = 1    ......  
+  IncrementDetector: M1_rank=5/5 full=Y incompat=N N1zero=N → incre=2
+   ======   order: 1   ======
+order 1  ......  0.0015 s. 
+   ======   order: 2   ======
+order 2  ......  0.0156 s. 
+   ======   order: 3   ======
+order 3  ......  0.0802 s. 
+   ======   order: 4   ======
+order 4  ......  0.3044 s. 
+   ======   order: 5   ======
+order 5  ......  1.0947 s. 
+Total time: 1.4966 s.
+#sol = 1
+   ......   Reg. 2/8   nb = 1    ......  
+  IncrementDetector: M1_rank=5/5 full=Y incompat=N N1zero=N → incre=2
+   ======   order: 1   ======
+order 1  ......  0.0015 s. 
+   ======   order: 2   ======
+order 2  ......  0.0158 s. 
+   ======   order: 3   ======
+order 3  ......  0.0914 s. 
+   ======   order: 4   ======
+order 4  ......  0.3562 s. 
+   ======   order: 5   ======
+order 5  ......  1.0217 s. 
+Total time: 1.4868 s.
+#sol = 1
+   ......   Reg. 3/8   nb = 1    ......  
+  IncrementDetector: M1_rank=5/5 full=Y incompat=N N1zero=N → incre=2
+   ======   order: 1   ======
+order 1  ......  0.0045 s. 
+   ======   order: 2   ======
+order 2  ......  0.0275 s. 
+   ======   order: 3   ======
+order 3  ......  0.0847 s. 
+   ======   order: 4   ======
+order 4  ......  0.3432 s. 
+   ======   order: 5   ======
+order 5  ......  1.1098 s. 
+Total time: 1.5698 s.
+#sol = 1
+   ......   Reg. 4/8   nb = 1    ......  
+  IncrementDetector: M1_rank=5/5 full=Y incompat=N N1zero=N → incre=2
+   ======   order: 1   ======
+order 1  ......  0.0016 s. 
+   ======   order: 2   ======
+order 2  ......  0.0235 s. 
+   ======   order: 3   ======
+order 3  ......  0.1230 s. 
+   ======   order: 4   ======
+order 4  ......  0.3880 s. 
+   ======   order: 5   ======
+order 5  ......  1.2117 s. 
+Total time: 1.7480 s.
+#sol = 1
+   ......   Reg. 5/8   nb = 1    ......  
+  IncrementDetector: M1_rank=5/5 full=Y incompat=N N1zero=N → incre=2
+   ======   order: 1   ======
+order 1  ......  0.0015 s. 
+   ======   order: 2   ======
+order 2  ......  0.0292 s. 
+   ======   order: 3   ======
+order 3  ......  0.1108 s. 
+   ======   order: 4   ======
+order 4  ......  0.3003 s. 
+   ======   order: 5   ======
+order 5  ......  1.5791 s. 
+Total time: 2.0242 s.
+#sol = 1
+   ......   Reg. 6/8   nb = 1    ......  
+  IncrementDetector: M1_rank=5/5 full=Y incompat=N N1zero=N → incre=2
+   ======   order: 1   ======
+order 1  ......  0.0015 s. 
+   ======   order: 2   ======
+order 2  ......  0.0341 s. 
+   ======   order: 3   ======
+order 3  ......  0.2316 s. 
+   ======   order: 4   ======
+order 4  ......  0.7459 s. 
+   ======   order: 5   ======
+order 5  ......  1.5553 s. 
+Total time: 2.5687 s.
+#sol = 1
+   ......   Reg. 7/8   nb = 1    ......  
+  IncrementDetector: M1_rank=5/5 full=Y incompat=N N1zero=N → incre=2
+   ======   order: 1   ======
+order 1  ......  0.0031 s. 
+   ======   order: 2   ======
+order 2  ......  0.0225 s. 
+   ======   order: 3   ======
+order 3  ......  0.1319 s. 
+   ======   order: 4   ======
+order 4  ......  0.4338 s. 
+   ======   order: 5   ======
+order 5  ......  1.1580 s. 
+Total time: 1.7494 s.
+#sol = 1
+   ......   Reg. 8/8   nb = 1    ......  
+  IncrementDetector: M1_rank=5/5 full=Y incompat=N N1zero=N → incre=2
+   ======   order: 1   ======
+order 1  ......  0.0015 s. 
+   ======   order: 2   ======
+order 2  ......  0.0185 s. 
+   ======   order: 3   ======
+order 3  ......  0.0852 s. 
+   ======   order: 4   ======
+order 4  ......  0.4157 s. 
+   ======   order: 5   ======
+order 5  ......  1.3810 s. 
+Total time: 1.9527 s.
+#sol = 1
+Recursion completed in 14.956s
+Saved to cache: ExpansionCache_SR212-3m_k5.bin
+Exported to MMA format: ExpansionMMA_SR212-3m.m
+Exported Compare-CPPResult to: verify/SR212-3m/Compare-CPPResult-SR212-3m.m
+Total branches: 8 matrices
+
+Loading ring data from RingData_SR212-3m.bin ...
+Loaded 8 regimes.
+Extracted 8 sectors.
+  Sector 0: [1, 0, 1, 0, 0]
+  Sector 1: [1, 0, 1, 0, 1]
+  Sector 2: [1, 0, 1, 0, 1]
+  Sector 3: [1, 0, 1, 0, 1]
+  Sector 4: [1, 0, 1, 0, 1]
+  Sector 5: [1, 0, 1, 0, 1]
+  Sector 6: [1, 0, 1, 0, 1]
+  Sector 7: [1, 0, 1, 0, 1]
+
+Exporting relation metadata (A_i, theta)...
+Exported relation meta to: RelationMeta_SR212-3m.m
+
+=== Relation Solving (RemoveSolvedVariables strategy) ===
+Ansatz mode: ExtendedPyramid (kernel: ν-α), alphas_max=91
+
+  --- (lev=1, deg=0) --- vars=36 active=36
+    [ν-sampling] vars=36 eq/sample=48 min_req=1 eff_max=30
+    ν points: {1,0,0,0,0}, {0,1,0,0,0}, {0,0,1,0,0}, {0,0,0,1,0}, {0,0,0,0,1}, {1,1,1,1,1}, {1,2,0,0,0}, {0,1,2,0,0}, {0,0,1,2,0}, {0,0,0,1,2} (+0 more, converged)
+    sol_dim=15 independent=15 stable_order=0
+
+  --- (lev=1, deg=1) --- vars=216 active=126
+    [ν-sampling] vars=216 active=126 eq/sample=48 min_req=4 eff_max=30
+    ν points: {1,0,0,0,0}, {0,1,0,0,0}, {0,0,1,0,0}, {0,0,0,1,0}, {0,0,0,0,1}, {1,1,1,1,1}, {1,2,0,0,0}, {0,1,2,0,0}, {2,0,0,0,0}, {0,2,0,0,0}, {0,0,2,0,0}, {0,0,0,2,0} (+3 more, converged)
+    sol_dim=0 independent=0 stable_order=1
+
+  --- (lev=1, deg=2) --- vars=756 active=441
+    [ν-sampling] vars=756 active=441 eq/sample=48 min_req=12 eff_max=50
+    ν points: {1,0,0,0,0}, {0,1,0,0,0}, {0,0,1,0,0}, {0,0,0,1,0}, {0,0,0,0,1}, {1,1,1,1,1}, {1,2,0,0,0}, {0,1,2,0,0} (+12 more, converged)
+    sol_dim=1 independent=1 stable_order=4
+
+  --- (lev=2, deg=0) --- vars=91 active=35
+    [ν-sampling] vars=91 active=35 eq/sample=48 min_req=1 eff_max=30
+    ν points: {1,0,0,0,0}, {0,1,0,0,0}, {0,0,1,0,0}, {0,0,0,1,0}, {0,0,0,0,1}, {1,1,1,1,1}, {1,2,0,0,0}, {0,1,2,0,0}, {0,0,1,2,0}, {0,0,0,1,2} (+0 more, converged)
+    sol_dim=6 independent=6 stable_order=0
+
+  --- (lev=2, deg=1) --- vars=546 active=174
+    [ν-sampling] vars=546 active=174 eq/sample=48 min_req=5 eff_max=30
+    ν points: {1,0,0,0,0}, {0,1,0,0,0}, {0,0,1,0,0}, {0,0,0,1,0}, {0,0,0,0,1}, {1,1,1,1,1}, {1,2,0,0,0}, {0,1,2,0,0}, {2,0,0,0,0}, {0,2,0,0,0}, {0,0,2,0,0}, {0,0,0,2,0} (+3 more, converged)
+    sol_dim=0 independent=0 stable_order=1
+
+  --- (lev=2, deg=2) --- vars=1911 active=605
+    [ν-sampling] vars=1911 active=605 eq/sample=48 min_req=16 eff_max=50
+    ν points: {1,0,0,0,0}, {0,1,0,0,0}, {0,0,1,0,0}, {0,0,0,1,0}, {0,0,0,0,1}, {1,1,1,1,1}, {1,2,0,0,0}, {0,1,2,0,0}, {167001904,155482615,54965195,41272356,57156361}, {29691739,65410770,112880877,103692389,178636681}, {20750573,163157269,61369538,109813718,122254905}, {23250797,118458539,31266724,111877656,162604779} (+18 more, converged)
+    sol_dim=1 independent=1 stable_order=4
+
+=== Stability bounds (lev x deg) ===
+           0       1       2
+  1        0       1       4
+  2        0       1       4
+
+=== Relation counts (lev x deg) ===
+           0       1       2
+  1       15       0       1
+  2        6       0       1
+  (lev=1, deg=0): active=36/36 sol_dim=15 independent=15 stable_order=0
+  (lev=1, deg=1): active=126/216 sol_dim=0 independent=0 stable_order=1
+  (lev=1, deg=2): active=441/756 sol_dim=1 independent=1 stable_order=4
+  (lev=2, deg=0): active=35/91 sol_dim=6 independent=6 stable_order=0
+  (lev=2, deg=1): active=174/546 sol_dim=0 independent=0 stable_order=1
+  (lev=2, deg=2): active=605/1911 sol_dim=1 independent=1 stable_order=4
+
+Exported all 6 results to: AllRelations_SR212-3m_k5.m
+
+=== Solution Summary ===
+Total configurations: 6
+  ✓ (lev=1, deg=0): vars=36 sol_dim=15 sys=0x36 ratio=0.00 nu=0 time=0.00s
+  ✗ (lev=1, deg=1): vars=126 sol_dim=0 sys=0x126 ratio=0.00 nu=0 time=0.00s
+  ✓ (lev=1, deg=2): vars=441 sol_dim=1 sys=0x441 ratio=0.00 nu=0 time=0.00s
+  ✓ (lev=2, deg=0): vars=35 sol_dim=6 sys=0x35 ratio=0.00 nu=0 time=0.00s
+  ✗ (lev=2, deg=1): vars=174 sol_dim=0 sys=0x174 ratio=0.00 nu=0 time=0.00s
+  ✓ (lev=2, deg=2): vars=605 sol_dim=1 sys=0x605 ratio=0.00 nu=0 time=0.00s
+
+Total execution time: 138.27 seconds.
+Test completed successfully.

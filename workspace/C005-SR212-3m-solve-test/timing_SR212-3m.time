@@ -1,0 +1,14 @@
+	Command being timed: "./build/test_relationFF SR212-3m 4 1 2 2"
+	User time (seconds): 12.21
+	System time (seconds): 0.06
+	Percent of CPU this job got: 94%
+	Elapsed (wall clock) time (m:ss): 0:13.01
+	Maximum resident set size (kbytes): 77048
+	Major (requiring I/O) page faults: 3
+	Minor (reclaiming a frame) page faults: 19986
+	Voluntary context switches: 14
+	Involuntary context switches: 2130
+	Swaps: 0
+	File system inputs: 35096
+	File system outputs: 118992
+	Exit status: 0

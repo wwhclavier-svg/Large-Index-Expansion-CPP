@@ -1,0 +1,23 @@
+
+      +++  sector:  {0, 0, 0, 1, 0, 1, 1, 0, 0}  (1/1)  +++ 
+                     SINGULAR                                 /  Development
+ A Computer Algebra System for Polynomial Computations       /   version 4.3.2
+                                                           0<
+ by: W. Decker, G.-M. Greuel, G. Pfister, H. Schoenemann     \   Feb 2023
+FB Mathematik der Universitaet, D-67653 Kaiserslautern        \  Debian 1:4.3.2-p10+ds-1.1build1
+compute hilbert series with std in ring (ZZ/179424673),(x18,x17,x16,x15,x14,x13,x12,x11,x10,x9,x8,x7,x6,x5,x4,x3,x2,x1,@),(dp(19),C)
+weights used for hilbert series: 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+[65535:5]2(18)s(17)s(16)s(15)s(14)s(13)s(12)s(11)s(10)s(9)s(10)s(12)s(15)s(19)s(18)s(20)s(22)s(25)s(26)s3(31)s(35)-s(38)s(44)s(54)-s(60)s(68)s(76)-----------s(67)-s(73)-s(78)s(81)-s(87)---s4(91)--------------------s(75)s(81)-----s(79)-------s(80)-s(87)-s(94)------s(95)------s(96)-----s(100)-----------------s(89)s(95)-----5---------------------------------------------------------------------------s(25)----s(31)--------6-s(27)-------s(31)------------7------s(20)------------8--------
+product criterion:560 chain criterion:237
+std with hilb in (ZZ/179424673),(x18,x17,x16,x15,x14,x13,x12,x11,x10,x9,x8,x7,x6,x5,x4,x3,x2,x1,@),(lp(18),dp(1),C)
+[65535:5]2(47)s(46)s(45)s(44)s(43)s(42)ss(41)ss(42)s(41)s(40)s(39)s(40)s(43)s(45)s(48)s(51)s(54)s3(58)s(63)s(68)-s(73)s(78)-s(87)-s(93)s(100)--s(106)-----s(110)s(118)-----shhhhhhhhhhhhhhhhh4(103)---(100)-s(110)s(119)s(129)-----s(134)-s(145)s(153)----s(158)-------ss(165)-----s(170)-s(179)------------------------s(162)----shhhhhhhhhhhhhhhhhhhhhhhhh5(141)-------------------------------s(120)-shhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh6(27)s(38)-shhhhhhhhhhhhhhhhhhhhhhh7(25)shhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh
+product criterion:543 chain criterion:277
+hilbert series criterion:205
+dehomogenization
+simplification
+imap to ring (ZZ/179424673),(x18,x17,x16,x15,x14,x13,x12,x11,x10,x9,x8,x7,x6,x5,x4,x3,x2,x1),(lp(18),C)
+Auf Wiedersehen.
+  >> 0 regions (all trivial): expReg=0.546s
+  [sector total: 0.554s]
+#Non-triv Sectors = 0
+

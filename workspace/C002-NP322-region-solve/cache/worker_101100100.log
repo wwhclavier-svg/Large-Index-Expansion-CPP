@@ -1,0 +1,208 @@
+
+      +++  sector:  {1, 0, 1, 1, 0, 0, 1, 0, 0}  (1/1)  +++ 
+                     SINGULAR                                 /  Development
+ A Computer Algebra System for Polynomial Computations       /   version 4.3.2
+                                                           0<
+ by: W. Decker, G.-M. Greuel, G. Pfister, H. Schoenemann     \   Feb 2023
+FB Mathematik der Universitaet, D-67653 Kaiserslautern        \  Debian 1:4.3.2-p10+ds-1.1build1
+compute hilbert series with std in ring (ZZ/179424673),(x18,x17,x16,x15,x14,x13,x12,x11,x10,x9,x8,x7,x6,x5,x4,x3,x2,x1,@),(dp(19),C)
+weights used for hilbert series: 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+[65535:5]2(18)s(17)s(16)s(15)s(14)s(13)s(12)s(11)s(10)s(9)s(10)s(12)s(13)s(14)s(16)s(19)s(21)s(27)s(31)s3(35)s(39)s(44)s(48)s(53)s(59)s(65)s(71)s(74)s(82)s(87)s(94)s(102)s(107)s(115)s(124)s(134)-s(142)s(151)s(158)s(167)s(175)s(181)s(186)s(194)s(199)s(208)s(219)s(226)s(235)s(242)s(246)s(254)s(260)s(269)4-s(279)s(289)s(300)-s(310)--s(319)--s(329)s(342)-------------s(343)s(355)----s(366)s(379)-----------------s(378)------------s(383)--------------------s(372)s(381)-s(387)s(397)s(408)-s(418)s(427)s(435)s(444)s(455)-s(466)-s(478)------s(483)s(490)----s(496)s(506)----s(513)s(525)s(535)s(548)---s(555)s(563)-s(573)s(584)--s(591)s(602)s(614)-s(625)----s(632)-s(643)-------s(646)s(658)s(671)--------s(674)------------s(673)-------------s-----------------------s(660)s(668)-----s(676)s(689)------------------s(678)-----------5--s(679)--s(692)s(708)--------(700)--------------------------------------s(677)s(693)-----------------------------s(680)--------------------------------------------------s(644)s(659)-s(671)------------s(673)-------------------s(669)s(685)s(700)-------------------------------------------s(673)--------s(682)--------------------------------------------s(652)s(668)--------------------------------------------------------------------(600)---s(608)s(618)s(629)----------------s(625)-----s(631)--------------s(629)------s(635)s(649)s(659)---------------------s(650)---s(658)-----------s(660)-------------------------------------------------------s(617)-----------------(600)------s(607)s(618)-s(631)s(643)s(658)--------------------s(648)--s(656)---s(665)---s(672)---s(680)----------------------------------------------------------s(632)----s(636)-----------------------6-------------(600)----------------------------------------------------------------------------------------------------(500)----------------------------------------------------------------------------------------------------(400)--------------------------------------------------s(363)------------------------------------------------------s(323)-----------------------(300)--------------s(301)-(300)-----------------------------------------------------------------------------s(235)s(247)s(260)-----------s(262)----------------s(258)-s(269)-s(281)--s(292)s(306)------(300)------s(307)-------(300)-s(312)s(326)----------------------s(317)-----------------(300)-------------------------------------------------------------------7---------------------------------(200)----------------------------------------------------------------------------------------------------(100)----------------------------------------------s(67)-s(79)------------s(81)--------------------------------------8-------------------------------------------
+product criterion:4414 chain criterion:7804
+std with hilb in (ZZ/179424673),(x18,x17,x16,x15,x14,x13,x12,x11,x10,x9,x8,x7,x6,x5,x4,x3,x2,x1,@),(lp(18),dp(1),C)
+[65535:5]2(167)s(166)s(165)s(164)s(163)s(162)s(163)s(164)s(163)s(162)s(161)s(162)s(163)s(164)s(166)s(170)s(172)s(176)s(181)s3(186)s(189)s(194)s(199)s(201)s(206)s(211)s(217)s(224)s(227)s(235)s(242)s(249)s(258)s(267)s(271)s(282)s(289)s(296)s(304)s(312)s(320)s(331)s(340)s(345)s(350)s(357)s(366)s(375)-s(381)s(388)s(394)s(402)s(410)s(417)s(426)shhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh4(400)s(410)-s(420)s(431)s(440)s(452)s(460)s(470)-s(478)-s(488)-s(497)s(508)s(518)s(529)s(540)s(549)s(560)-s(567)--s(576)s(588)s(600)s(609)s(621)s(630)s(643)------s(650)s(659)--s(671)-----s(674)s(686)s(698)--s(706)s(721)s(733)-s(742)s(756)-s(768)s(784)-s(793)-------------s(797)-------------------s(787)--s(797)---------s(800)-------s(802)--(800)------s(805)-s(813)--s(818)----s(823)-----s(831)-s(841)---------------------------------------s(813)---s(822)--------shhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh5(700)s(714)-s(728)s(743)s(759)s(775)s(791)----------------s(788)s(802)s(813)-----s(823)-------s(830)-----------------s(826)---------s(833)s(847)s(862)s(879)-s(889)-s(901)s(912)-----------s(916)s(932)---------------------s(926)---------s(928)----s(936)-s(946)s(959)s(971)--------------------s(963)--------s(966)s(980)------s(990)------s(994)--s(1004)----(1000)-------------------------------------------s(969)--------------s(965)-----------------------------------------------------------------(900)------------------------s(890)-----s(895)-------------------------------------------------------------s(845)---s(850)-----------------------------------------s(820)------------------shhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh6(616)----------------(600)-------------------------------s(582)s(596)----------------------------------------------------s(556)---------------s-s(566)----s(575)------------------s(570)s(583)s(595)-------s(601)s(614)s(627)---s(638)--------------------------------------(600)------s(608)--------(600)----------------------------------------------------------------------------------------------------(500)-------------------------------------------------------------s(452)----------------------------------------------------(400)----------------------------------------------------------------------------------------------------(300)-----------------shhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh7(233)---------------------s(225)-s(237)--------------------shhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh
+product criterion:4604 chain criterion:7467
+hilbert series criterion:650
+dehomogenization
+simplification
+imap to ring (ZZ/179424673),(x18,x17,x16,x15,x14,x13,x12,x11,x10,x9,x8,x7,x6,x5,x4,x3,x2,x1),(lp(18),C)
+Auf Wiedersehen.
+                     SINGULAR                                 /  Development
+ A Computer Algebra System for Polynomial Computations       /   version 4.3.2
+                                                           0<
+ by: W. Decker, G.-M. Greuel, G. Pfister, H. Schoenemann     \   Feb 2023
+FB Mathematik der Universitaet, D-67653 Kaiserslautern        \  Debian 1:4.3.2-p10+ds-1.1build1
+// ** loaded /usr/bin/../share/singular/LIB/primdec.lib (4.3.2.9,Oct_2023)
+// ** loaded /usr/bin/../share/singular/LIB/ring.lib (4.3.1.3,Feb_2023)
+// ** loaded /usr/bin/../share/singular/LIB/absfact.lib (4.1.2.0,Feb_2019)
+// ** loaded /usr/bin/../share/singular/LIB/triang.lib (4.1.2.0,Feb_2019)
+// ** loaded /usr/bin/../share/singular/LIB/matrix.lib (4.3.2.3,Aug_2023)
+// ** loaded /usr/bin/../share/singular/LIB/nctools.lib (4.1.2.0,Feb_2019)
+// ** loaded /usr/bin/../share/singular/LIB/inout.lib (4.1.2.0,Feb_2019)
+// ** loaded /usr/bin/../share/singular/LIB/random.lib (4.1.2.0,Feb_2019)
+// ** loaded /usr/bin/../share/singular/LIB/polylib.lib (4.2.0.0,Dec_2020)
+// ** loaded /usr/bin/../share/singular/LIB/elim.lib (4.3.2.5,Jul_2023)
+// ** loaded /usr/bin/../share/singular/LIB/general.lib (4.1.2.0,Feb_2019)
+map with cache
+map with cache
+map with cache
+map with cache
+map with cache
+map with cache
+map with cache
+map with cache
+map with cache
+map with cache
+map with cache
+map with cache
+map with cache
+map with cache
+map with cache
+map with cache
+map with cache
+map with cache
+std in (ZZ/179424673),(x18,x17,x16,x15,x14,x13,x12,x11,x10,x9,x8,x7,x6,x5,x4,x3,x2,x1),(dp(18),C)
+[65535:5]1(17)s(16)s(15)s(14)s(13)s(12)s(11)s(10)s(9)s(8)s(7)s(6)s(5)s(4)s(3)s(2)sss
+(S:17)-----------------
+product criterion:153 chain criterion:0
+[65535:5]1(17)s(16)s(15)s(14)s(13)s(12)s(11)s(10)s(9)s(8)s(7)s(6)s(5)s(4)s(3)s(2)sss
+(S:17)-----------------
+product criterion:153 chain criterion:0
+map is a permutation
+[65535:6]1(18)s(17)s(16)s(15)s(14)s(13)s(12)s(11)s(10)s(9)s(8)s(7)s(6)s(5)s(4)s(3)s(2)sss
+(S:18)------------------
+product criterion:171 chain criterion:0
+[65535:5]1(17)s(16)s(15)s(14)s(13)s(12)s(11)s(10)s(9)s(8)s(7)s(6)s(5)s(4)s(3)s(2)sss
+(S:17)-----------------
+product criterion:153 chain criterion:0
+{1}[65535:7]1(17)s(16)s(15)s(14)s(13)s(12)s(11)s(10)s(9)s(8)s(7)s(6)s(5)s(4)s(3)s(2)sss
+(S:18)-------------------
+product criterion:0 chain criterion:0
+(S:18)rrrrrrrrrrrrrrrrrr
+[65535:5]1(17)s(16)s(15)s(14)s(13)s(12)s(11)s(10)s(9)s(8)s(7)s(6)s(5)s(4)s(3)s(2)sss
+(S:17)-----------------
+product criterion:153 chain criterion:0
+intersect by elimination method
+[65535:7]1(18)s2(17)s(16)s(15)s(14)s(13)s(12)s(11)s(10)s(9)s(8)s(7)s(6)s(5)s(4)s(3)s(2)sss
+(S:18)------------------
+product criterion:171 chain criterion:0
+map is a permutation
+[65535:6]1(18)s(17)s(16)s(15)s(14)s(13)s(12)s(11)s(10)s(9)s(8)s(7)s(6)s(5)s(4)s(3)s(2)ss2s
+(S:0)
+product criterion:171 chain criterion:0
+map is a permutation
+[65535:6]1(18)s(17)s(16)s(15)s(14)s(13)s(12)s(11)s(10)s(9)s(8)s(7)s(6)s(5)s(4)s(3)s(2)ss2s
+(S:0)
+product criterion:171 chain criterion:0
+map is a permutation
+[65535:6]1(18)s(17)s(16)s(15)s(14)s(13)s(12)s(11)s(10)s(9)s(8)s(7)s(6)s(5)s(4)s(3)s(2)ss2s
+(S:0)
+product criterion:171 chain criterion:0
+map is a permutation
+[65535:6]1(18)s(17)s(16)s(15)s(14)s(13)s(12)s(11)s(10)s(9)s(8)s(7)s(6)s(5)s(4)s(3)s(2)ss2s
+(S:0)
+product criterion:171 chain criterion:0
+map is a permutation
+[65535:6]1(18)s(17)s(16)s(15)s(14)s(13)s(12)s(11)s(10)s(9)s(8)s(7)s(6)s(5)s(4)s(3)s(2)ss2s
+(S:0)
+product criterion:171 chain criterion:0
+map is a permutation
+[65535:6]1(18)s(17)s(16)s(15)s(14)s(13)s(12)s(11)s(10)s(9)s(8)s(7)s(6)s(5)s(4)s(3)s(2)ss2s
+(S:0)
+product criterion:171 chain criterion:0
+map is a permutation
+[65535:6]1(18)s(17)s(16)s(15)s(14)s(13)s(12)s(11)s(10)s(9)s(8)s(7)s(6)s(5)s(4)s(3)s(2)ss2s
+(S:0)
+product criterion:171 chain criterion:0
+map is a permutation
+[65535:6]1(18)s(17)s(16)s(15)s(14)s(13)s(12)s(11)s(10)s(9)s(8)s(7)s(6)s(5)s(4)s(3)s(2)ss2s
+(S:0)
+product criterion:171 chain criterion:0
+map is a permutation
+[65535:6]1(18)s(17)s(16)s(15)s(14)s(13)s(12)s(11)s(10)s(9)s(8)s(7)s(6)s(5)s(4)s(3)s(2)ss2s
+(S:0)
+product criterion:171 chain criterion:0
+map is a permutation
+[65535:6]1(18)s(17)s(16)s(15)s(14)s(13)s(12)s(11)s(10)s(9)s(8)s(7)s(6)s(5)s(4)s(3)s(2)ss2s
+(S:0)
+product criterion:171 chain criterion:0
+map is a permutation
+[65535:6]1(18)s(17)s(16)s(15)s(14)s(13)s(12)s(11)s(10)s(9)s(8)s(7)s(6)s(5)s(4)s(3)s(2)ss2s
+(S:0)
+product criterion:171 chain criterion:0
+map is a permutation
+[65535:6]1(18)s(17)s(16)s(15)s(14)s(13)s(12)s(11)s(10)s(9)s(8)s(7)s(6)s(5)s(4)s(3)s(2)ss2s
+(S:0)
+product criterion:171 chain criterion:0
+map is a permutation
+[65535:6]1(18)s(17)s(16)s(15)s(14)s(13)s(12)s(11)s(10)s(9)s(8)s(7)s(6)s(5)s(4)s(3)s(2)ss2s
+(S:0)
+product criterion:171 chain criterion:0
+map is a permutation
+[65535:6]1(18)s(17)s(16)s(15)s(14)s(13)s(12)s(11)s(10)s(9)s(8)s(7)s(6)s(5)s(4)s(3)s(2)ss2s
+(S:0)
+product criterion:171 chain criterion:0
+map is a permutation
+[65535:6]1(18)s(17)s(16)s(15)s(14)s(13)s(12)s(11)s(10)s(9)s(8)s(7)s(6)s(5)s(4)s(3)s(2)ss2s
+(S:0)
+product criterion:171 chain criterion:0
+map is a permutation
+[65535:6]1(18)s(17)s(16)s(15)s(14)s(13)s(12)s(11)s(10)s(9)s(8)s(7)s(6)s(5)s(4)s(3)s(2)ss2s
+(S:0)
+product criterion:171 chain criterion:0
+map is a permutation
+[65535:6]1(18)s(17)s(16)s(15)s(14)s(13)s(12)s(11)s(10)s(9)s(8)s(7)s(6)s(5)s(4)s(3)s(2)ss2s
+(S:0)
+product criterion:171 chain cr[SECTOR_RESULT] key=101100100 tier=Quick state=trivial time=1.678298 regions=0
+)s(10)s(9)s(8)s(7)s(6)s(5)s(4)s(3)s(2)ss2s
+(S:0)
+product criterion:171 chain criterion:0
+[65535:5]1(17)s(16)s(15)s(14)s(13)s(12)s(11)s(10)s(9)s(8)s(7)s(6)s(5)s(4)s(3)s(2)sss
+(S:17)-----------------
+product criterion:153 chain criterion:0
+// ** _ is no standard basis
+Auf Wiedersehen.
+                     SINGULAR                                 /  Development
+ A Computer Algebra System for Polynomial Computations       /   version 4.3.2
+                                                           0<
+ by: W. Decker, G.-M. Greuel, G. Pfister, H. Schoenemann     \   Feb 2023
+FB Mathematik der Universitaet, D-67653 Kaiserslautern        \  Debian 1:4.3.2-p10+ds-1.1build1
+compute hilbert series with std in ring (ZZ/179424673),(x18,x17,x16,x15,x14,x13,x12,x11,x10,x9,x8,x7,x6,x5,x4,x3,x2,x1,@),(dp(19),C)
+weights used for hilbert series: 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+[65535:5]1(17)s(16)s(15)s(14)s(13)s(12)s(11)s(10)s(9)s(8)s(7)s(6)s2(5)s(4)ss(5)s(7)s(10)s3(14)--------------
+product criterion:138 chain criterion:0
+std with hilb in (ZZ/179424673),(x18,x17,x16,x15,x14,x13,x12,x11,x10,x9,x8,x7,x6,x5,x4,x3,x2,x1,@),(lp(18),dp(1),C)
+[65535:5]1(17)s(16)s(15)s(14)s(13)s(12)s(11)s(10)s(9)s(8)s(7)s(6)s2(5)s(4)ss(5)s(7)s(10)shhhhhhhhhhhhhhh
+product criterion:138 chain criterion:0
+hilbert series criterion:15
+dehomogenization
+simplification
+imap to ring (ZZ/179424673),(x18,x17,x16,x15,x14,x13,x12,x11,x10,x9,x8,x7,x6,x5,x4,x3,x2,x1),(lp(18),C)
+   ? `erify` is not defined
+   ? premature end of file while reading string
+Auf Wiedersehen.
+                     SINGULAR                                 /  Development
+ A Computer Algebra System for Polynomial Computations       /   version 4.3.2
+                                                           0<
+ by: W. Decker, G.-M. Greuel, G. Pfister, H. Schoenemann     \   Feb 2023
+FB Mathematik der Universitaet, D-67653 Kaiserslautern        \  Debian 1:4.3.2-p10+ds-1.1build1
+// ** loaded /usr/bin/../share/singular/LIB/primdec.lib (4.3.2.9,Oct_2023)
+// ** loaded /usr/bin/../share/singular/LIB/ring.lib (4.3.1.3,Feb_2023)
+// ** loaded /usr/bin/../share/singular/LIB/absfact.lib (4.1.2.0,Feb_2019)
+// ** loaded /usr/bin/../share/singular/LIB/triang.lib (4.1.2.0,Feb_2019)
+// ** loaded /usr/bin/../share/singular/LIB/matrix.lib (4.3.2.3,Aug_2023)
+// ** loaded /usr/bin/../share/singular/LIB/nctools.lib (4.1.2.0,Feb_2019)
+// ** loaded /usr/bin/../share/singular/LIB/inout.lib (4.1.2.0,Feb_2019)
+// ** loaded /usr/bin/../share/singular/LIB/random.lib (4.1.2.0,Feb_2019)
+// ** loaded /usr/bin/../share/singular/LIB/polylib.lib (4.2.0.0,Dec_2020)
+// ** loaded /usr/bin/../share/singular/LIB/elim.lib (4.3.2.5,Jul_2023)
+// ** loaded /usr/bin/../share/singular/LIB/general.lib (4.1.2.0,Feb_2019)
+[65535:5]1(34)s(33)s(32)-s(30)-s(28)-s(26)-s(24)-s(22)-s(20)-s(18)-s(16)-s(14)-s(12)-s(10)-s(8)-s(6)-s(4)-s(2)-ss
+(S:0)
+product criterion:171 chain criterion:0
+// ** redefining j (int j = 2;)
+Auf Wiedersehen.
+assembleCoordinateRing: Solve returned empty for prime {-31897720 + A[9], -19936073 + A[8], 19936073 + A[7], 21108786 + A[6], 57415896 + A[5], 19936073 + A[4], 59808223 + A[3], -66453582 + A[2], 39872150 + A[1], -33642129 + B[9], 78498295 + B[8], -78498295 + B[7], -11214041 + B[6], 67284255 + B[5] + B[6], -78498295 + B[4], -44856169 + B[3], 44856171 + B[2] + B[6], -31897720 - 44856166*A[9] + B[1], -19936073 + A[8], 19936073 + A[7], 21108786 + A[6], 57415896 + A[5], 19936073 + A[4], 59808223 + A[3], -66453582 + A[2], 39872150 + A[1], -33642129 + B[9], 78498295 + B[8], -78498295 + B[7], -11214041 + B[6], 67284255 + B[5] + B[6], -78498295 + B[4], -44856169 + B[3], 44856171 + B[2] + B[6], -44856166 + B[1]} varpar={}, mmaGb={1}
+
+Set::setraw: Cannot assign to raw object 0.
+
+Part::partw: Part 1 of {} does not exist.
+
+Set::shape: Lists {} and {{}[[1]]} are not the same shape.
+
+Part::partw: Part 1 of {} does not exist.
+  >> 1 region(s): expReg=2.188s  build=0.081s
+  [sector total: 2.283s]
+#Non-triv Sectors = 1
+
+[SECTOR_RESULT] key=101100100 tier=Quick state=done time=2.284787 regions=1

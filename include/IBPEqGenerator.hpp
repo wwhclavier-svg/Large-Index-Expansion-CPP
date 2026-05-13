@@ -477,10 +477,10 @@ inline std::string buildSP2PDScript(const ScalarProductBasis& spb,
     }
 
     ss << "// ========================================\n";
-    ss << "// Linear solve: sp[*] = Inv × (-z[*] - const[*])\n";
-    ss << "//   C * sp + Cconst = -z\n";
-    ss << "//   C * sp = -z - Cconst\n";
-    ss << "//   sp = C^{-1} * (-z - Cconst)  [if ne == nSP]\n";
+    ss << "// Linear solve: sp[*] = Inv × (z[*] - const[*])\n";
+    ss << "//   C * sp + Cconst = z\n";
+    ss << "//   C * sp = z - Cconst\n";
+    ss << "//   sp = C^{-1} * (z - Cconst)  [if ne == nSP]\n";
     ss << "// ========================================\n\n";
 
     ss << "// SP2PD rules: sp[j] expressed in z[*] basis\n";
@@ -489,11 +489,11 @@ inline std::string buildSP2PDScript(const ScalarProductBasis& spb,
     ss << "if (ne == nSP) {\n";
     ss << "  matrix C_inv = inverse(C);\n";
     ss << "  sp2pd_result = string(nSP) + \"|\" + string(ne);\n";
-    ss << "  // sp[j] = Σ_i C_inv[j,i] * (-z[i] - Cconst[i,1])\n";
+    ss << "  // sp[j] = Σ_i C_inv[j,i] * (z[i] - Cconst[i,1])\n";
     ss << "  for (int j = 1; j <= nSP; j++) {\n";
     ss << "    poly rule_j;\n";
     ss << "    for (int i = 1; i <= ne; i++) {\n";
-    ss << "      rule_j = rule_j + C_inv[j,i] * (-z(i) - Cconst[i,1]);\n";
+    ss << "      rule_j = rule_j + C_inv[j,i] * (z(i) - Cconst[i,1]);\n";
     ss << "    }\n";
     ss << "    sp2pd[j] = sp(j) - rule_j;\n";
     ss << "    sp2pd_result = sp2pd_result + \"|\" + string(rule_j);\n";
@@ -794,7 +794,7 @@ inline std::string buildIBPDerivativeScript(const ScalarProductBasis& spb,
     ss << "for (int ss = 1; ss <= nSP; ss++) {\n";
     ss << "  poly p = 0;\n";
     ss << "  for (int ii = 1; ii <= ne; ii++) {\n";
-    ss << "    p = p + C_inv[ss,ii] * (-z(ii) - Cconst[ii,1]);\n";
+    ss << "    p = p + C_inv[ss,ii] * (z(ii) - Cconst[ii,1]);\n";
     ss << "  }\n";
     ss << "  spL = spL + list(p);\n";
     ss << "}\n";
@@ -1156,8 +1156,8 @@ inline std::vector<IBPEquationG> assembleIBPFromDerivatives(
                     for (int m = 0; m < ne; ++m) {
                         if (m != i - 1) multiplied.exps[m] += 1;
                     }
-                    // The n_i factor: negate (MMA formula has -n_i * deriv)
-                    multiplied.coeff = (-multiplied.coeff) % modulus;
+                    // The n_i factor (SP2PD aligned with MMA convention C*sp+Cconst=z)
+                    // No negation — MMA's Coefficient["n"] extraction doesn't negate
                     if (multiplied.coeff < 0) multiplied.coeff += modulus;
                     multiplied.nIdx = i;
 

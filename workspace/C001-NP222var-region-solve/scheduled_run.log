@@ -1,0 +1,138 @@
+========================================
+ScheduledRegionSolve NP222var Recompute
+ProjectRoot: /home/ykm/Large-Index-Expansion-CPP/
+VerifyUtility: /home/ykm/Large-Index-Expansion-CPP/verify/VerifyUtility
+========================================
+
+[1/5] Loading packages...
+  Packages loaded.
+
+[2/5] Loading family config...
+=== Registered IBP Families (19) ===
+  bub00 — 1-loop bubble, msq=0
+  bub10 — 1-loop bubble, msq=1
+  bub11 — 1-loop bubble, msq=1
+  Tri — 1-loop triangle, 3 props, s1=3,s2=8,s3=0
+  Box — 1-loop box, 4 props, s=3,t=2,u=-5
+  SR212 — Sunrise 2L1P, massless, s=1
+  SR212-3m — Sunrise 2L1P, 3-massive (props 1,3,5), s=3/2
+  SR212-5m — Sunrise 2L1P, all-massive, s=0
+  NP222 — Non-Planar 2L2P, s=1,s2=0,m=0
+  NP222var — NP 2L2P triangle, arXiv:2305.13951, k=0(fam b)
+  TB123 — Tri-Box 2L3P, massless, s=3,s1=2,s2=4
+  TB123m — Tri-Box 2L3P, massive, s=3,s1=2,s2=5,m=1
+  DB313 — Double Box 2L4P, s=2,t=3
+  NP322 — Non-Planar 2L4P, massless, s=1,t=5
+  NP322m — Non-Planar 2L4P, massive, s=3,t=2,m1=1,m2=4,m=1
+  DP323 — Double Pentagon 2L5P, s12=4,s13=7,s14=8,s23=1,s24=2,m=3
+  BN3L — 3-Loop Banana, vacuum, msq=1
+  BN3L1P — 3-Loop Banana 1-Point, massless, s=1
+  BN3L1Pm — 3-Loop Banana 1-Point, massive, s=1,msq=1
+  Name: NP 2L2P triangle, arXiv:2305.13951, k=0(fam b)
+  Propagators: 7
+  Modulus: 179424673
+
+[3/5] Defining IBP family...
+[LIE-Workflow] Step 1: Defining IBP family...
+  - Propagators: 7
+  - Loops: 2
+  - External legs: 2
+#IBP&LI: 9
+[LIE-Workflow] Family defined in 0.051252s
+  - Total IBP relations: 8
+  - Sectors to analyze: 57
+  Family definition time: 0.842355 s
+  NE = 7
+  NIBP = 8
+  Sectors = 57
+
+[4/5] Running ScheduledRegionSolve...
+========================================
+ScheduledRegionSolve: NP222var
+Sectors: 57
+Modulus: 179424673
+Cache:   /home/ykm/Large-Index-Expansion-CPP/verify/NP222var/cache
+Output:  /home/ykm/Large-Index-Expansion-CPP/
+========================================
+
+Pending sectors: 1/57
+  Quick: 0  Fast(resume): 0  Retry(resume): 1
+  (Skipped 56 already-computed/trivial/cached sectors)
+
+========================================
+Interleaved Tier Pipeline: Quick + Fast + Retry
+Max parallel workers: 2
+========================================
+  [LAUNCH] 1111110 -> Retry tier (86400s)
+    [PID=1239023, active={0, 0, 1}, totalActive=1]
+  [DONE] 1111110 -> 5 regions, 23356.4s
+
+Interleaved pipeline complete.
+#reg: 42
+
+KeyExistsQ::invrl: The argument Missing[KeyAbsent, RecursionMatrix] is not a valid Association or a list of rules.
+
+KeyExistsQ::invrl: The argument Missing[KeyAbsent, RecursionMatrix] is not a valid Association or a list of rules.
+
+ExportBinaryIBPMatrix::nodims: -- Message text not found --
+
+General::openx: OutputStream[/home/ykm/Large-Index-Expansion-CPP/IBPMat_NP222var.bin, 4] is not open.
+Binary export completed: /home/ykm/Large-Index-Expansion-CPP/IBPMat_NP222var.bin
+Exporting 42 cells to /home/ykm/Large-Index-Expansion-CPP/RingData_NP222var.bin...
+
+Values::invrl: The argument Missing[KeyAbsent, CoordinateRing][MonomialBasisMatrix] is not a valid Association or a list of rules.
+
+ReplaceAll::reps: {Missing[KeyAbsent, CoordinateRing][VarRule]} is neither a list of replacement rules nor a valid dispatch table, and so cannot be used for replacing.
+
+ReplaceAll::reps: {Missing[KeyAbsent, CoordinateRing][VarRule]} is neither a list of replacement rules nor a valid dispatch table, and so cannot be used for replacing.
+
+ReplaceAll::reps: {Missing[KeyAbsent, CoordinateRing][VarRule]} is neither a list of replacement rules nor a valid dispatch table, and so cannot be used for replacing.
+
+General::stop: Further output of ReplaceAll::reps will be suppressed during this calculation.
+
+Inverse::matsq: Argument {0, 0, 0, 0, 0, 0, 0} at position 1 is not a non-empty square matrix.
+
+BinaryWrite::nocoerce: Missing[KeyAbsent, CoordinateRing][LimitSector] cannot be coerced to the specified format.
+
+BinaryWrite::nocoerce: {0, 0, 0, 0, 0, 0, 0} . Values[Missing[KeyAbsent, CoordinateRing][MonomialBasisMatrix]] cannot be coerced to the specified format.
+
+BinaryWrite::nocoerce: Inverse[{0, 0, 0, 0, 0, 0, 0}, Modulus -> 179424673] . Inverse[Values[Missing[KeyAbsent, CoordinateRing][MonomialBasisMatrix]], Modulus -> 179424673] cannot be coerced to the specified format.
+
+General::stop: Further output of BinaryWrite::nocoerce will be suppressed during this calculation.
+
+Values::invrl: The argument Missing[KeyAbsent, CoordinateRing][MonomialBasisMatrix] is not a valid Association or a list of rules.
+
+Inverse::matsq: Argument {0, 0, 0, 0, 0, 0, 0} at position 1 is not a non-empty square matrix.
+
+Values::invrl: The argument Missing[KeyAbsent, CoordinateRing][MonomialBasisMatrix] is not a valid Association or a list of rules.
+
+General::stop: Further output of Values::invrl will be suppressed during this calculation.
+
+Inverse::matsq: Argument {0, 0, 0, 0, 0, 0, 0} at position 1 is not a non-empty square matrix.
+
+General::stop: Further output of Inverse::matsq will be suppressed during this calculation.
+Export Complete: /home/ykm/Large-Index-Expansion-CPP/RingData_NP222var.bin
+
+Export complete:
+  /home/ykm/Large-Index-Expansion-CPP/IBPMat_NP222var.bin
+  /home/ykm/Large-Index-Expansion-CPP/RingData_NP222var.bin
+
+ScheduledRegionSolve complete for NP222var.
+[LOCK] Released.
+
+[5/5] Result summary
+  Done:     17
+  Trivial:  40
+  Timeout:  0
+  Error:    0
+  Failed sectors remaining: 0
+
+Output files:
+  /home/ykm/Large-Index-Expansion-CPP/IBPMat_NP222var.bin EXISTS
+  /home/ykm/Large-Index-Expansion-CPP/RingData_NP222var.bin EXISTS
+  IBPMat size: 8 bytes
+  RingData size: 344 bytes
+
+========================================
+ScheduledRegionSolve NP222var complete.
+========================================

@@ -1,0 +1,28 @@
+{
+    "name": "NP322",
+    "description": "Non-Planar 2L4P, massless, s=1,t=5",
+    "propagators": [
+        "-(k2 + p1)^2 + msq",
+        "-(k1 - k2 - p1 - p2)^2",
+        "-k2^2 + msq",
+        "-(k1 - p2)^2 + msq",
+        "-(k1 - k2)^2",
+        "-k1^2 + msq",
+        "-(k1 - k2 + p4)^2",
+        "-(k1 + p1)^2",
+        "-(k1 + p4)^2"
+    ],
+    "loopMomenta": ["k1", "k2"],
+    "externalMomenta": ["p1", "p2", "p4"],
+    "kinematicRules": {
+        "p1^2": "m1",
+        "p2^2": "m2",
+        "p4^2": "0",
+        "p1*p2": "(s - m1 - m2)/2",
+        "p1*p4": "(t - m1)/2",
+        "p2*p4": "-(s + t - m1)/2"
+    },
+    "topSector": [1, 1, 1, 1, 1, 1, 1, 0, 0],
+    "numeric": {"s": 1, "t": 5, "m1": 0, "m2": 0, "msq": 0, "d": "1/7"},
+    "modulus": 179424673
+}

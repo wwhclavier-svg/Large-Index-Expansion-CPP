@@ -594,9 +594,9 @@ int main(int argc, char* argv[]) {
     
     initBinomial();
 
-    const string binIBPFile = "IBPMat_"+family+".bin";
-    const string binRingFile = "RingData_"+family+".bin";
-    const string coeffCacheFile = "ExpansionCache_"+family+"_k"+to_string(order)+".bin";
+    const string binIBPFile = "data/IBPMat_"+family+".bin";
+    const string binRingFile = "data/RingData_"+family+".bin";
+    const string coeffCacheFile = "data/ExpansionCache_"+family+"_k"+to_string(order)+".bin";
 
     cout << "=== Configuration ===" << endl;
     cout << "Family: " << family << endl;
@@ -748,7 +748,7 @@ int main(int argc, char* argv[]) {
         }
 
         cout << "\nExporting relation metadata (A_i, theta)..." << endl;
-        string metaFile = "RelationMeta_" + family + ".m";
+        string metaFile = "relations/RelationMeta_" + family + ".m";
         exportRelationMeta(ringData, ne, static_cast<int>(FFInt::p), family, metaFile);
 
         auto start = chrono::high_resolution_clock::now();
@@ -793,7 +793,7 @@ int main(int argc, char* argv[]) {
             }
 
             // Export single unified file containing ALL results
-            string unifiedFilename = "AllRelations_" + family + "_k" + to_string(order) + ".m";
+            string unifiedFilename = "relations/AllRelations_" + family + "_k" + to_string(order) + ".m";
             exportAllResultsToMMA_SingleFile(all_results, ne, order,
                 static_cast<int>(FFInt::p), family, unifiedFilename, ansatz_mode);
 

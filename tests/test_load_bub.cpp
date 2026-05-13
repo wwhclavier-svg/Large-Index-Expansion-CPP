@@ -22,7 +22,7 @@ int main(int argc, char* argv[]) {
             family = argv[1];
         }
 
-        std::string filename = "IBPMat_" + family + ".bin";
+        std::string filename = "data/IBPMat_" + family + ".bin";
         std::cout << "=== Test Loading " << filename << " ===" << std::endl;
 
         auto ibpmatlist = loadAllIBPMatricesBinary<firefly::FFInt>(filename);

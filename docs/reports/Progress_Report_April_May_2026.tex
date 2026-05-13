@@ -1,0 +1,295 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage[UTF8]{ctex}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{geometry}
+\usepackage{enumitem}
+\usepackage[backend=biber,style=numeric]{biblatex}
+\geometry{margin=2.5cm}
+\title{\textbf{Large-Index-Expansion-CPP 项目进展报告}\\2026年4月--5月}
+\author{}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\section{概述}
+
+时间跨度：2026年4月1日 -- 5月6日，共25个提交，涉及60+文件，净增约17,500行代码。
+工作集中在六个方向：(1) 核心算法缺陷修复，(2) 求解器增量RREF重构，
+(3) FamilyGenerate C++ 重写管线，(4) 大规模基准测试与 scaling 分析，
+(5) 跨验证基础设施，(6) 构建系统与可移植性。
+
+\section{核心算法修复（5项关键Bug）}
+
+\subsection{符号函数有限域溢出（\texttt{Utilities.hpp}）}
+
+\texttt{sgn()} 函数中 \texttt{static\_cast<FFInt>(-1)} 将负整数先转为
+\texttt{uint64\_t}（$2^{64}-1$）再对模数 $p = 179424673$ 取模，产生约400万的错误值。
+修正为 \texttt{-static\_cast<FFInt>(1)}，利用有限域已有的负号运算符。
+
+\subsection{seed索引偏移（5个文件）}
+
+方程组变量枚举中 \texttt{max(ncurr, 0)} 应为 \texttt{max(ncurr - 1, 0)}，
+导致多枚举一个不存在的变量。影响 \texttt{LayerRecursion.hpp}、
+\texttt{LayerRecursionCore.tpp}、\texttt{LayerRecursionCore.cpp}、
+\texttt{layerRecursion.cpp}、\texttt{RelationSolver.hpp}。
+
+\subsection{f2卷积存储维度（\texttt{RelationSolver.hpp}）}
+
+卷积索引 \texttt{f2\_len} 原为 \texttt{k\_max\_ + 1}，修正为
+\texttt{deg\_ + k\_max\_ + 1}，正确处理g函数的负指数项
+（$g[\nu-\alpha]$ 而非 $j[\alpha]$）。修复前超出范围的项被静默丢弃，矩阵缺行导致结果错误但不崩溃。
+
+\subsection{nimax缓冲区溢出（\texttt{LayerRecursion.hpp}）}
+
+\texttt{nimax} 从硬编码4改为动态计算：遍历所有 $k,l$ 组合取
+$\max\left(\binom{l+n_e-1}{n_e-1} \cdot n_b\right)$。
+
+\subsection{二项式系数中间溢出（\texttt{LayerRecursionCore.tpp}）}
+
+$\texttt{BINOM}[a][b] \times \texttt{BINOM}[c][d]$ 的乘积可能溢出 \texttt{long long}，
+改为先分别取值再乘。
+
+\section{求解器增量RREF重构}
+
+\subsection{IncrementalNullspaceSolver 重写}
+
+\texttt{RelationSolver.hpp} 中的 \texttt{IncrementalNullspaceSolver<T>} 从
+批量高斯消元重构为增量RREF维护（commit \texttt{8391228}，289行变更）：
+
+\begin{itemize}[nosep]
+    \item \textbf{增量消元}：\texttt{addRow()} 不再追加到原始矩阵待批量消元，
+    而是立即用已有主元列消去新行、查找新主元、归一化、再对已有RREF行反向消去
+    \item \textbf{RREF 持久化}：维护 \texttt{rref\_} + \texttt{pivot\_cols\_} + \texttt{rank\_}
+    替代原始 \texttt{matrix\_}，所有已保留行始终保持行简化阶梯形
+    \item \textbf{零空间O(1)查询}：\texttt{getNullity()} 直接返回
+    $\text{num\_vars} - \text{rank}$，无需每次计算
+    \item \textbf{冗余行丢弃}：线性相关行（消元后全零）在 \texttt{addRow()} 内即被丢弃，
+    不占用存储，实现了 \texttt{nimax\_lists = \{0\}} 的简化策略
+\end{itemize}
+
+\textbf{性能影响}：eq/sample 削减25--250倍，总时间加速5--10倍，
+\texttt{SR212-5m}（45 regimes）从 OOM 变为可计算（69.77s）。
+这是基准测试中算法优化效果的核心来源。
+
+\section{FamilyGenerate C++ 重写管线}
+
+将基于 Mathematica 的 IBP 矩阵生成器完整迁移至 C++，取代原有 MMA/Singular 混合管道。
+架构分为4个阶段：
+
+\subsection{Phase 0 — 基础设施（纯C++）}
+\begin{itemize}[nosep]
+    \item \texttt{FamilyConfig.hpp}：JSON 族定义解析器，支持8个族配置（bub00/10/11、Tri、Box、SR、SR3m、SR5m）
+    \item \texttt{BinaryIBPWriter.hpp}：IBP1 二进制格式写入器（与 \texttt{IBPMatrixLoader\_Binary} 格式对应）
+    \item \texttt{BinaryRingWriter.hpp}：RingData 二进制写入器（与 \texttt{RingDataLoader} 格式对应）
+\end{itemize}
+
+\subsection{Phase 1 — CLI 与 Singular 集成}
+\begin{itemize}[nosep]
+    \item \texttt{SingularRunner.hpp}（499行）：基于模板的 Singular 子进程运行器，
+    通过管道接口调用 Singular CAS
+    \item \texttt{family\_generate.cpp}（161行）：命令行工具，编排
+    \texttt{family.json} $\to$ IBP生成 $\to$ \texttt{.bin} 导出全流程
+\end{itemize}
+
+\subsection{Phase 2 — IBP 方程生成（Singular子进程）}
+\begin{itemize}[nosep]
+    \item \texttt{IBPEqGenerator.hpp}（1,302行）：核心生成器
+    \begin{itemize}[nosep]
+        \item 传播子自动展开解析器：字符串 $\to$ 标量积系数 + 常数
+        \item \texttt{SP2PD}：标量积 $\to$ z基线性求解（通过 Singular \texttt{inverse(C)}）
+        \item 导数矩阵 $\texttt{derivL}[i][j][k]$：C++ 预计算 sp 指标贡献，Singular 替换
+        \item IBP 组装 + \texttt{mon2F}：公式
+        $d \cdot \delta_{jk} - \sum_i n_i \cdot \text{deriv}[i,j,k] / z_i$
+        乘 $\prod z_m \to$ g算子位移形式（C++完成）
+    \end{itemize}
+\end{itemize}
+\textbf{验证}：全部8个族通过正确性检验（bub00: 2方程/11项, Tri: 3/26, Box: 4/41, SR: 6/56, SR3m: 6/64, SR5m: 6/60）。
+
+\subsection{Phase 3--4 — 区域求解与集成（规划中）}
+\begin{itemize}[nosep]
+    \item \texttt{RegionSolver.hpp}（442行）：Groebner基 + 准素分解的区域求解器（Singular子进程方式）
+    \item \texttt{LIECoreAlgebra.wl}：MMA参考实现，作为C++版本的对照标准
+\end{itemize}
+
+\subsection{VerifyUtility — MMA参考实现与交叉验证}
+新增17个MMA脚本（5,973行），作为C++重写的权威参考：
+\begin{itemize}[nosep]
+    \item 族定义与IBP生成：\texttt{LIEFamilyDefine.wl}、\texttt{LIEUtility.wl}
+    \item 代数核心：\texttt{LIECoreAlgebra.wl}、\texttt{LIERegions.wl}
+    \item 展开与重构：\texttt{LIEExpand.wl}（519行）、\texttt{LIEReconstruct.wl}（1,022行）
+    \item Singular接口：\texttt{SingularInterface.wl}（685行）
+    \item Kira格式转换：\texttt{M2Kira.wl}（523行）
+    \item 二进制导出：\texttt{ExportBinary\_IBPMatrix.wl}（183行）
+    \item 交叉验证：\texttt{Compare-*.wl} 系列（5个脚本，917行）
+\end{itemize}
+
+\section{基准测试与性能分析}
+
+\subsection{算法优化}
+\textbf{Incremental RREF + nimax=\{0\}} 策略使 eq/sample 削减25--250倍，总时间加速5--10倍。
+\texttt{SR212-5m}（45 regimes）从 OOM 变为可计算（69.77s）。
+
+\subsection{展开时间 scaling}
+小 $n_e$ 家族（需高 $k$ 才能收敛）的展开时间遵循幂律：
+\[
+T_{\text{expand}}(n_e, k) \approx C(n_e) \cdot k^{1.5\cdot n_e + 1}
+\]
+其中 $C(n_e=2) \approx 3\times10^{-7}$、$C(n_e=5) \approx 10^{-5}$。
+求解阶段 $T_{\text{solve}} \propto k^{1.0\sim1.3}$，远低于展开的增长速率。
+
+大 $n_e$ 下稳定阶数低（$k=2\sim3$），展开成本不是瓶颈；瓶颈转向变量空间
+$\propto \binom{n_e+\text{lev}}{n_e} \times \binom{n_e+\text{deg}}{n_e}$ 的 RREF 消元。
+
+\subsection{编译优化}
+\texttt{-O3 -DNDEBUG} 带来 2--6x 常数加速，不改变 scaling 指数。
+
+\subsection{关键性能数据}
+
+\begin{table}[h]
+\centering
+\caption{算法优化效果（-O0, order=3）}
+\begin{tabular}{lcccccc}
+\toprule
+Family & $L$ & $n_e$ & Regimes & 优化前(s) & 优化后(s) & 加速比 \\
+\midrule
+Box    & 1 & 4 & 15 & 71.6  & 7.50   & 9.5x \\
+SR212  & 2 & 5 & 6  & 53.6  & 9.85   & 5.4x \\
+SR212-3m & 2 & 5 & 8 & 80.2 & 12.75 & 6.3x \\
+SR212-5m & 2 & 5 & 45 & OOM  & 69.77  & $\infty$ \\
+TB123  & 2 & 7 & 37 & 38min+ & 300.52 & $\sim$7.5x \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{收敛性分析}
+
+\subsection{稳定阶数与关系计数}
+
+提升 order（3$\to$5）和扩大 lev（2$\to$3）显著改善了收敛性：
+\begin{itemize}[nosep]
+    \item 所有稳定阶数 $\ge 0$，不再出现 $-2$（之前 SR212 (2,2) 的 stable\_order 为 $-2$）
+    \item lev=3 引入后，Box/SR212-5m 在 (3,0) 分别发现6和10个非零关系（之前 lev$\le$2 全为零）
+    \item SR212 (2,2) 的关系数从40（不稳定）收敛到11（稳定）
+\end{itemize}
+
+\subsection{全扇区 vs --topsector}
+\begin{itemize}[nosep]
+    \item \textbf{DB313}：全扇区模式下 (3,1) 的1,168个独立变量被
+    \texttt{RemoveSolvedVariables} 传播的子扇区解完全消去（sol\_dim=0, stable\_order=1）；
+    \texttt{--topsector} 孤立测试则虚高且不收敛
+    \item \textbf{NP322}（非平面）：(3,1) 在 order=2 即收敛于零，变量空间约束强于平面拓扑，
+    但 IBP 矩阵大80倍（105 MB vs 1.3 MB）
+\end{itemize}
+
+关键发现：\textbf{全扇区模式的 RemoveSolvedVariables 策略模拟了 Laporta 的层级消去逻辑}——
+子扇区先确定独立变量，传播到顶扇区后将变量空间从1,840缩减到0。
+$\nu$ 采样密度信息远不及 sector 层级约束有效。
+
+\subsection{策略建议}
+对于大 $n_e$ 家族，优先扩展 regime 覆盖（全扇区模式）而非提高 order 或 lev/deg；
+前者在更低 order 即可实现收敛，且内存/时间可控。
+
+\section{数据管线与二进制生成}
+
+\subsection{.bin 生成性能}
+
+\begin{table}[h]
+\centering
+\caption{MMA + Singular .bin 生成耗时分解}
+\begin{tabular}{lcccccc}
+\toprule
+Family & $n_e$ & 总扇区 & 非平凡 & 族定义(s) & Singular(s) & 总计(s) \\
+\midrule
+TB123  & 7 & 57 & 21 & 0.66 & 128.90 & 129.6 \\
+NP222  & 7 & — & 47 & 0.66 & 15.96  & 16.6 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+关键发现：
+\begin{itemize}[nosep]
+    \item 族定义的 C++ 重写已消除 MMA 依赖——Phase 0 将 0.66s 降至可忽略水平
+    \item 真正的瓶颈是 Singular Groebner 基计算，与 regimes/\#root 数量无直接关系，
+    取决于每个扇区极限方程组的变量数、次数和方程结构复杂度
+    \item NP222 的 regimes (92) 和 \#root (113) 均大于 TB123 (37, 70)，但 Singular 快8倍
+\end{itemize}
+
+\section{构建系统与可移植性}
+
+\begin{itemize}[nosep]
+    \item \textbf{FireFly 路径可移植}：通过 CMake cache 变量 \texttt{FIREFLY\_ROOT} +
+    环境变量 \texttt{FIREFLY\_ROOT} 回退 + 路径存在性检查，不再硬编码
+    \item \textbf{可选构建目标守卫}：无源码文件的测试目标自动跳过，避免 CMake 配置失败
+    \item \textbf{.gitignore 修正}：将 \texttt{Compare-*.wl} 和 \texttt{Verify-*.wl}
+    模式锚定到仓库根目录（\texttt{/Compare-*.wl}），避免误排除子目录文件
+\end{itemize}
+
+\section{文档与验证基础设施}
+
+\subsection{新增文档}
+\begin{itemize}[nosep]
+    \item \texttt{CLAUDE.md}（282行）：项目指南，编码规范，构建说明
+    \item \texttt{AGENTS.md}：扩展的双语（中/英）模块规格与测试策略
+    \item \texttt{CODE\_STATUS\_260504.md}：初始提交至5月4日的变更摘要
+    \item \texttt{FamilyDatabase/}：19个积分族（1L+2L+3L）的统一定义与文档
+    \item \texttt{Test-Expand.md} / \texttt{Test-Relation.md}：展开与关系验证文档
+    \item \texttt{RegionSolverAlgorithm.md Appendix B}（204行）：C++重写架构计划
+    \item \texttt{Benchmark\_Results.md}：完整的基准测试与 scaling 分析报告
+\end{itemize}
+
+\subsection{验证框架（\texttt{verify/} 目录）}
+\begin{itemize}[nosep]
+    \item 结构化交叉验证框架：C++ $\leftrightarrow$ MMA $\leftrightarrow$ Kira IBP
+    \item \texttt{VerifyUtility/}：17个 MMA 参考脚本 + 5个 Compare-* 工具
+    \item \texttt{FamilyDatabase/}：统一的族定义数据库
+    \item 验证方法：CompareVerify、EquationVerify、SeriesVerify 三种互补方法
+\end{itemize}
+
+\section{数值结果摘要}
+
+\subsection{已收敛家族（-O3, 最佳已知结果）}
+
+\begin{table}[h]
+\centering
+\caption{全量关系计数矩阵（各家族当前最佳order）}
+\begin{tabular}{lcccccc}
+\toprule
+Family & $n_e$ & $k_{\max}$ & \#regimes & \#root & (3,0)关系 & (3,1)关系 \\
+\midrule
+Box      & 4 & 5 & 15 & 17    & 6  & 0 \\
+SR212    & 5 & 5 & 6  & 6     & 10 & — \\
+SR212-3m & 5 & 5 & 8  & 8     & 10 & 4 \\
+SR212-5m & 5 & 5 & 45 & 45   & 10 & 0 \\
+DB313    & 9 & 2 & — & —     & 36 & 0 (稳定) \\
+NP322    & 9 & 2 & 605 & 1,537 & 36 & 0 (稳定) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{内存使用}
+\begin{itemize}[nosep]
+    \item DB313 $k=3$：3.79 GB RSS，95\% 为展开系数缓存（可落盘降至 $\sim$200 MB）
+    \item NP322 $k=2$ --topsector：3.25 GB（IBP 矩阵105 MB），全扇区605 regime 需落盘策略
+    \item 每 $l$ 值内存消耗 $\approx$ 0.74 MB（FFInt 系数 + nb $\times$ nimax 数据）
+\end{itemize}
+
+\section{仍待完成}
+
+\begin{enumerate}[nosep]
+    \item \textbf{FamilyGenerate Phase 3--4}：Groebner基/准素分解区域求解器的C++实现
+    \item \textbf{ne=7 家族 k=5 展开}：TB123 (37 regimes, $\sim$30min)、NP222 (92 regimes, $\sim$75min)
+    \item \textbf{展开系数落盘}：实现展开完成后写盘、求解时按需加载，将大$n_e$内存从
+    $\sim$4 GB 降至 $\sim$200 MB
+    \item \textbf{全扇区 NP322}：605 regime 流式处理，展开落盘后求解矩阵规模可控
+    \item \textbf{ne=9 更高 order}：DB313 order=4 展开预计 $\sim$25分钟 / 18 GB RSS
+\end{enumerate}
+
+\section*{致谢}
+
+本报告由 Claude Code (Anthropic) 辅助生成，基于项目 git 历史与文档自动汇总。
+
+\end{document}

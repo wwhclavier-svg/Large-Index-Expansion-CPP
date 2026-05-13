@@ -1,0 +1,72 @@
+=== FamilyGenerate ===
+Family: TB123 (L=2 E=2 N=7)
+Modulus: 179424673
+
+[Step 1] Generating IBP equations...
+[IBPEqGenerator] Family TB123: ne=7 nl=2 nE=2 nIBP=8 subsectors=57
+[IBPEqGenerator] Step 1: Running SP2PD...
+[IBPEqGenerator] SP2PD OK: 7 scalar products → z-basis
+[IBPEqGenerator] Step 2: Computing derivatives...
+[IBPEqGenerator] Derivatives OK: 56 polynomials computed
+[IBPEqGenerator] Step 3: Assembling IBP equations (mon2F)...
+[IBPEqGenerator] Generated 8 IBP equations with 102 total g-operator terms.
+  ne=7 nibp=8 subsectors=57
+  [TIMING] Step 1: 0.079 s
+
+[Step 2] Extracting FTable...
+  nibp=8 ne=7
+  [TIMING] Step 2: 0 s
+
+[Step 3] Solving sectors...
+  Filtering: sector = 1110110
+  Solving sector [1110110]
+  [2026-05-13 07:38:51] Singular minAssGTZ starting...
+  [Singular minAssGTZ] 0.0518597 s, kept=1
+  [2026-05-13 07:38:51] Singular minAssGTZ done
+  [2026-05-13 07:38:51] Component 0/1 (14 polys)
+
+[DEBUG solveVarRule] sector=[1,1,1,0,1,1,0] nb=4 VarIndep=[A7] VarDep=[A1,A2,A3,A4,A5,A6]
+  compGb:
+    [0] A7^4-1184318*A7^3+87866480*A7^2+51328408*A7-1227316
+    [1] A6+12645148*A7^3-32438881*A7^2-12721136*A7+78794961
+    [2] A5+12645148*A7^3-32438881*A7^2-12721136*A7+78794961
+    [3] A4-81668288*A7^3+51940842*A7^2-24874867*A7-78677979
+    [4] A3+51516554*A7^3+72378754*A7^2-54841896*A7+38448181
+    [5] A2+77953596*A7^3-55405411*A7^2-16340489*A7+49662179
+    [6] A1+3161287*A7^3+36746448*A7^2-3180284*A7-25157428
+    [7] B7+39325405*A7^3+15645839*A7^2-21889801*A7+86123848
+    [8] B6+84268725*A7^3+2979744*A7^2+21992349*A7+20762001
+    [9] B5+84268725*A7^3+2979744*A7^2+21992349*A7+20762001
+    [10] B4+75318942*A7^3-75182810*A7^2+60427645*A7+31014832
+    [11] B3-39674012*A7^3+35018541*A7^2-14584685*A7-75871010
+    [12] B2+67763587*A7^3+37251166*A7^2+205096*A7+34347023
+    [13] B1-21774446*A7^3+11918976*A7^2+87969396*A7+83048004
+  VarRule result:
+    A1 -> 25157428+3180284*A7+142678225*A7^2+176263386*A7^3
+    A2 -> 129762494+16340489*A7+55405411*A7^2+101471077*A7^3
+    A3 -> 140976492+54841896*A7+107045919*A7^2+127908119*A7^3
+    A4 -> 78677979+24874867*A7+127483831*A7^2+81668288*A7^3
+    A5 -> 100629712+12721136*A7+32438881*A7^2+166779525*A7^3
+    A6 -> 100629712+12721136*A7+32438881*A7^2+166779525*A7^3
+    [2026-05-13 07:38:51] MBM reduction k=0/4 (4 products)...
+    [2026-05-13 07:38:51] MBM reduction k=1/4 (4 products)...
+    [2026-05-13 07:38:51] MBM reduction k=2/4 (4 products)...
+    [2026-05-13 07:38:51] MBM reduction k=3/4 (4 products)...
+  -> 1 region(s) in 0.093 s
+  Found 1 region(s) total
+  [TIMING] Step 3: 0.094 s
+
+[Step 4] Building recursion + ring matrices...
+  Region 0: nb=4
+  [TIMING] Step 4: 0.006 s
+
+[Step 5] Writing .bin files...
+Written 1 regime(s) to /home/ykm/Large-Index-Expansion-CPP/cache/TB123_scheduled/SectorCache/IBPMat_TB123_sector_1110110.bin
+Written 1 ring cell(s) to /home/ykm/Large-Index-Expansion-CPP/cache/TB123_scheduled/SectorCache/RingData_TB123_sector_1110110.bin
+  [TIMING] Step 5: 0 s
+
+[TIMING] Total wall-clock: 0.183 s
+
+Done. Output:
+  /home/ykm/Large-Index-Expansion-CPP/cache/TB123_scheduled/SectorCache/IBPMat_TB123_sector_1110110.bin
+  /home/ykm/Large-Index-Expansion-CPP/cache/TB123_scheduled/SectorCache/RingData_TB123_sector_1110110.bin

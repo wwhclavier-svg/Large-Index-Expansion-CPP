@@ -31,8 +31,8 @@ int main(int argc, char* argv[]) {
 
     const int order = 4;
     const int incre = 2;
-    const string matrixFile = "IBPMat_" + famname + ".bin";
-    const string coeffCacheFile = "resCache_Expansion_" + famname + ".bin";
+    const string matrixFile = "data/IBPMat_" + famname + ".bin";
+    const string coeffCacheFile = "data/resCache_Expansion_" + famname + ".bin";
 
     try {
         // 4. Load IBP matrix data

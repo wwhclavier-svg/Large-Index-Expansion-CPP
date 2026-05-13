@@ -4,17 +4,27 @@
 //   FamilyConfig → IBPEqGenerator → IBPAnalyzer → RegionSolver
 //   → RecursionBuilder → RingBuilder → BinaryWriter
 //
+// Modes:
+//   Default:               Full pipeline, all sectors → IBPMat + RingData
+//   --sector <bin> [--cache-dir <dir>]:  Only solve one sector
+//   --merge-sectors <dir> [--output <dir>]:  Merge partial outputs from --sector runs
+//
 // Usage:
 //   ./family_generate families/bub00.json
-//   ./family_generate families/bub00.json --output /tmp/out --diff --source-dir .
+//   ./family_generate families/bub00.json --sector 11 --cache-dir cache/sectors
+//   ./family_generate families/bub00.json --merge-sectors cache/sectors
 
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include <string>
 #include <vector>
+#include <map>
 #include <chrono>
 #include <cstdlib>
 #include <sys/stat.h>
+#include <glob.h>
+#include <filesystem>
 
 #include "FamilyConfig.hpp"
 #include "IBPEqGenerator.hpp"
@@ -29,31 +39,24 @@ using namespace std;
 using namespace firefly;
 
 // ============================================================
-// Dense → sparse CSR conversion
-//
-// RecursionBuilder produces dense FlatMatrix (nb×nb) per operator entry.
-// BinaryIBPWriter expects SparseTensorRaw (CSR format matching MMA).
+// Dense → sparse CSR conversion (same as before)
 // ============================================================
 
-// Helper: build CSR from a 4D array [nibp][ne] of FlatMatrix (nb×nb)
 template<typename T>
 SparseTensorRaw<T> denseToSparse4D(
-    const vector<vector<RecursionBuilder::FlatMatrix>>& data,  // [nibp][ne]
+    const vector<vector<RecursionBuilder::FlatMatrix>>& data,
     int nibp, int ne, int nb)
 {
     SparseTensorRaw<T> result;
     result.dims = {int32_t(nibp), int32_t(ne), int32_t(nb), int32_t(nb)};
-
     result.rowPtr.resize(nibp + 1, 0);
     int32_t nz = 0;
-
     for (int m = 0; m < nibp; ++m) {
         for (int i = 0; i < ne; ++i) {
             for (int r = 0; r < nb; ++r) {
                 for (int c = 0; c < nb; ++c) {
                     int64_t val = RecursionBuilder::matAt(data[m][i], nb, r, c);
                     if (val != 0) {
-                        // MMA IBP1 format: colIdx stores multi-dimensional coords (1-based)
                         result.colIdx.push_back(i + 1);
                         result.colIdx.push_back(r + 1);
                         result.colIdx.push_back(c + 1);
@@ -71,24 +74,20 @@ SparseTensorRaw<T> denseToSparse4D(
     return result;
 }
 
-// 3D: [nibp] of FlatMatrix (for F0)
 template<typename T>
 SparseTensorRaw<T> denseToSparse3D(
-    const vector<RecursionBuilder::FlatMatrix>& data,  // [nibp]
+    const vector<RecursionBuilder::FlatMatrix>& data,
     int nibp, int nb)
 {
     SparseTensorRaw<T> result;
     result.dims = {int32_t(nibp), int32_t(nb), int32_t(nb)};
-
     result.rowPtr.resize(nibp + 1, 0);
     int32_t nz = 0;
-
     for (int m = 0; m < nibp; ++m) {
         for (int r = 0; r < nb; ++r) {
             for (int c = 0; c < nb; ++c) {
                 int64_t val = RecursionBuilder::matAt(data[m], nb, r, c);
                 if (val != 0) {
-                    // MMA IBP1 format: colIdx stores multi-dimensional coords (1-based)
                     result.colIdx.push_back(r + 1);
                     result.colIdx.push_back(c + 1);
                     if constexpr (is_same_v<T, FFInt>)
@@ -104,18 +103,15 @@ SparseTensorRaw<T> denseToSparse3D(
     return result;
 }
 
-// 5D: [nibp][ne][ne] of FlatMatrix (for F2, F2s)
 template<typename T>
 SparseTensorRaw<T> denseToSparse5D(
-    const vector<vector<vector<RecursionBuilder::FlatMatrix>>>& data,  // [nibp][ne][ne]
+    const vector<vector<vector<RecursionBuilder::FlatMatrix>>>& data,
     int nibp, int ne, int nb)
 {
     SparseTensorRaw<T> result;
     result.dims = {int32_t(nibp), int32_t(ne), int32_t(ne), int32_t(nb), int32_t(nb)};
-
     result.rowPtr.resize(nibp + 1, 0);
     int32_t nz = 0;
-
     for (int m = 0; m < nibp; ++m) {
         for (int i = 0; i < ne; ++i) {
             for (int j = 0; j < ne; ++j) {
@@ -123,7 +119,6 @@ SparseTensorRaw<T> denseToSparse5D(
                     for (int c = 0; c < nb; ++c) {
                         int64_t val = RecursionBuilder::matAt(data[m][i][j], nb, r, c);
                         if (val != 0) {
-                            // MMA IBP1 format: colIdx stores multi-dimensional coords (1-based)
                             result.colIdx.push_back(i + 1);
                             result.colIdx.push_back(j + 1);
                             result.colIdx.push_back(r + 1);
@@ -143,7 +138,6 @@ SparseTensorRaw<T> denseToSparse5D(
     return result;
 }
 
-// Convert one region's RecursionMatrices → RegimeSparseData
 template<typename T>
 RegimeSparseData<T> convertToRegimeSparse(
     const RecursionBuilder::RecursionMatrices& rm,
@@ -153,9 +147,8 @@ RegimeSparseData<T> convertToRegimeSparse(
     reg.nibp    = static_cast<int32_t>(rm.nibp);
     reg.ne      = static_cast<int32_t>(rm.ne);
     reg.nb      = static_cast<int32_t>(rm.nb);
-    reg.incre   = 2;  // default in MMA
+    reg.incre   = 2;
     reg.modulus = modulus;
-
     reg.M1  = denseToSparse4D<T>(rm.M1,  rm.nibp, rm.ne, rm.nb);
     reg.N1  = denseToSparse4D<T>(rm.N1,  rm.nibp, rm.ne, rm.nb);
     reg.K1  = denseToSparse4D<T>(rm.K1,  rm.nibp, rm.ne, rm.nb);
@@ -164,11 +157,9 @@ RegimeSparseData<T> convertToRegimeSparse(
     reg.F0  = denseToSparse3D<T>(rm.F0,  rm.nibp, rm.nb);
     reg.F2  = denseToSparse5D<T>(rm.F2,  rm.nibp, rm.ne, rm.nb);
     reg.F2s = denseToSparse5D<T>(rm.F2s, rm.nibp, rm.ne, rm.nb);
-
     return reg;
 }
 
-// Convert RingMatrices → RingCellRaw
 template<typename T>
 RingCellRaw<T> convertToRingCell(
     const RingBuilder::RingMatrices& rm,
@@ -176,32 +167,17 @@ RingCellRaw<T> convertToRingCell(
 {
     RingCellRaw<T> cell;
     cell.limitSector = limitSector;
-
     int ne = static_cast<int>(rm.A_list.size());
     int nb = 0;
-    if (ne > 0 && !rm.A_list.empty()) {
+    if (ne > 0 && !rm.A_list.empty())
         nb = static_cast<int>(sqrt(rm.A_list[0].size()));
-    }
     cell.nb = nb;
-
-    // Flatten: concatenate A_list[0..ne-1] → A_flat
-    for (int i = 0; i < ne; ++i) {
-        for (auto v : rm.A_list[i]) {
-            if constexpr (is_same_v<T, FFInt>)
-                cell.A_flat.push_back(FFInt(static_cast<uint64_t>(v)));
-            else
-                cell.A_flat.push_back(static_cast<T>(v));
-        }
-    }
-    for (int i = 0; i < ne; ++i) {
-        for (auto v : rm.Ainv_list[i]) {
-            if constexpr (is_same_v<T, FFInt>)
-                cell.Ainv_flat.push_back(FFInt(static_cast<uint64_t>(v)));
-            else
-                cell.Ainv_flat.push_back(static_cast<T>(v));
-        }
-    }
-
+    for (int i = 0; i < ne; ++i)
+        for (auto v : rm.A_list[i])
+            cell.A_flat.push_back(FFInt(static_cast<uint64_t>(v)));
+    for (int i = 0; i < ne; ++i)
+        for (auto v : rm.Ainv_list[i])
+            cell.Ainv_flat.push_back(FFInt(static_cast<uint64_t>(v)));
     return cell;
 }
 
@@ -224,6 +200,126 @@ inline bool filesIdentical(const string& a, const string& b) {
                  istreambuf_iterator<char>(fb));
 }
 
+// Glob: find files matching pattern
+inline vector<string> globFiles(const string& pattern) {
+    vector<string> results;
+    glob_t g;
+    if (::glob(pattern.c_str(), GLOB_TILDE, nullptr, &g) == 0) {
+        for (size_t i = 0; i < g.gl_pathc; ++i)
+            results.push_back(g.gl_pathv[i]);
+        globfree(&g);
+    }
+    return results;
+}
+
+// ============================================================
+// Merge partial sector files
+// ============================================================
+
+// Read raw bytes from a file, starting after an initial header skip
+inline vector<char> readBytesAfter(const string& path, int64_t skipBytes) {
+    ifstream f(path, ios::binary | ios::ate);
+    if (!f) throw runtime_error("Cannot open: " + path);
+    int64_t total = f.tellg();
+    int64_t remaining = total - skipBytes;
+    if (remaining <= 0) return {};
+    f.seekg(skipBytes);
+    vector<char> buf(remaining);
+    f.read(buf.data(), remaining);
+    return buf;
+}
+
+// Read just the regime count from an IBP1 partial file
+inline int32_t readRegimeCount(const string& path) {
+    ifstream f(path, ios::binary);
+    char magic[4];
+    f.read(magic, 4);
+    if (string(magic, 4) != "IBP1") return 0;
+    // Read BE int32
+    uint8_t b[4];
+    f.read(reinterpret_cast<char*>(b), 4);
+    return (b[0] << 24) | (b[1] << 16) | (b[2] << 8) | b[3];
+}
+
+// Read cell count from RingData partial file (native endian int32)
+inline int32_t readCellCount(const string& path) {
+    ifstream f(path, ios::binary);
+    int32_t count;
+    f.read(reinterpret_cast<char*>(&count), sizeof(count));
+    return count;
+}
+
+// Read globalNe from RingData partial file (native endian int32)
+inline int32_t readRingNe(const string& path) {
+    ifstream f(path, ios::binary);
+    f.seekg(4); // skip cell count
+    int32_t ne;
+    f.read(reinterpret_cast<char*>(&ne), sizeof(ne));
+    return ne;
+}
+
+void mergeIBPSectors(const string& pattern, const string& output) {
+    auto files = globFiles(pattern);
+    if (files.empty()) {
+        cerr << "[MERGE] No partial IBP files found matching: " << pattern << endl;
+        return;
+    }
+    sort(files.begin(), files.end());
+
+    int32_t totalRegimes = 0;
+    for (const auto& f : files)
+        totalRegimes += readRegimeCount(f);
+
+    ofstream out(output, ios::binary);
+    if (!out) throw runtime_error("Cannot write: " + output);
+
+    out.write("IBP1", 4);
+    // Write BE int32
+    uint8_t hdr[4] = { uint8_t((totalRegimes >> 24) & 0xFF),
+                       uint8_t((totalRegimes >> 16) & 0xFF),
+                       uint8_t((totalRegimes >> 8) & 0xFF),
+                       uint8_t(totalRegimes & 0xFF) };
+    out.write(reinterpret_cast<const char*>(hdr), 4);
+
+    for (const auto& f : files) {
+        auto payload = readBytesAfter(f, 8); // skip magic(4) + count(4)
+        out.write(payload.data(), payload.size());
+    }
+    out.close();
+    cout << "[MERGE] Merged " << files.size() << " partial IBP files → " << output
+         << " (" << totalRegimes << " regimes)" << endl;
+}
+
+void mergeRingSectors(const string& pattern, const string& output) {
+    auto files = globFiles(pattern);
+    if (files.empty()) {
+        cerr << "[MERGE] No partial RingData files found matching: " << pattern << endl;
+        return;
+    }
+    sort(files.begin(), files.end());
+
+    int32_t totalCells = 0;
+    int32_t globalNe = 0;
+    for (const auto& f : files) {
+        totalCells += readCellCount(f);
+        if (globalNe == 0) globalNe = readRingNe(f);
+    }
+
+    ofstream out(output, ios::binary);
+    if (!out) throw runtime_error("Cannot write: " + output);
+
+    out.write(reinterpret_cast<const char*>(&totalCells), sizeof(totalCells));
+    out.write(reinterpret_cast<const char*>(&globalNe), sizeof(globalNe));
+
+    for (const auto& f : files) {
+        auto payload = readBytesAfter(f, 8); // skip cellCount(4) + ne(4)
+        out.write(payload.data(), payload.size());
+    }
+    out.close();
+    cout << "[MERGE] Merged " << files.size() << " partial RingData files → " << output
+         << " (" << totalCells << " cells)" << endl;
+}
+
 // ============================================================
 // Main
 // ============================================================
@@ -234,41 +330,63 @@ int main(int argc, char* argv[]) {
   Reads a family.json config, generates IBPMat_*.bin and RingData_*.bin.
 
 Options:
-  --source-dir DIR   Comparison source directory for --diff (default: .)
-  --output DIR       Output directory (default: .)
-  --diff             Compare generated .bin files against source-dir originals
+  --sector <binary>        Only solve one subsector (e.g. "110")
+  --cache-dir DIR          Cache directory for per-sector partial output
+  --merge-sectors DIR      Merge partial sector outputs from DIR
+  --output DIR             Output directory (default: data/)
+  --source-dir DIR         Comparison source for --diff (default: data/)
+  --diff                   Compare against source-dir originals
 )";
         return 1;
     }
 
-    string jsonFile  = argv[1];
-    string sourceDir = ".";
-    string outputDir = ".";
-    bool   doDiff    = false;
+    string jsonFile     = argv[1];
+    string sourceDir    = "data";
+    string outputDir    = "data";
+    string sectorFilter = "";
+    string cacheDir     = "";
+    string mergeDir     = "";
+    bool   doDiff       = false;
 
     for (int i = 2; i < argc; ++i) {
         string arg = argv[i];
-        if (arg == "--source-dir" && i + 1 < argc) {
-            sourceDir = argv[++i];
-        } else if (arg == "--output" && i + 1 < argc) {
-            outputDir = argv[++i];
-        } else if (arg == "--diff") {
-            doDiff = true;
-        } else {
-            cerr << "Unknown flag: " << arg << endl;
-            return 1;
-        }
+        if (arg == "--source-dir" && i + 1 < argc) sourceDir = argv[++i];
+        else if (arg == "--output" && i + 1 < argc) outputDir = argv[++i];
+        else if (arg == "--sector" && i + 1 < argc) sectorFilter = argv[++i];
+        else if (arg == "--cache-dir" && i + 1 < argc) cacheDir = argv[++i];
+        else if (arg == "--merge-sectors" && i + 1 < argc) mergeDir = argv[++i];
+        else if (arg == "--diff") doDiff = true;
+        else { cerr << "Unknown flag: " << arg << endl; return 1; }
     }
 
+    // ── Merge mode ────────────────────────────────────────────────
+    if (!mergeDir.empty()) {
+        if (outputDir == ".") outputDir = mergeDir; // default: write back to merge dir
+        string famName = "";
+        auto ibpFiles = globFiles(mergeDir + "/IBPMat_*_sector_*.bin");
+        if (!ibpFiles.empty()) {
+            // Extract family name from first file: IBPMat_<fam>_sector_<key>.bin
+            string fn = filesystem::path(ibpFiles[0]).filename().string();
+            auto p1 = fn.find("_sector_");
+            if (p1 != string::npos)
+                famName = fn.substr(7, p1 - 7); // after "IBPMat_" (7 chars)
+        }
+        string ibpOut  = outputDir + "/IBPMat_"  + famName + ".bin";
+        string ringOut = outputDir + "/RingData_" + famName + ".bin";
+
+        mergeIBPSectors(mergeDir + "/IBPMat_*_sector_*.bin", ibpOut);
+        mergeRingSectors(mergeDir + "/RingData_*_sector_*.bin", ringOut);
+        return 0;
+    }
+
+    // ── Normal / sector mode ──────────────────────────────────────
     using Clock = std::chrono::high_resolution_clock;
     using Ms    = std::chrono::milliseconds;
     auto t_total_0 = Clock::now();
 
     if (outputDir != ".") mkdirP(outputDir);
 
-    // ========================================
     // 1. Parse family config
-    // ========================================
     cout << "=== FamilyGenerate ===" << endl;
     FamilyDef fam;
     try {
@@ -277,18 +395,14 @@ Options:
         cerr << "Failed to parse " << jsonFile << ": " << e.what() << endl;
         return 1;
     }
-
     cout << "Family: " << fam.name
          << " (L=" << fam.nLoop() << " E=" << fam.nExt()
          << " N=" << fam.nProp() << ")" << endl;
     cout << "Modulus: " << fam.modulus << endl;
 
-    // Set FFInt modulus
     FFInt::set_new_prime(static_cast<uint64_t>(fam.modulus));
 
-    // ========================================
     // 2. Generate IBP equations
-    // ========================================
     cout << "\n[Step 1] Generating IBP equations..." << endl;
     auto t1_0 = Clock::now();
     auto ibp = IBPEqGenerator::generateIBPEquations(fam);
@@ -296,104 +410,130 @@ Options:
     int ne = ibp.ne;
     cout << "  ne=" << ne << " nibp=" << ibp.nibp
          << " subsectors=" << ibp.sectorlist.size() << endl;
-    cout << "  [TIMING] Step 1 (IBP eq gen): "
-         << std::chrono::duration_cast<Ms>(t1_1 - t1_0).count() / 1000.0 << " s" << endl;
+    cout << "  [TIMING] Step 1: "
+         << chrono::duration_cast<Ms>(t1_1 - t1_0).count() / 1000.0 << " s" << endl;
 
-    // ========================================
     // 3. Extract FTable
-    // ========================================
     cout << "\n[Step 2] Extracting FTable..." << endl;
     auto t2_0 = Clock::now();
     auto ft = IBPAnalyzer::extractFTable(ibp, fam.modulus);
     auto t2_1 = Clock::now();
     cout << "  nibp=" << ft.nibp << " ne=" << ft.ne << endl;
-    cout << "  [TIMING] Step 2 (FTable): "
-         << std::chrono::duration_cast<Ms>(t2_1 - t2_0).count() / 1000.0 << " s" << endl;
+    cout << "  [TIMING] Step 2: "
+         << chrono::duration_cast<Ms>(t2_1 - t2_0).count() / 1000.0 << " s" << endl;
 
-    // ========================================
-    // 4. Solve all sectors → regions
-    // ========================================
-    cout << "\n[Step 3] Solving all sectors..." << endl;
+    // 4. Solve sectors → regions
+    cout << "\n[Step 3] Solving sectors..." << endl;
     auto t3_0 = Clock::now();
-    auto topSector = fam.topSector;  // top sector from family config (all active propagators)
-    auto regions = RegionSolver::solveAllSectors(ibp, topSector, fam.modulus);
-    auto t3_1 = Clock::now();
-    cout << "  Found " << regions.size() << " region(s)" << endl;
-    cout << "  [TIMING] Step 3 (Region solve): "
-         << std::chrono::duration_cast<Ms>(t3_1 - t3_0).count() / 1000.0 << " s" << endl;
+    auto topSector = fam.topSector;
+    vector<RegionSolver::RegionData> regions;
 
-    if (regions.empty()) {
-        cerr << "No zero-dimensional regions found. Aborting." << endl;
-        return 1;
+    if (!sectorFilter.empty()) {
+        // Single-sector mode: only solve the specified sector
+        cout << "  Filtering: sector = " << sectorFilter << endl;
+        auto subsectors = RegionSolver::generateSubsectors(topSector, ibp.nl);
+        bool found = false;
+        for (const auto& sub : subsectors) {
+            string key;
+            for (int b : sub) key += to_string(b);
+            if (key == sectorFilter) {
+                found = true;
+                auto abEqs = IBPAnalyzer::buildABEquations(ibp, sub, fam.modulus);
+                bool hasContent = false;
+                for (const auto& eq : abEqs) {
+                    for (char ch : eq)
+                        if (ch != '0' && ch != '+' && ch != '-' && ch != '*') { hasContent = true; break; }
+                    if (hasContent) break;
+                    if (!eq.empty() && eq != "0") hasContent = true;
+                }
+                if (hasContent) {
+                    cerr << "  Solving sector [" << key << "]" << endl;
+                    auto t_s0 = Clock::now();
+                    auto sregions = RegionSolver::solveRegion(abEqs, sub, ne, fam.modulus);
+                    auto t_s1 = Clock::now();
+                    double sec = chrono::duration_cast<Ms>(t_s1 - t_s0).count() / 1000.0;
+                    cerr << "  -> " << sregions.size() << " region(s) in " << sec << " s" << endl;
+                    for (auto& r : sregions)
+                        regions.push_back(move(r));
+                }
+                break;
+            }
+        }
+        if (!found)
+            cerr << "  Sector " << sectorFilter << " not found in family" << endl;
+    } else {
+        // Normal mode: solve all sectors
+        regions = RegionSolver::solveAllSectors(ibp, topSector, fam.modulus);
     }
-
-    // Sort regions by sector to match MMA's output order
-    // MMA order: {1,0}, {0,1}, then {1,1} groups (ascending by sum, then descending by first element)
-    std::sort(regions.begin(), regions.end(), [](const RegionSolver::RegionData& a, const RegionSolver::RegionData& b) {
-        const auto& sa = a.limitSector;
-        const auto& sb = b.limitSector;
-        int suma = 0, sumb = 0;
-        for (int v : sa) suma += v;
-        for (int v : sb) sumb += v;
-        if (suma != sumb) return suma < sumb;
-        // For equal sums, descending by first element (so {1,0} before {0,1})
-        return sa[0] > sb[0];
-    });
-
-    // ========================================
-    // 5. Build recursion + ring matrices per region
-    // ========================================
-    cout << "\n[Step 4] Building recursion + ring matrices..." << endl;
-    auto t4_0 = Clock::now();
+    auto t3_1 = Clock::now();
+    cout << "  Found " << regions.size() << " region(s) total" << endl;
+    cout << "  [TIMING] Step 3: "
+         << chrono::duration_cast<Ms>(t3_1 - t3_0).count() / 1000.0 << " s" << endl;
 
     vector<RegimeSparseData<FFInt>> ibpRegimes;
     vector<RingCellRaw<FFInt>>      ringCells;
 
-    for (size_t ridx = 0; ridx < regions.size(); ++ridx) {
-        auto& reg = regions[ridx];
-        cout << "  Region " << ridx << ": nb=" << reg.nb << endl;
+    if (regions.empty()) {
+        cout << "  No regions found. Writing empty output." << endl;
+    } else {
+        // Sort regions by sector (MMA ordering)
+        sort(regions.begin(), regions.end(),
+            [](const RegionSolver::RegionData& a, const RegionSolver::RegionData& b) {
+                const auto& sa = a.limitSector;
+                const auto& sb = b.limitSector;
+                int suma = 0, sumb = 0;
+                for (int v : sa) suma += v;
+                for (int v : sb) sumb += v;
+                if (suma != sumb) return suma < sumb;
+                return sa[0] > sb[0];
+            });
 
-        // Build recursion matrices
-        auto recMats = RecursionBuilder::buildRecursionMatrices(ft, reg, fam.modulus);
-
-        // Build ring matrices
-        auto ringMats = RingBuilder::computeRingMatrices(reg, ne, fam.modulus);
-
-        // Convert to sparse + raw formats
-        ibpRegimes.push_back(convertToRegimeSparse<FFInt>(recMats, fam.modulus));
-        ringCells.push_back(convertToRingCell<FFInt>(ringMats, reg.limitSector));
+        // 5. Build recursion + ring matrices per region
+        cout << "\n[Step 4] Building recursion + ring matrices..." << endl;
+        auto t4_0 = Clock::now();
+        for (size_t ridx = 0; ridx < regions.size(); ++ridx) {
+            auto& reg = regions[ridx];
+            cout << "  Region " << ridx << ": nb=" << reg.nb << endl;
+            auto recMats = RecursionBuilder::buildRecursionMatrices(ft, reg, fam.modulus);
+            auto ringMats = RingBuilder::computeRingMatrices(reg, ne, fam.modulus);
+            ibpRegimes.push_back(convertToRegimeSparse<FFInt>(recMats, fam.modulus));
+            ringCells.push_back(convertToRingCell<FFInt>(ringMats, reg.limitSector));
+        }
+        auto t4_1 = Clock::now();
+        cout << "  [TIMING] Step 4: "
+             << chrono::duration_cast<Ms>(t4_1 - t4_0).count() / 1000.0 << " s" << endl;
     }
-    auto t4_1 = Clock::now();
-    cout << "  [TIMING] Step 4 (Recursion+Ring build): "
-         << std::chrono::duration_cast<Ms>(t4_1 - t4_0).count() / 1000.0 << " s" << endl;
 
-    // ========================================
-    // 6. Write output .bin files
-    // ========================================
-    string ibpOut  = outputDir + "/IBPMat_"  + fam.name + ".bin";
-    string ringOut = outputDir + "/RingData_" + fam.name + ".bin";
+    // 6. Write output
+    string ibpOut, ringOut;
+    if (!sectorFilter.empty() && !cacheDir.empty()) {
+        // Sector mode: write partial output with sector key in filename
+        mkdirP(cacheDir);
+        ibpOut  = cacheDir + "/IBPMat_"  + fam.name + "_sector_" + sectorFilter + ".bin";
+        ringOut = cacheDir + "/RingData_" + fam.name + "_sector_" + sectorFilter + ".bin";
+    } else {
+        ibpOut  = outputDir + "/IBPMat_"  + fam.name + ".bin";
+        ringOut = outputDir + "/RingData_" + fam.name + ".bin";
+    }
 
     cout << "\n[Step 5] Writing .bin files..." << endl;
     auto t5_0 = Clock::now();
     writeIBPMatrixBinary<FFInt>(ibpOut, ibpRegimes);
     writeRingDataBinary<FFInt>(ringOut, ringCells, ne);
     auto t5_1 = Clock::now();
-    cout << "  [TIMING] Step 5 (Write .bin): "
-         << std::chrono::duration_cast<Ms>(t5_1 - t5_0).count() / 1000.0 << " s" << endl;
+    cout << "  [TIMING] Step 5: "
+         << chrono::duration_cast<Ms>(t5_1 - t5_0).count() / 1000.0 << " s" << endl;
 
     auto t_total_1 = Clock::now();
-    double total_s = std::chrono::duration_cast<Ms>(t_total_1 - t_total_0).count() / 1000.0;
+    double total_s = chrono::duration_cast<Ms>(t_total_1 - t_total_0).count() / 1000.0;
     cout << "\n[TIMING] Total wall-clock: " << total_s << " s" << endl;
 
-    // ========================================
     // 7. Optional diff
-    // ========================================
     if (doDiff) {
         string ibpSrc  = sourceDir + "/IBPMat_"  + fam.name + ".bin";
         string ringSrc = sourceDir + "/RingData_" + fam.name + ".bin";
         bool ibpOk  = filesIdentical(ibpSrc, ibpOut);
         bool ringOk = filesIdentical(ringSrc, ringOut);
-
         cout << "\n--- Diff ---" << endl;
         cout << "IBP:  " << (ibpOk  ? "IDENTICAL" : "DIFFER") << endl;
         cout << "Ring: " << (ringOk ? "IDENTICAL" : "DIFFER") << endl;
