@@ -1,0 +1,722 @@
+{
+  "s0": {
+    "State": "done",
+    "Time": 0.115,
+    "Regions": 0,
+    "SectorName": "000001100"
+  },
+  "s1": {
+    "State": "done",
+    "Time": 0.1,
+    "Regions": 0,
+    "SectorName": "000010100"
+  },
+  "s2": {
+    "State": "done",
+    "Time": 0.11,
+    "Regions": 0,
+    "SectorName": "000011000"
+  },
+  "s3": {
+    "State": "done",
+    "Time": 0.102,
+    "Regions": 0,
+    "SectorName": "000100100"
+  },
+  "s4": {
+    "State": "done",
+    "Time": 0.094,
+    "Regions": 0,
+    "SectorName": "000101000"
+  },
+  "s5": {
+    "State": "done",
+    "Time": 0.105,
+    "Regions": 0,
+    "SectorName": "000110000"
+  },
+  "s6": {
+    "State": "done",
+    "Time": 0.108,
+    "Regions": 0,
+    "SectorName": "001000100"
+  },
+  "s7": {
+    "State": "done",
+    "Time": 0.106,
+    "Regions": 0,
+    "SectorName": "001001000"
+  },
+  "s8": {
+    "State": "done",
+    "Time": 0.094,
+    "Regions": 0,
+    "SectorName": "001010000"
+  },
+  "s9": {
+    "State": "done",
+    "Time": 0.091,
+    "Regions": 0,
+    "SectorName": "001100000"
+  },
+  "s10": {
+    "State": "done",
+    "Time": 0.082,
+    "Regions": 0,
+    "SectorName": "010000100"
+  },
+  "s11": {
+    "State": "done",
+    "Time": 0.082,
+    "Regions": 0,
+    "SectorName": "010001000"
+  },
+  "s12": {
+    "State": "done",
+    "Time": 0.107,
+    "Regions": 0,
+    "SectorName": "010010000"
+  },
+  "s13": {
+    "State": "done",
+    "Time": 0.128,
+    "Regions": 0,
+    "SectorName": "010100000"
+  },
+  "s14": {
+    "State": "done",
+    "Time": 0.121,
+    "Regions": 0,
+    "SectorName": "011000000"
+  },
+  "s15": {
+    "State": "done",
+    "Time": 0.14,
+    "Regions": 0,
+    "SectorName": "100000100"
+  },
+  "s16": {
+    "State": "done",
+    "Time": 0.139,
+    "Regions": 0,
+    "SectorName": "100001000"
+  },
+  "s17": {
+    "State": "done",
+    "Time": 0.106,
+    "Regions": 0,
+    "SectorName": "100010000"
+  },
+  "s18": {
+    "State": "done",
+    "Time": 0.112,
+    "Regions": 0,
+    "SectorName": "100100000"
+  },
+  "s19": {
+    "State": "done",
+    "Time": 0.111,
+    "Regions": 0,
+    "SectorName": "101000000"
+  },
+  "s20": {
+    "State": "done",
+    "Time": 0.097,
+    "Regions": 0,
+    "SectorName": "110000000"
+  },
+  "s21": {
+    "State": "done",
+    "Time": 0.14,
+    "Regions": 0,
+    "SectorName": "000011100"
+  },
+  "s22": {
+    "State": "done",
+    "Time": 0.141,
+    "Regions": 0,
+    "SectorName": "000101100"
+  },
+  "s23": {
+    "State": "done",
+    "Time": 0.134,
+    "Regions": 0,
+    "SectorName": "000110100"
+  },
+  "s24": {
+    "State": "done",
+    "Time": 0.12,
+    "Regions": 0,
+    "SectorName": "000111000"
+  },
+  "s25": {
+    "State": "done",
+    "Time": 0.153,
+    "Regions": 1,
+    "SectorName": "001001100"
+  },
+  "s26": {
+    "State": "done",
+    "Time": 0.113,
+    "Regions": 0,
+    "SectorName": "001010100"
+  },
+  "s27": {
+    "State": "done",
+    "Time": 0.085,
+    "Regions": 0,
+    "SectorName": "001011000"
+  },
+  "s28": {
+    "State": "done",
+    "Time": 0.106,
+    "Regions": 0,
+    "SectorName": "001100100"
+  },
+  "s29": {
+    "State": "done",
+    "Time": 0.105,
+    "Regions": 0,
+    "SectorName": "001101000"
+  },
+  "s30": {
+    "State": "done",
+    "Time": 0.1,
+    "Regions": 0,
+    "SectorName": "001110000"
+  },
+  "s31": {
+    "State": "done",
+    "Time": 0.084,
+    "Regions": 0,
+    "SectorName": "010001100"
+  },
+  "s32": {
+    "State": "done",
+    "Time": 0.137,
+    "Regions": 1,
+    "SectorName": "010010100"
+  },
+  "s33": {
+    "State": "done",
+    "Time": 0.084,
+    "Regions": 0,
+    "SectorName": "010011000"
+  },
+  "s34": {
+    "State": "done",
+    "Time": 0.095,
+    "Regions": 0,
+    "SectorName": "010100100"
+  },
+  "s35": {
+    "State": "done",
+    "Time": 0.096,
+    "Regions": 0,
+    "SectorName": "010101000"
+  },
+  "s36": {
+    "State": "done",
+    "Time": 0.096,
+    "Regions": 0,
+    "SectorName": "010110000"
+  },
+  "s37": {
+    "State": "done",
+    "Time": 0.119,
+    "Regions": 0,
+    "SectorName": "011000100"
+  },
+  "s38": {
+    "State": "done",
+    "Time": 0.106,
+    "Regions": 0,
+    "SectorName": "011001000"
+  },
+  "s39": {
+    "State": "done",
+    "Time": 0.123,
+    "Regions": 0,
+    "SectorName": "011010000"
+  },
+  "s40": {
+    "State": "done",
+    "Time": 0.122,
+    "Regions": 0,
+    "SectorName": "011100000"
+  },
+  "s41": {
+    "State": "done",
+    "Time": 0.108,
+    "Regions": 0,
+    "SectorName": "100001100"
+  },
+  "s42": {
+    "State": "done",
+    "Time": 0.109,
+    "Regions": 0,
+    "SectorName": "100010100"
+  },
+  "s43": {
+    "State": "done",
+    "Time": 0.087,
+    "Regions": 0,
+    "SectorName": "100011000"
+  },
+  "s44": {
+    "State": "done",
+    "Time": 0.139,
+    "Regions": 1,
+    "SectorName": "100100100"
+  },
+  "s45": {
+    "State": "done",
+    "Time": 0.089,
+    "Regions": 0,
+    "SectorName": "100101000"
+  },
+  "s46": {
+    "State": "done",
+    "Time": 0.091,
+    "Regions": 0,
+    "SectorName": "100110000"
+  },
+  "s47": {
+    "State": "done",
+    "Time": 0.115,
+    "Regions": 0,
+    "SectorName": "101000100"
+  },
+  "s48": {
+    "State": "done",
+    "Time": 0.104,
+    "Regions": 0,
+    "SectorName": "101001000"
+  },
+  "s49": {
+    "State": "done",
+    "Time": 0.109,
+    "Regions": 0,
+    "SectorName": "101010000"
+  },
+  "s50": {
+    "State": "done",
+    "Time": 0.1,
+    "Regions": 0,
+    "SectorName": "101100000"
+  },
+  "s51": {
+    "State": "done",
+    "Time": 0.085,
+    "Regions": 0,
+    "SectorName": "110000100"
+  },
+  "s52": {
+    "State": "done",
+    "Time": 0.094,
+    "Regions": 0,
+    "SectorName": "110001000"
+  },
+  "s53": {
+    "State": "done",
+    "Time": 0.091,
+    "Regions": 0,
+    "SectorName": "110010000"
+  },
+  "s54": {
+    "State": "done",
+    "Time": 0.123,
+    "Regions": 0,
+    "SectorName": "110100000"
+  },
+  "s55": {
+    "State": "done",
+    "Time": 0.093,
+    "Regions": 0,
+    "SectorName": "111000000"
+  },
+  "s56": {
+    "State": "done",
+    "Time": 0.148,
+    "Regions": 0,
+    "SectorName": "000111100"
+  },
+  "s57": {
+    "State": "done",
+    "Time": 0.143,
+    "Regions": 0,
+    "SectorName": "001011100"
+  },
+  "s58": {
+    "State": "done",
+    "Time": 0.184,
+    "Regions": 1,
+    "SectorName": "001101100"
+  },
+  "s59": {
+    "State": "done",
+    "Time": 0.153,
+    "Regions": 0,
+    "SectorName": "001110100"
+  },
+  "s60": {
+    "State": "done",
+    "Time": 0.143,
+    "Regions": 0,
+    "SectorName": "001111000"
+  },
+  "s61": {
+    "State": "done",
+    "Time": 0.24,
+    "Regions": 1,
+    "SectorName": "010011100"
+  },
+  "s62": {
+    "State": "done",
+    "Time": 0.212,
+    "Regions": 1,
+    "SectorName": "010101100"
+  },
+  "s63": {
+    "State": "done",
+    "Time": 0.158,
+    "Regions": 1,
+    "SectorName": "010110100"
+  },
+  "s64": {
+    "State": "done",
+    "Time": 0.185,
+    "Regions": 0,
+    "SectorName": "010111000"
+  },
+  "s65": {
+    "State": "done",
+    "Time": 0.202,
+    "Regions": 1,
+    "SectorName": "011001100"
+  },
+  "s66": {
+    "State": "done",
+    "Time": 0.249,
+    "Regions": 1,
+    "SectorName": "011010100"
+  },
+  "s67": {
+    "State": "done",
+    "Time": 0.11,
+    "Regions": 0,
+    "SectorName": "011011000"
+  },
+  "s68": {
+    "State": "done",
+    "Time": 0.148,
+    "Regions": 0,
+    "SectorName": "011100100"
+  },
+  "s69": {
+    "State": "done",
+    "Time": 0.099,
+    "Regions": 0,
+    "SectorName": "011101000"
+  },
+  "s70": {
+    "State": "done",
+    "Time": 0.159,
+    "Regions": 0,
+    "SectorName": "011110000"
+  },
+  "s71": {
+    "State": "done",
+    "Time": 0.117,
+    "Regions": 0,
+    "SectorName": "100011100"
+  },
+  "s72": {
+    "State": "done",
+    "Time": 0.191,
+    "Regions": 1,
+    "SectorName": "100101100"
+  },
+  "s73": {
+    "State": "done",
+    "Time": 0.217,
+    "Regions": 1,
+    "SectorName": "100110100"
+  },
+  "s74": {
+    "State": "done",
+    "Time": 0.179,
+    "Regions": 0,
+    "SectorName": "100111000"
+  },
+  "s75": {
+    "State": "done",
+    "Time": 0.172,
+    "Regions": 1,
+    "SectorName": "101001100"
+  },
+  "s76": {
+    "State": "done",
+    "Time": 0.183,
+    "Regions": 1,
+    "SectorName": "101010100"
+  },
+  "s77": {
+    "State": "done",
+    "Time": 0.137,
+    "Regions": 0,
+    "SectorName": "101011000"
+  },
+  "s78": {
+    "State": "done",
+    "Time": 0.162,
+    "Regions": 1,
+    "SectorName": "101100100"
+  },
+  "s79": {
+    "State": "done",
+    "Time": 0.115,
+    "Regions": 0,
+    "SectorName": "101101000"
+  },
+  "s80": {
+    "State": "done",
+    "Time": 0.124,
+    "Regions": 0,
+    "SectorName": "101110000"
+  },
+  "s81": {
+    "State": "done",
+    "Time": 0.133,
+    "Regions": 0,
+    "SectorName": "110001100"
+  },
+  "s82": {
+    "State": "done",
+    "Time": 0.198,
+    "Regions": 1,
+    "SectorName": "110010100"
+  },
+  "s83": {
+    "State": "done",
+    "Time": 0.165,
+    "Regions": 0,
+    "SectorName": "110011000"
+  },
+  "s84": {
+    "State": "done",
+    "Time": 0.172,
+    "Regions": 1,
+    "SectorName": "110100100"
+  },
+  "s85": {
+    "State": "done",
+    "Time": 0.162,
+    "Regions": 0,
+    "SectorName": "110101000"
+  },
+  "s86": {
+    "State": "done",
+    "Time": 0.114,
+    "Regions": 0,
+    "SectorName": "110110000"
+  },
+  "s87": {
+    "State": "done",
+    "Time": 0.137,
+    "Regions": 0,
+    "SectorName": "111000100"
+  },
+  "s88": {
+    "State": "done",
+    "Time": 0.107,
+    "Regions": 0,
+    "SectorName": "111001000"
+  },
+  "s89": {
+    "State": "done",
+    "Time": 0.152,
+    "Regions": 0,
+    "SectorName": "111010000"
+  },
+  "s90": {
+    "State": "done",
+    "Time": 0.165,
+    "Regions": 0,
+    "SectorName": "111100000"
+  },
+  "s91": {
+    "State": "done",
+    "Time": 0.315,
+    "Regions": 1,
+    "SectorName": "001111100"
+  },
+  "s92": {
+    "State": "done",
+    "Time": 0.383,
+    "Regions": 2,
+    "SectorName": "010111100"
+  },
+  "s93": {
+    "State": "pending",
+    "Time": 0,
+    "Regions": 0,
+    "SectorName": "011011100"
+  },
+  "s94": {
+    "State": "done",
+    "Time": 3542.27,
+    "Regions": 0,
+    "SectorName": "011101100"
+  },
+  "s95": {
+    "State": "done",
+    "Time": 0.42,
+    "Regions": 1,
+    "SectorName": "011110100"
+  },
+  "s96": {
+    "State": "done",
+    "Time": 0.189,
+    "Regions": 0,
+    "SectorName": "011111000"
+  },
+  "s97": {
+    "State": "done",
+    "Time": 0.359,
+    "Regions": 1,
+    "SectorName": "100111100"
+  },
+  "s98": {
+    "State": "done",
+    "Time": 3541.43,
+    "Regions": 0,
+    "SectorName": "101011100"
+  },
+  "s99": {
+    "State": "done",
+    "Time": 0.165,
+    "Regions": 0,
+    "SectorName": "101101100"
+  },
+  "s100": {
+    "State": "running",
+    "Time": 0,
+    "Regions": 0,
+    "SectorName": "101110100"
+  },
+  "s101": {
+    "State": "done",
+    "Time": 0.318,
+    "Regions": 1,
+    "SectorName": "101111000"
+  },
+  "s102": {
+    "State": "done",
+    "Time": 41.284,
+    "Regions": 1,
+    "SectorName": "110011100"
+  },
+  "s103": {
+    "State": "running",
+    "Time": 0,
+    "Regions": 0,
+    "SectorName": "110101100"
+  },
+  "s104": {
+    "State": "done",
+    "Time": 3542.3,
+    "Regions": 0,
+    "SectorName": "110110100"
+  },
+  "s105": {
+    "State": "done",
+    "Time": 0.146,
+    "Regions": 0,
+    "SectorName": "110111000"
+  },
+  "s106": {
+    "State": "done",
+    "Time": 0.163,
+    "Regions": 1,
+    "SectorName": "111001100"
+  },
+  "s107": {
+    "State": "done",
+    "Time": 1.855,
+    "Regions": 2,
+    "SectorName": "111010100"
+  },
+  "s108": {
+    "State": "done",
+    "Time": 0.12,
+    "Regions": 0,
+    "SectorName": "111011000"
+  },
+  "s109": {
+    "State": "done",
+    "Time": 0.188,
+    "Regions": 1,
+    "SectorName": "111100100"
+  },
+  "s110": {
+    "State": "done",
+    "Time": 0.194,
+    "Regions": 1,
+    "SectorName": "111101000"
+  },
+  "s111": {
+    "State": "done",
+    "Time": 0.154,
+    "Regions": 0,
+    "SectorName": "111110000"
+  },
+  "s112": {
+    "State": "done",
+    "Time": 0.0,
+    "Regions": 0,
+    "SectorName": "011111100"
+  },
+  "s113": {
+    "State": "done",
+    "Time": 0.0,
+    "Regions": 0,
+    "SectorName": "101111100"
+  },
+  "s114": {
+    "State": "done",
+    "Time": 0.0,
+    "Regions": 0,
+    "SectorName": "110111100"
+  },
+  "s115": {
+    "State": "done",
+    "Time": 0.0,
+    "Regions": 0,
+    "SectorName": "111011100"
+  },
+  "s116": {
+    "State": "done",
+    "Time": 0.0,
+    "Regions": 0,
+    "SectorName": "111101100"
+  },
+  "s117": {
+    "State": "done",
+    "Time": 0.0,
+    "Regions": 0,
+    "SectorName": "111110100"
+  },
+  "s118": {
+    "State": "done",
+    "Time": 0.241,
+    "Regions": 1,
+    "SectorName": "111111000"
+  },
+  "s119": {
+    "State": "done",
+    "Time": 7142.48,
+    "Regions": 0,
+    "SectorName": "111111100"
+  }
+}
