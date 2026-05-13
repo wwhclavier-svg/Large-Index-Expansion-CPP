@@ -1,5 +1,5 @@
 (* run_scheduled.wl -- Run ScheduledRegionSolve for TB123 *)
-(* Usage: wolframscript -file verify/TB123/run_scheduled.wl *)
+(* Usage: wolframscript -file workspace/C003-TB123-region-solve/run_scheduled.wl *)
 
 $ProjectRoot = DirectoryName[DirectoryName[DirectoryName[$InputFileName]]];
 $VerifyUtilityPath = FileNameJoin[{$ProjectRoot, "verify", "VerifyUtility"}];
@@ -64,9 +64,9 @@ scheduleConfig = <|
     <|"Name" -> "Retry",  "Timeout" -> 86400, "Order" -> "FIFO",  "MaxParallel" -> 1|>
   },
   "MaxRetriesPerTier" -> 1,
-  "CacheDir" -> FileNameJoin[{$ProjectRoot, "verify", "TB123", "cache"}],
+  "CacheDir" -> FileNameJoin[{$ProjectRoot, "workspace", "C003-TB123-region-solve", "cache"}],
   "OutputDir" -> $ProjectRoot,
-  "LogDir" -> FileNameJoin[{$ProjectRoot, "verify", "TB123", "cache"}],
+  "LogDir" -> FileNameJoin[{$ProjectRoot, "workspace", "C003-TB123-region-solve", "cache"}],
   "ScheduleMode" -> "Interleaved",
   "MaxParallelJobs" -> 2,
   "CheckpointInterval" -> 1,
