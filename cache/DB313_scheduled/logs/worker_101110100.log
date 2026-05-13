@@ -18,6 +18,6 @@ Modulus: 179424673
   [TIMING] Step 2: 0 s
 
 [Step 3] Solving sectors...
-  Filtering: sector = 110110100
-  Solving sector [110110100]
-  [2026-05-13 19:40:32] Singular minAssGTZ starting...
+  Filtering: sector = 101110100
+  Solving sector [101110100]
+  [2026-05-13 19:40:59] Singular minAssGTZ starting...

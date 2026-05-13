@@ -1,0 +1,44 @@
+=== FamilyGenerate ===
+Family: TB123 (L=2 E=2 N=7)
+Modulus: 179424673
+
+[Step 1] Generating IBP equations...
+[IBPEqGenerator] Family TB123: ne=7 nl=2 nE=2 nIBP=8 subsectors=57
+[IBPEqGenerator] Step 1: Running SP2PD...
+[IBPEqGenerator] SP2PD OK: 7 scalar products → z-basis
+[IBPEqGenerator] Step 2: Computing derivatives...
+[IBPEqGenerator] Derivatives OK: 56 polynomials computed
+[IBPEqGenerator] Step 3: Assembling IBP equations (mon2F)...
+[IBPEqGenerator] Generated 8 IBP equations with 102 total g-operator terms.
+  ne=7 nibp=8 subsectors=57
+  [TIMING] Step 1: 0.04 s
+
+[Step 2] Extracting FTable...
+  nibp=8 ne=7
+  [TIMING] Step 2: 0 s
+
+[Step 3] Solving sectors...
+  Filtering: sector = 1011010
+  Solving sector [1011010]
+  [2026-05-13 19:38:26] Singular minAssGTZ starting...
+  [Singular minAssGTZ] 0.0361883 s, kept=1
+  [2026-05-13 19:38:27] Singular minAssGTZ done
+  [2026-05-13 19:38:27] Component 0/1 (14 polys)
+  -> 1 region(s) in 0.043 s
+  Found 1 region(s) total
+  [TIMING] Step 3: 0.043 s
+
+[Step 4] Building recursion + ring matrices...
+  Region 0: nb=1
+  [TIMING] Step 4: 0.001 s
+
+[Step 5] Writing .bin files...
+Written 1 regime(s) to /home/ykm/Large-Index-Expansion-CPP/cache/TB123_scheduled/SectorCache/IBPMat_TB123_sector_1011010.bin
+Written 1 ring cell(s) to /home/ykm/Large-Index-Expansion-CPP/cache/TB123_scheduled/SectorCache/RingData_TB123_sector_1011010.bin
+  [TIMING] Step 5: 0 s
+
+[TIMING] Total wall-clock: 0.089 s
+
+Done. Output:
+  /home/ykm/Large-Index-Expansion-CPP/cache/TB123_scheduled/SectorCache/IBPMat_TB123_sector_1011010.bin
+  /home/ykm/Large-Index-Expansion-CPP/cache/TB123_scheduled/SectorCache/RingData_TB123_sector_1011010.bin
