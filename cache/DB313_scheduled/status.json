@@ -1,0 +1,604 @@
+{
+  "110000000": {
+    "State": "done",
+    "Time": 0,
+    "Regions": 0
+  },
+  "101000000": {
+    "State": "done",
+    "Time": 0,
+    "Regions": 0
+  },
+  "100100000": {
+    "State": "done",
+    "Time": 0,
+    "Regions": 0
+  },
+  "100010000": {
+    "State": "done",
+    "Time": 0,
+    "Regions": 0
+  },
+  "100001000": {
+    "State": "done",
+    "Time": 0,
+    "Regions": 0
+  },
+  "100000100": {
+    "State": "done",
+    "Time": 0,
+    "Regions": 0
+  },
+  "011000000": {
+    "State": "done",
+    "Time": 0,
+    "Regions": 0
+  },
+  "010100000": {
+    "State": "done",
+    "Time": 0,
+    "Regions": 0
+  },
+  "010010000": {
+    "State": "done",
+    "Time": 0,
+    "Regions": 0
+  },
+  "010001000": {
+    "State": "done",
+    "Time": 0,
+    "Regions": 0
+  },
+  "010000100": {
+    "State": "done",
+    "Time": 0,
+    "Regions": 0
+  },
+  "001100000": {
+    "State": "done",
+    "Time": 0,
+    "Regions": 0
+  },
+  "001010000": {
+    "State": "done",
+    "Time": 0,
+    "Regions": 0
+  },
+  "001001000": {
+    "State": "done",
+    "Time": 0,
+    "Regions": 0
+  },
+  "001000100": {
+    "State": "done",
+    "Time": 0,
+    "Regions": 0
+  },
+  "000110000": {
+    "State": "done",
+    "Time": 0,
+    "Regions": 0
+  },
+  "000101000": {
+    "State": "done",
+    "Time": 0,
+    "Regions": 0
+  },
+  "000100100": {
+    "State": "done",
+    "Time": 0,
+    "Regions": 0
+  },
+  "000011000": {
+    "State": "done",
+    "Time": 0,
+    "Regions": 0
+  },
+  "000010100": {
+    "State": "done",
+    "Time": 0,
+    "Regions": 0
+  },
+  "000001100": {
+    "State": "done",
+    "Time": 0,
+    "Regions": 0
+  },
+  "111000000": {
+    "State": "done",
+    "Time": 0,
+    "Regions": 0
+  },
+  "110100000": {
+    "State": "done",
+    "Time": 0,
+    "Regions": 0
+  },
+  "110010000": {
+    "State": "done",
+    "Time": 0,
+    "Regions": 0
+  },
+  "110001000": {
+    "State": "done",
+    "Time": 0,
+    "Regions": 0
+  },
+  "110000100": {
+    "State": "done",
+    "Time": 0,
+    "Regions": 0
+  },
+  "101100000": {
+    "State": "done",
+    "Time": 0,
+    "Regions": 0
+  },
+  "101010000": {
+    "State": "done",
+    "Time": 0,
+    "Regions": 0
+  },
+  "101001000": {
+    "State": "done",
+    "Time": 0,
+    "Regions": 0
+  },
+  "101000100": {
+    "State": "done",
+    "Time": 0,
+    "Regions": 0
+  },
+  "100110000": {
+    "State": "done",
+    "Time": 0,
+    "Regions": 0
+  },
+  "100101000": {
+    "State": "done",
+    "Time": 0,
+    "Regions": 0
+  },
+  "100100100": {
+    "State": "done",
+    "Time": 0,
+    "Regions": 0
+  },
+  "100011000": {
+    "State": "done",
+    "Time": 0,
+    "Regions": 0
+  },
+  "100010100": {
+    "State": "done",
+    "Time": 0,
+    "Regions": 0
+  },
+  "100001100": {
+    "State": "done",
+    "Time": 0,
+    "Regions": 0
+  },
+  "011100000": {
+    "State": "done",
+    "Time": 0,
+    "Regions": 0
+  },
+  "011010000": {
+    "State": "done",
+    "Time": 0,
+    "Regions": 0
+  },
+  "011001000": {
+    "State": "done",
+    "Time": 0,
+    "Regions": 0
+  },
+  "011000100": {
+    "State": "done",
+    "Time": 0,
+    "Regions": 0
+  },
+  "010110000": {
+    "State": "done",
+    "Time": 0,
+    "Regions": 0
+  },
+  "010101000": {
+    "State": "done",
+    "Time": 0,
+    "Regions": 0
+  },
+  "010100100": {
+    "State": "done",
+    "Time": 0,
+    "Regions": 0
+  },
+  "010011000": {
+    "State": "done",
+    "Time": 0,
+    "Regions": 0
+  },
+  "010010100": {
+    "State": "done",
+    "Time": 0,
+    "Regions": 0
+  },
+  "010001100": {
+    "State": "done",
+    "Time": 0,
+    "Regions": 0
+  },
+  "001110000": {
+    "State": "done",
+    "Time": 0,
+    "Regions": 0
+  },
+  "001101000": {
+    "State": "done",
+    "Time": 0,
+    "Regions": 0
+  },
+  "001100100": {
+    "State": "done",
+    "Time": 0,
+    "Regions": 0
+  },
+  "001011000": {
+    "State": "done",
+    "Time": 0,
+    "Regions": 0
+  },
+  "001010100": {
+    "State": "done",
+    "Time": 0,
+    "Regions": 0
+  },
+  "001001100": {
+    "State": "done",
+    "Time": 0,
+    "Regions": 0
+  },
+  "000111000": {
+    "State": "done",
+    "Time": 0,
+    "Regions": 0
+  },
+  "000110100": {
+    "State": "done",
+    "Time": 0,
+    "Regions": 0
+  },
+  "000101100": {
+    "State": "done",
+    "Time": 0,
+    "Regions": 0
+  },
+  "000011100": {
+    "State": "done",
+    "Time": 0,
+    "Regions": 0
+  },
+  "111100000": {
+    "State": "done",
+    "Time": 0,
+    "Regions": 0
+  },
+  "111010000": {
+    "State": "done",
+    "Time": 0,
+    "Regions": 0
+  },
+  "111001000": {
+    "State": "done",
+    "Time": 0,
+    "Regions": 0
+  },
+  "111000100": {
+    "State": "done",
+    "Time": 0,
+    "Regions": 0
+  },
+  "110110000": {
+    "State": "done",
+    "Time": 0,
+    "Regions": 0
+  },
+  "110101000": {
+    "State": "done",
+    "Time": 0,
+    "Regions": 0
+  },
+  "110100100": {
+    "State": "done",
+    "Time": 0,
+    "Regions": 0
+  },
+  "110011000": {
+    "State": "done",
+    "Time": 0,
+    "Regions": 0
+  },
+  "110010100": {
+    "State": "done",
+    "Time": 0,
+    "Regions": 0
+  },
+  "110001100": {
+    "State": "done",
+    "Time": 0,
+    "Regions": 0
+  },
+  "101110000": {
+    "State": "done",
+    "Time": 0,
+    "Regions": 0
+  },
+  "101101000": {
+    "State": "done",
+    "Time": 0,
+    "Regions": 0
+  },
+  "101100100": {
+    "State": "done",
+    "Time": 0,
+    "Regions": 0
+  },
+  "101011000": {
+    "State": "done",
+    "Time": 0,
+    "Regions": 0
+  },
+  "101010100": {
+    "State": "done",
+    "Time": 0,
+    "Regions": 0
+  },
+  "101001100": {
+    "State": "done",
+    "Time": 0,
+    "Regions": 0
+  },
+  "100111000": {
+    "State": "done",
+    "Time": 0,
+    "Regions": 0
+  },
+  "100110100": {
+    "State": "done",
+    "Time": 0,
+    "Regions": 0
+  },
+  "100101100": {
+    "State": "done",
+    "Time": 0,
+    "Regions": 0
+  },
+  "100011100": {
+    "State": "done",
+    "Time": 0,
+    "Regions": 0
+  },
+  "011110000": {
+    "State": "done",
+    "Time": 0,
+    "Regions": 0
+  },
+  "011101000": {
+    "State": "done",
+    "Time": 0,
+    "Regions": 0
+  },
+  "011100100": {
+    "State": "done",
+    "Time": 0,
+    "Regions": 0
+  },
+  "011011000": {
+    "State": "done",
+    "Time": 0,
+    "Regions": 0
+  },
+  "011010100": {
+    "State": "done",
+    "Time": 0,
+    "Regions": 0
+  },
+  "011001100": {
+    "State": "done",
+    "Time": 0,
+    "Regions": 0
+  },
+  "010111000": {
+    "State": "done",
+    "Time": 0,
+    "Regions": 0
+  },
+  "010110100": {
+    "State": "done",
+    "Time": 0,
+    "Regions": 0
+  },
+  "010101100": {
+    "State": "done",
+    "Time": 0,
+    "Regions": 0
+  },
+  "010011100": {
+    "State": "done",
+    "Time": 0,
+    "Regions": 0
+  },
+  "001111000": {
+    "State": "done",
+    "Time": 0,
+    "Regions": 0
+  },
+  "001110100": {
+    "State": "done",
+    "Time": 0,
+    "Regions": 0
+  },
+  "001101100": {
+    "State": "done",
+    "Time": 0,
+    "Regions": 0
+  },
+  "001011100": {
+    "State": "done",
+    "Time": 0,
+    "Regions": 0
+  },
+  "000111100": {
+    "State": "done",
+    "Time": 0,
+    "Regions": 0
+  },
+  "111110000": {
+    "State": "done",
+    "Time": 0,
+    "Regions": 0
+  },
+  "111101000": {
+    "State": "done",
+    "Time": 0,
+    "Regions": 0
+  },
+  "111100100": {
+    "State": "done",
+    "Time": 0,
+    "Regions": 0
+  },
+  "111011000": {
+    "State": "running",
+    "Time": 0,
+    "Regions": 0,
+    "Tier": "Quick"
+  },
+  "111010100": {
+    "State": "running",
+    "Time": 0,
+    "Regions": 0,
+    "Tier": "Quick"
+  },
+  "111001100": {
+    "State": "pending",
+    "Time": 0,
+    "Regions": 0
+  },
+  "110111000": {
+    "State": "pending",
+    "Time": 0,
+    "Regions": 0
+  },
+  "110110100": {
+    "State": "pending",
+    "Time": 0,
+    "Regions": 0
+  },
+  "110101100": {
+    "State": "pending",
+    "Time": 0,
+    "Regions": 0
+  },
+  "110011100": {
+    "State": "pending",
+    "Time": 0,
+    "Regions": 0
+  },
+  "101111000": {
+    "State": "pending",
+    "Time": 0,
+    "Regions": 0
+  },
+  "101110100": {
+    "State": "pending",
+    "Time": 0,
+    "Regions": 0
+  },
+  "101101100": {
+    "State": "pending",
+    "Time": 0,
+    "Regions": 0
+  },
+  "101011100": {
+    "State": "pending",
+    "Time": 0,
+    "Regions": 0
+  },
+  "100111100": {
+    "State": "pending",
+    "Time": 0,
+    "Regions": 0
+  },
+  "011111000": {
+    "State": "pending",
+    "Time": 0,
+    "Regions": 0
+  },
+  "011110100": {
+    "State": "pending",
+    "Time": 0,
+    "Regions": 0
+  },
+  "011101100": {
+    "State": "pending",
+    "Time": 0,
+    "Regions": 0
+  },
+  "011011100": {
+    "State": "pending",
+    "Time": 0,
+    "Regions": 0
+  },
+  "010111100": {
+    "State": "pending",
+    "Time": 0,
+    "Regions": 0
+  },
+  "001111100": {
+    "State": "pending",
+    "Time": 0,
+    "Regions": 0
+  },
+  "111111000": {
+    "State": "pending",
+    "Time": 0,
+    "Regions": 0
+  },
+  "111110100": {
+    "State": "pending",
+    "Time": 0,
+    "Regions": 0
+  },
+  "111101100": {
+    "State": "pending",
+    "Time": 0,
+    "Regions": 0
+  },
+  "111011100": {
+    "State": "pending",
+    "Time": 0,
+    "Regions": 0
+  },
+  "110111100": {
+    "State": "pending",
+    "Time": 0,
+    "Regions": 0
+  },
+  "101111100": {
+    "State": "pending",
+    "Time": 0,
+    "Regions": 0
+  },
+  "011111100": {
+    "State": "pending",
+    "Time": 0,
+    "Regions": 0
+  },
+  "111111100": {
+    "State": "pending",
+    "Time": 0,
+    "Regions": 0
+  }
+}
