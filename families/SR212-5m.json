@@ -1,23 +1,56 @@
 {
-    "name": "SR212-5m",
-    "description": "Sunrise 2L1P, all-massive, s=0",
-    "propagators": [
-        "-l1^2 - msq",
-        "-(l1+p)^2 - msq",
-        "-l2^2 - msq",
-        "-(l2+p)^2 - msq",
-        "-(l1+l2+p)^2 - msq"
-    ],
-    "loopMomenta": ["l1", "l2"],
-    "externalMomenta": ["p"],
-    "kinematicRules": {
-        "p^2": "s"
-    },
-    "topSector": [1, 1, 1, 1, 1],
-    "numeric": {
-        "s": 0,
-        "msq": 1,
-        "d": "1/13"
-    },
-    "modulus": 179424673
+	"name":"SR212-5m",
+	"description":"Sunrise 2L1P, all-massive, s=0",
+	"propagators":[
+		"l1^2 - msq",
+		"-msq + (l1 + p)^2",
+		"l2^2 - msq",
+		"-msq + (l2 + p)^2",
+		"-msq + (l1 + l2 + p)^2"
+	],
+	"loopMomenta":[
+		"l1",
+		"l2"
+	],
+	"externalMomenta":[
+		"p"
+	],
+	"kinematicRules":{
+		"p^2":"s"
+	},
+	"topSector":[
+		1,
+		1,
+		1,
+		1,
+		1
+	],
+	"numeric":{
+		"s":0,
+		"msq":1,
+		"d":"1\/13"
+	},
+	"modulus":179424673,
+	"graph":[
+		[
+			3,
+			1
+		],
+		[
+			1,
+			4
+		],
+		[
+			2,
+			4
+		],
+		[
+			3,
+			2
+		],
+		[
+			4,
+			3
+		]
+	]
 }

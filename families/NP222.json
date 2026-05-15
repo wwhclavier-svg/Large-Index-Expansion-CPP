@@ -1,42 +1,68 @@
 {
-  "name": "NP222",
-  "description": "Non-Planar 2-loop 2-point (2L2P, 7 propagators)",
-  "propagators": [
-    "-(l2 + p1)^2 + msq",
-    "-(l1 - l2 - p1 - p2)^2",
-    "-l2^2 + msq",
-    "-(l1 - p2)^2 + msq",
-    "-(l1 - l2)^2",
-    "-l1^2 + msq",
-    "-(l1 + p1)^2"
-  ],
-  "loopMomenta": [
-    "l1",
-    "l2"
-  ],
-  "externalMomenta": [
-    "p1",
-    "p2"
-  ],
-  "kinematicRules": {
-    "p1^2": "0",
-    "p2^2": "s2",
-    "p1*p2": "(s - s2)/2"
-  },
-  "topSector": [
-    1,
-    1,
-    1,
-    1,
-    1,
-    1,
-    0
-  ],
-  "numeric": {
-    "s": 1,
-    "s2": 0,
-    "msq": 0,
-    "d": "1/13"
-  },
-  "modulus": 179424673
+	"name":"NP222",
+	"description":"Non-Planar 2L2P, s=1,s2=0,m=0",
+	"propagators":[
+		"msq + (l2 + p1)^2",
+		"(l1 - l2 - p1 - p2)^2",
+		"l2^2 + msq",
+		"msq + (l1 - p2)^2",
+		"(l1 - l2)^2",
+		"l1^2 + msq",
+		"(l1 + p1)^2"
+	],
+	"loopMomenta":[
+		"l1",
+		"l2"
+	],
+	"externalMomenta":[
+		"p1",
+		"p2"
+	],
+	"kinematicRules":{
+		"p1^2":"0",
+		"p2^2":"s2",
+		"p1*p2":"(s - s2)\/2"
+	},
+	"topSector":[
+		1,
+		1,
+		1,
+		1,
+		1,
+		1,
+		0
+	],
+	"numeric":{
+		"s":1,
+		"s2":0,
+		"msq":0,
+		"d":"1\/13"
+	},
+	"modulus":179424673,
+	"graph":[
+		[
+			1,
+			4
+		],
+		[
+			3,
+			4
+		],
+		[
+			5,
+			1
+		],
+		[
+			4,
+			2
+		],
+		[
+			5,
+			3
+		],
+		[
+			2,
+			5
+		]
+	]
 }

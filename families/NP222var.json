@@ -1,29 +1,68 @@
 {
-    "name": "NP222var",
-    "description": "NP 2L2P triangle, arXiv:2305.13951, k=0(fam b)",
-    "nLoop": 2,
-    "nExt": 2,
-    "nProp": 7,
-    "modulus": 179424673,
-    "numeric": {
-        "s": 1,
-        "d": "1/13"
-    },
-    "propagators": [
-        "-(l1 - p1)^2",
-        "-(l2 - p1)^2",
-        "-(l1 + p2)^2",
-        "-(l1 - l2 + p2)^2",
-        "-(l1 - l2)^2",
-        "-l2^2",
-        "-l1^2"
-    ],
-    "loopMomenta": ["l1", "l2"],
-    "externalMomenta": ["p1", "p2"],
-    "kinematicRules": {
-        "p1^2": "0",
-        "p2^2": "0",
-        "p1*p2": "s/2"
-    },
-    "topSector": [1, 1, 1, 1, 1, 1, 0]
+	"name":"NP222var",
+	"description":"NP 2L2P triangle, arXiv:2305.13951, k=0(fam b)",
+	"propagators":[
+		"(l1 - p1)^2",
+		"-msq + (l2 - p1)^2",
+		"(l1 + p2)^2",
+		"-msq + (l1 - l2 + p2)^2",
+		"(l1 - l2)^2 - k*msq",
+		"l2^2 - k*msq",
+		"l1^2"
+	],
+	"loopMomenta":[
+		"l1",
+		"l2"
+	],
+	"externalMomenta":[
+		"p1",
+		"p2"
+	],
+	"kinematicRules":{
+		"p1^2":"0",
+		"p2^2":"0",
+		"p1*p2":"s\/2"
+	},
+	"topSector":[
+		1,
+		1,
+		1,
+		1,
+		1,
+		1,
+		0
+	],
+	"numeric":{
+		"s":1,
+		"msq":0,
+		"k":0,
+		"d":"1\/13"
+	},
+	"modulus":179424673,
+	"graph":[
+		[
+			4,
+			3
+		],
+		[
+			4,
+			1
+		],
+		[
+			5,
+			3
+		],
+		[
+			2,
+			5
+		],
+		[
+			4,
+			2
+		],
+		[
+			1,
+			5
+		]
+	]
 }

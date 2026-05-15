@@ -335,7 +335,7 @@ class FamilyScheduler:
 
                 for key, ti in timeout_workers:
                     active[ti] -= 1
-                    self.status[key] = {"State": f"{tier_names[ti]}-timeout", "Time": 0, "Regions": 0}
+                    self.status[key] = {"State": f"{tier_names[ti]}-timeout", "Time": 0, "Regions": 0, "Tier": tier_names[ti]}
                     self._save_status()
                     if ti < n_tiers - 1:
                         # Find the sector bits for re-queue

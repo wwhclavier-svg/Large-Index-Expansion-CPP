@@ -257,8 +257,8 @@ int main(int argc, char* argv[]) {
     const int incre = 2;
     string verifyDir = "verify/" + famname + "/";
     std::filesystem::create_directories(verifyDir);
-    const string filename = verifyDir + "IBPMat_" + famname + ".bin";
-    const string coeffCacheFile = verifyDir + "resCache_Expansion_" + famname + ".bin";  // 缓存文件
+    const string filename = string("data/IBPMat_") + famname + ".bin";
+    const string coeffCacheFile = string("data/ExpansionCache_") + famname + "_k" + to_string(order) + ".bin";
 
     FFInt test_div = FFInt(1) / FFInt(2);
     std::cout << "[SANITY] 1/2 mod p = " << test_div.n << " (expected 89712337 for correct mod inverse)" << std::endl;

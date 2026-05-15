@@ -38,6 +38,8 @@ cmake --build . --target test_expandFF
 cd .. && ./build/test_expandFF
 ```
 
+> **Full CLI usage**: See [`docs/CommandGuideline.md`](docs/CommandGuideline.md) for per-executable input/output paths, flags, and pipeline data flow.
+
 ### Dependencies
 
 **Required:**
@@ -228,6 +230,8 @@ The high-level `reconstructAllRelations()` implements the MMA-inspired **RemoveS
 4. **Column compression**: the equation matrix is compressed to only active columns before Gaussian elimination, then solutions are expanded back to the full variable space.
 
 This reduces variable counts by up to ~50% (e.g., for bub00 at lev=2,deg=2: 36→19 active variables).
+
+> **CLI reference**: See [`docs/CommandGuideline.md`](docs/CommandGuideline.md) for detailed input/output paths, CLI flags, and pipeline data flow for all executables below.
 
 ## Test Executables
 
