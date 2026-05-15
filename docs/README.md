@@ -87,6 +87,10 @@ mkdir -p build && cd build && cmake .. && make -j$(nproc)
 
 CMakeLists.txt 位于项目根目录。`tests/test_relationFF.cpp` 等测试入口编译为独立二进制文件，输出到 `build/`。`tools/` 中的 `.cpp` 文件为独立工具入口，编译为对应的独立二进制文件。`tools/family_scheduler.py` 为 Python 脚本，无需编译。
 
+## 命令速查
+
+各可执行文件的详细 CLI 用法、参数说明、输入输出文件路径，参见 [`docs/CommandGuideline.md`](./CommandGuideline.md)。
+
 ## 任务模板与 Skill 对应
 
 | Stage | CXXX 任务模板 | 实现 Skill | VXXX 验证模板 | 验证 Skill |

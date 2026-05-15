@@ -1,17 +1,55 @@
 {
-    "name": "SR212",
-    "description": "Sunrise 2L1P, massless, s=1",
-    "propagators": [
-        "-l1^2",
-        "-(l1+p)^2",
-        "-l2^2",
-        "-(l2+p)^2",
-        "-(l1+l2+p)^2"
-    ],
-    "loopMomenta": ["l1", "l2"],
-    "externalMomenta": ["p"],
-    "kinematicRules": {"p^2": "s"},
-    "topSector": [1, 1, 1, 1, 1],
-    "numeric": {"s": 1, "d": "1/13"},
-    "modulus": 179424673
+	"name":"SR212",
+	"description":"Sunrise 2L1P, massless, s=1",
+	"propagators":[
+		"l1^2",
+		"(l1 + p)^2",
+		"l2^2",
+		"(l2 + p)^2",
+		"(l1 + l2 + p)^2"
+	],
+	"loopMomenta":[
+		"l1",
+		"l2"
+	],
+	"externalMomenta":[
+		"p"
+	],
+	"kinematicRules":{
+		"p^2":"s"
+	},
+	"topSector":[
+		1,
+		1,
+		1,
+		1,
+		1
+	],
+	"numeric":{
+		"s":1,
+		"d":"1\/13"
+	},
+	"modulus":179424673,
+	"graph":[
+		[
+			3,
+			1
+		],
+		[
+			1,
+			4
+		],
+		[
+			2,
+			4
+		],
+		[
+			3,
+			2
+		],
+		[
+			4,
+			3
+		]
+	]
 }

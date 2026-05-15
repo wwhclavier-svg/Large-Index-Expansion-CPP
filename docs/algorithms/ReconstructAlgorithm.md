@@ -928,6 +928,8 @@ analyzeOrderStability(rows_by_order, k_max, plateau_size, num_vars):
 
 C++ 入口 `test_relationFF` 接收 LayerRecursion 的 `seriesCoefficient<T>` 数组作为输入（同一进程内内存传递），调用 `reconstructAllRelations()` 输出 `AllRelations_*.m` 到 `relations/`。MMA 入口直接使用 `ReconstructReductionRelation.wl` 包。
 
+> **CLI 速查**: [`docs/CommandGuideline.md`](../CommandGuideline.md) — test_relationFF 参数说明、输入输出路径、验证命令。
+
 ## 9. 参考文件
 
 ### MMA

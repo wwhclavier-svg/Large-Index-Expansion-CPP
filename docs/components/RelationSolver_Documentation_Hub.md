@@ -267,6 +267,7 @@ IncrementalRelationSolver (for multi-level problems)
 
 ## 🔗 Cross-References
 
+- **CLI Command Reference**: [`docs/CommandGuideline.md`](../CommandGuideline.md) — full input/output paths, flags, and pipeline data flow for all executables
 - **Linear System Solving**: See LinearSolver_Eigen.hpp, LinearSolver_FF.hpp
 - **Coefficient Storage**: See SeriesCoefficient.hpp
 - **Multi-Index Tools**: See Combinatorics.hpp

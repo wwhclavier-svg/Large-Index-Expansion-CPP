@@ -1,18 +1,58 @@
 {
-    "name": "BN3L",
-    "description": "3-Loop Banana, vacuum, msq=1",
-    "propagators": [
-        "-(l1)^2 + msq",
-        "-(l2)^2 + msq",
-        "-(l3)^2 + msq",
-        "-(l1 - l2)^2 + msq",
-        "-(l2 - l3)^2 + msq",
-        "-(l3 - l1)^2 + msq"
-    ],
-    "loopMomenta": ["l1", "l2", "l3"],
-    "externalMomenta": [],
-    "kinematicRules": {},
-    "topSector": [1, 1, 1, 1, 1, 1],
-    "numeric": {"msq": 1, "d": "1/13"},
-    "modulus": 179424673
+	"name":"BN3L",
+	"description":"3-Loop Banana, vacuum, msq=1",
+	"propagators":[
+		"l1^2 - msq",
+		"l2^2 - msq",
+		"l3^2 - msq",
+		"(l1 - l2)^2 - msq",
+		"(l2 - l3)^2 - msq",
+		"(-l1 + l3)^2 - msq"
+	],
+	"loopMomenta":[
+		"l1",
+		"l2",
+		"l3"
+	],
+	"externalMomenta":[],
+	"kinematicRules":{},
+	"topSector":[
+		1,
+		1,
+		1,
+		1,
+		1,
+		1
+	],
+	"numeric":{
+		"msq":1,
+		"d":"1\/13"
+	},
+	"modulus":179424673,
+	"graph":[
+		[
+			1,
+			2
+		],
+		[
+			2,
+			3
+		],
+		[
+			3,
+			1
+		],
+		[
+			2,
+			4
+		],
+		[
+			3,
+			4
+		],
+		[
+			1,
+			4
+		]
+	]
 }

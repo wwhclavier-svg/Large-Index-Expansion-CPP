@@ -476,16 +476,32 @@ Options:
     if (regions.empty()) {
         cout << "  No regions found. Writing empty output." << endl;
     } else {
-        // Sort regions by sector (MMA ordering)
+        // Sort regions by sector (MMA ordering: weight ascending, then binary descending)
+        // Within same sector, sort by nb descending then by raw prime content for deterministic order
         sort(regions.begin(), regions.end(),
             [](const RegionSolver::RegionData& a, const RegionSolver::RegionData& b) {
                 const auto& sa = a.limitSector;
                 const auto& sb = b.limitSector;
+                int ne = (int)sa.size();
                 int suma = 0, sumb = 0;
-                for (int v : sa) suma += v;
-                for (int v : sb) sumb += v;
+                int va = 0, vb = 0;
+                for (int i = 0; i < ne; ++i) {
+                    suma += sa[i]; sumb += sb[i];
+                    va = (va << 1) | sa[i];
+                    vb = (vb << 1) | sb[i];
+                }
                 if (suma != sumb) return suma < sumb;
-                return sa[0] > sb[0];
+                if (va != vb) return va > vb;  // descending binary within same weight
+                // Same sector: tiebreak by nb (descending) for deterministic order
+                if (a.nb != b.nb) return a.nb > b.nb;
+                // Same nb: tiebreak by MonomialBasis content
+                if (a.MonomialBasis.size() != b.MonomialBasis.size())
+                    return a.MonomialBasis.size() < b.MonomialBasis.size();
+                for (size_t i = 0; i < a.MonomialBasis.size(); ++i) {
+                    if (a.MonomialBasis[i] != b.MonomialBasis[i])
+                        return a.MonomialBasis[i] < b.MonomialBasis[i];
+                }
+                return false;  // truly equal
             });
 
         // 5. Build recursion + ring matrices per region

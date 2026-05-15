@@ -414,6 +414,7 @@ auto abEqs = IBPAnalyzer::buildABEquations(ibp, sub, modulus);
 | `include/SingularRunner.hpp` | C++ Singular 子进程管理 |
 | `include/PolyArith.hpp` | C++ 多项式字符串解析/格式化 |
 | `tools/family_generate.cpp` | C++ 完整流水线 CLI |
+| `tools/family_scheduler.py` | Python 分层调度器 |
 | `workspace/shared/VerifyUtility/ExportBinary_IBPMatrix.wl` | MMA 二进制导出 |
 
 ---
@@ -421,6 +422,7 @@ auto abEqs = IBPAnalyzer::buildABEquations(ibp, sub, modulus);
 *文档版本: 1.3*
 *最后更新: 2026-05-12*
 *相关文档: [docs/verify/Test-RingData.md](../verify/Test-RingData.md) — RingData 验证工作流与常见问题*
+*CLI 速查: [`docs/CommandGuideline.md`](../CommandGuideline.md) — family_generate、family_scheduler 完整命令参考*
 *Skill: [region-solver](../.claude/skills/region-solver-mma-scheduled/SKILL.md) — ScheduledRegionSolve 管线、状态机、resume 逻辑、IBPMat 完整性验证*
 
 ---

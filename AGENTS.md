@@ -130,6 +130,8 @@ cd ..
 ./build/test_relationFF
 ```
 
+> **完整命令参考**: 各可执行文件的 CLI 参数、输入输出路径、管线数据流，见 [`docs/CommandGuideline.md`](docs/CommandGuideline.md)。
+
 ### 依赖安装
 
 **Ubuntu/Debian:**

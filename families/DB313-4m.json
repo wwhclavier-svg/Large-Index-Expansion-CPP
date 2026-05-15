@@ -1,14 +1,14 @@
 {
-	"name":"DB313",
-	"description":"Double Box 2L4P, s=2,t=3",
+	"name":"DB313-4m",
+	"description":"Double Box 2L4P, 4-massive (props 1,2,3,7), s=2,t=3,msq=1",
 	"propagators":[
-		"l1^2",
-		"(l1 + p1)^2",
-		"(l1 + p1 + p2)^2",
+		"l1^2 + msq",
+		"msq + (l1 + p1)^2",
+		"msq + (l1 + p1 + p2)^2",
 		"(l2 - p1 - p2)^2",
 		"(l2 + p4)^2",
 		"l2^2",
-		"(l1 + l2)^2",
+		"(l1 + l2)^2 + msq",
 		"(l2 + p2)^2",
 		"(l1 + p4)^2"
 	],
@@ -43,6 +43,7 @@
 	"numeric":{
 		"s":2,
 		"t":3,
+		"msq":1,
 		"d":"1\/3"
 	},
 	"modulus":179424673,

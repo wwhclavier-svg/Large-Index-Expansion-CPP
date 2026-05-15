@@ -1,23 +1,69 @@
 {
-    "name": "TB123m",
-    "description": "Tri-Box 2L3P, massive, s=3,s1=2,s2=5,m=1",
-    "propagators": [
-        "-l1^2 - msq",
-        "-(l1 - p1)^2 - msq",
-        "-(l1 - p1 - p2)^2 - msq",
-        "-(l2 + p1 + p2)^2 - msq",
-        "-l2^2 - msq",
-        "-(l1 + l2)^2 - msq",
-        "-(l2 + p1)^2"
-    ],
-    "loopMomenta": ["l1", "l2"],
-    "externalMomenta": ["p1", "p2"],
-    "kinematicRules": {
-        "p1^2": "s1",
-        "p2^2": "s2",
-        "p1*p2": "(s - s1 - s2)/2"
-    },
-    "topSector": [1, 1, 1, 1, 1, 1, 0],
-    "numeric": {"s": 3, "s1": 2, "s2": 5, "msq": 1, "d": "1/13"},
-    "modulus": 179424673
+	"name":"TB123m",
+	"description":"Tri-Box 2L3P, massive, s=3,s1=2,s2=5,m=1",
+	"propagators":[
+		"l1^2 - msq",
+		"-msq + (l1 - p1)^2",
+		"-msq + (l1 - p1 - p2)^2",
+		"-msq + (l2 + p1 + p2)^2",
+		"l2^2 - msq",
+		"(l1 + l2)^2 - msq",
+		"(l2 + p1)^2"
+	],
+	"loopMomenta":[
+		"l1",
+		"l2"
+	],
+	"externalMomenta":[
+		"p1",
+		"p2"
+	],
+	"kinematicRules":{
+		"p1^2":"s1",
+		"p2^2":"s2",
+		"p1*p2":"(s - s1 - s2)\/2"
+	},
+	"topSector":[
+		1,
+		1,
+		1,
+		1,
+		1,
+		1,
+		0
+	],
+	"numeric":{
+		"s":3,
+		"s1":2,
+		"s2":5,
+		"msq":1,
+		"d":"1\/13"
+	},
+	"modulus":179424673,
+	"graph":[
+		[
+			1,
+			4
+		],
+		[
+			2,
+			1
+		],
+		[
+			5,
+			2
+		],
+		[
+			5,
+			3
+		],
+		[
+			3,
+			4
+		],
+		[
+			4,
+			5
+		]
+	]
 }

@@ -510,17 +510,29 @@ void exportRelationMeta(
         }
         out << "},\n";
 
+        out << "      \"NB\" -> " << ring.matDim << ",\n";
+
         out << "      \"A\" -> {";
         for (int i = 0; i < ne; ++i) {
             if (i > 0) out << ", ";
-            writeFF(ring.A_list[0][i]);
+            out << "{";
+            for (int k = 0; k < ring.matDim * ring.matDim; ++k) {
+                if (k > 0) out << ", ";
+                writeFF(ring.A_list[i][k]);
+            }
+            out << "}";
         }
         out << "},\n";
 
         out << "      \"Ainv\" -> {";
         for (int i = 0; i < ne; ++i) {
             if (i > 0) out << ", ";
-            writeFF(ring.Ainv_list[0][i]);
+            out << "{";
+            for (int k = 0; k < ring.matDim * ring.matDim; ++k) {
+                if (k > 0) out << ", ";
+                writeFF(ring.Ainv_list[i][k]);
+            }
+            out << "}";
         }
         out << "}\n";
 
