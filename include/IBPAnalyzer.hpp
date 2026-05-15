@@ -164,21 +164,11 @@ inline std::vector<std::string> buildABEquations(
         PolyArith::Polynomial poly;
 
         for (const auto& term : eq.terms) {
-            // d-terms (nIdx=0) are skipped: MMA's expRegSolve2 uses
-            // Coefficient[ibpeqs, "n"], and d-terms have no n dependence.
-            // Inactive n_i terms are also skipped: they become v_i (no "n")
-            // after sectorLimitIBP, so Coefficient[..., "n"] filters them out.
-            if (term.nIdx == 0)
-                continue;
-            if (term.nIdx > 0 && sector[term.nIdx - 1] == 0)
-                continue;
-
-            // Coefficient with n→0 step matching MMA's regionsBySectors:
-            //   1. LargeIndexIBP: n_i → n + v_i  → term becomes coeff*(n+v_i)*g
-            //   2. regionsBySectors: "n" → 0  → coeff * v_i * g
-            //   3. sectorLimitIBP: v_i → sector[i]*n + v_i
-            //      - active (sector[i]=1):  coeff*(n+v_i)*g  → Coefficient[n,"n"] = coeff
-            //      - inactive (sector[i]=0): coeff*v_i*g     → no "n" → Coefficient=0 (skipped above)
+            // Include ALL terms: d-terms (nIdx=0), active and inactive n_i.
+            // MMA uses the FULL ideal via sectorLimitIBP + Coefficient[n],
+            // which evaluates all IBP equations with the sector mask applied
+            // at the g-operator argument level. Filtering by nIdx here would
+            // miss cross-terms connecting active and inactive propagators.
             int64_t coeff = term.coeff % modulus;
             if (coeff < 0) coeff += modulus;
             // Active n_i: coeff stays as-is (×1, matching MMA's n→0 path)
