@@ -103,3 +103,5 @@ tests/archive/
 
 # Playground directory (temporary experiments, large notebooks)
 workspace/playground/
+# Task workspace directories (runtime data, not source)
+workspace/C*/
