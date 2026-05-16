@@ -1259,15 +1259,15 @@ std::vector<std::vector<T>> RegimeEvaluator<T>::buildFinalMatrix() {
                 }
                 if (all_zero) {
                     zero_f2_count++;
-                    std::cerr << "[DIAG] Zero f2 for alpha=[" << alphas_[a_idx][0] << "," << alphas_[a_idx][1] << "," << alphas_[a_idx][2] << "]" << std::endl;
+                    // std::cerr << "[DIAG] Zero f2 for alpha=[" << alphas_[a_idx][0] << "," << alphas_[a_idx][1] << "," << alphas_[a_idx][2] << "]" << std::endl;
                 }
             }
         }
     }
-    if (null_f2_count > 0 || zero_f2_count > 0) {
-        std::cerr << "[DIAG] buildFinalMatrix: null_f2=" << null_f2_count << " zero_f2=" << zero_f2_count << "/" << (alphas_.size()*betas_.size())
-                  << " (alpha=" << alphas_.size() << ", beta=" << betas_.size() << ")" << std::endl;
-    }
+    // if (null_f2_count > 0 || zero_f2_count > 0) {
+    //     std::cerr << "[DIAG] buildFinalMatrix: null_f2=" << null_f2_count << " zero_f2=" << zero_f2_count << "/" << (alphas_.size()*betas_.size())
+    //               << " (alpha=" << alphas_.size() << ", beta=" << betas_.size() << ")" << std::endl;
+    // }
     return mat;
 }
 
@@ -1686,6 +1686,10 @@ std::vector<std::vector<T>> GlobalEquationAssembler<T>::evaluateAtNu(const std::
     }
 
     // ---- 行去重：排序后移除重复行 ----
+    // NOTE: 去重会改变行顺序，导致 splitRowsByOrder 无法正确按阶数拆分行。
+    // 暂时禁用去重以保证 analyzeOrderStability 的正确性。
+    // 如需恢复，应先按阶数拆分再去重，或记录每行的来源信息。
+    /*
     if constexpr (std::is_same_v<T, firefly::FFInt>) {
         std::sort(all_rows.begin(), all_rows.end());
         auto last = std::unique(all_rows.begin(), all_rows.end());
@@ -1700,6 +1704,7 @@ std::vector<std::vector<T>> GlobalEquationAssembler<T>::evaluateAtNu(const std::
                 }),
             all_rows.end());
     }
+    */
 
     return all_rows;
 }
@@ -1774,26 +1779,37 @@ static std::pair<int, int> analyzeOrderStability(
             return {cur_order, 0};
         }
 
-        // 稳定性检查: nullity 连续 plateau_size+1 个阶数不变
-        // 对应 MMA trigger 3: plateau 确认 (L667-671)
-        if (cur_order >= plateau_size) {
-            bool all_same = true;
-            for (int i = 1; i <= plateau_size; ++i) {
-                if (nullity[cur_order - i] != nullity[cur_order]) {
-                    all_same = false;
+    }
+    
+    // 稳定性检查: 从最高阶开始往回找，找到延伸到 k_max 的最长 plateau
+    // 这避免了早期假 plateau 导致的误判
+    for (int start_order = k_max; start_order >= plateau_size; --start_order) {
+        bool all_same = true;
+        for (int i = 1; i <= plateau_size; ++i) {
+            if (nullity[start_order - i] != nullity[start_order]) {
+                all_same = false;
+                break;
+            }
+        }
+        if (all_same) {
+            // 确认 plateau 延伸到 k_max
+            bool extends_to_kmax = true;
+            for (int o = start_order + 1; o <= k_max; ++o) {
+                if (nullity[o] != nullity[start_order]) {
+                    extends_to_kmax = false;
                     break;
                 }
             }
-            if (all_same) {
-                // 找到第一个达到该最终 nullity 的阶数
-                int final_nullity = nullity[cur_order];
-                for (int j = 0; j <= cur_order; ++j) {
+            if (extends_to_kmax) {
+                int final_nullity = nullity[start_order];
+                for (int j = 0; j <= start_order; ++j) {
                     if (nullity[j] == final_nullity)
                         return {j, final_nullity};
                 }
             }
         }
     }
+    
     return {-2, nullity[k_max]};  // 在可用阶数内未稳定
 }
 
@@ -1947,15 +1963,15 @@ AdaptiveEquationBuilder<T>::build(
             solver->addRows(rows);
         }
         
-        // 第一次采样后检测全零列并重建 solver
-        if (!zero_cols_checked && result.nu_count >= 0) {
+        // 延迟到第 10 个采样点后检测全零列，避免早期采样点的数值巧合导致误判
+        if (!zero_cols_checked && result.nu_count >= 10) {
             zero_cols_checked = true;
             std::vector<size_t> zero_cols;
             for (size_t j = 0; j < num_vars_full; ++j) {
                 if (!col_has_nonzero[j]) zero_cols.push_back(j);
             }
             if (!zero_cols.empty()) {
-                std::cout << "[ZeroColFix] Found " << zero_cols.size() << " zero columns, rebuilding solver..." << std::endl;
+                // std::cout << "[ZeroColFix] Found " << zero_cols.size() << " zero columns, rebuilding solver..." << std::endl;
                 // 初始化或更新 column_mask_
                 if (!hasColumnMask()) {
                     column_mask_.assign(num_vars_full, true);
