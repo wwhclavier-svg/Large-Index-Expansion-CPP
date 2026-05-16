@@ -100,3 +100,6 @@ CompareReadIndex.m
 
 # Archive directory
 tests/archive/
+
+# Playground directory (temporary experiments, large notebooks)
+workspace/playground/
