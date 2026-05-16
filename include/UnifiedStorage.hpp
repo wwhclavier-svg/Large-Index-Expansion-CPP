@@ -76,6 +76,7 @@ public:
     long long dot_cap, rank_cap, exp_cap;
     int element_size; // 每个格点储存的数据大小 (Matrix: N*N, std::vector: K)
     std::vector<T> data;
+    std::vector<bool> computed; // 追踪每个 slot 是否被显式写入过
 
     // 构造函数
     GenericBlock(int pd_dim, int isp_dim, int dot, int rank, 
@@ -90,17 +91,29 @@ public:
 
         long long total_items = dot_cap * rank_cap * exp_cap;
         data.resize(total_items * element_size, T(0));
+        computed.resize(total_items, false);
     }
 
     // 通用 Setter (通过指针写入，避免拷贝)
     void set(long long dNo, long long rNo, long long eNo, const std::vector<T>& val) {
         // Index = ( (d * R_cap + r) * E_cap + e ) * Size
-        long long idx = ((dNo * rank_cap + rNo) * exp_cap + eNo) * element_size;
+        long long flat_idx = (dNo * rank_cap + rNo) * exp_cap + eNo;
+        long long idx = flat_idx * element_size;
         for(int i=0; i<element_size; ++i) data[idx + i] = val[i];
+        computed[flat_idx] = true;
     }
     
-    // 获取数据指针
+    // 获取数据指针（仅当该 slot 已被写入时返回有效指针）
     T* getPtr(long long dNo, long long rNo, long long eNo = 0) {
+        long long flat_idx = (dNo * rank_cap + rNo) * exp_cap + eNo;
+        if (flat_idx < 0 || flat_idx >= (long long)computed.size() || !computed[flat_idx])
+            return nullptr;
+        long long idx = flat_idx * element_size;
+        return &data[idx];
+    }
+    
+    // 无条件获取数据指针（旧行为，用于 toFinalMatrix 等场景）
+    T* getPtrUnchecked(long long dNo, long long rNo, long long eNo = 0) {
         long long idx = ((dNo * rank_cap + rNo) * exp_cap + eNo) * element_size;
         return &data[idx];
     }
