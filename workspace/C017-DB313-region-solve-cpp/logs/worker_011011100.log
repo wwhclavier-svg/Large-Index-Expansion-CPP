@@ -1,0 +1,78 @@
+=== FamilyGenerate ===
+Family: DB313 (L=2 E=3 N=9)
+Modulus: 179424673
+
+[Step 1] Generating IBP equations...
+[IBPEqGenerator] Family DB313: ne=9 nl=2 nE=3 nIBP=10 subsectors=120
+[IBPEqGenerator] Step 1: Running SP2PD...
+[IBPEqGenerator] SP2PD OK: 9 scalar products → z-basis
+[IBPEqGenerator] Step 2: Computing derivatives...
+[IBPEqGenerator] Derivatives OK: 90 polynomials computed
+[IBPEqGenerator] Step 3: Assembling IBP equations (mon2F)...
+[IBPEqGenerator] Generated 10 IBP equations with 159 total g-operator terms.
+  ne=9 nibp=10 subsectors=120
+  [TIMING] Step 1: 0.162 s
+
+[Step 2] Extracting FTable...
+  nibp=10 ne=9
+  [TIMING] Step 2: 0 s
+
+[Step 3] Solving sectors...
+  Filtering: sector = 011011100
+  Solving sector [011011100]
+  [2026-05-13 22:21:13] Singular minAssGTZ starting...
+  [Singular minAssGTZ] 107.856 s, kept=2
+  [2026-05-13 22:23:01] Singular minAssGTZ done
+  [2026-05-13 22:23:01] Component 0/2 (18 polys)
+  [2026-05-13 22:23:01] Component 1/2 (18 polys)
+
+[DEBUG solveVarRule] sector=[0,1,1,0,1,1,1,0,0] nb=2 VarIndep=[A9] VarDep=[A1,A2,A3,A4,A5,A6,A7,A8]
+  compGb:
+    [0] A9^2-61801291*A9-39619256
+    [1] A8-10799738*A9-59607772
+    [2] A7+89245860*A9+85324162
+    [3] A6-26803708*A9-18573786
+    [4] A5+71426638*A9+61235867
+    [5] A4+77135174*A9-53965093
+    [6] A3-26803708*A9-18573786
+    [7] A2+71426638*A9+61235867
+    [8] A1+77135174*A9-53965093
+    [9] B9-56257978*A9+73267604
+    [10] B8+35717512*A9-23953522
+    [11] B7-81050791*A9-3446714
+    [12] B6-18610041*A9+59746625
+    [13] B5+77416552*A9-55861696
+    [14] B4-1930425*A9-10432541
+    [15] B3-18610041*A9+59746625
+    [16] B2+77416552*A9-55861696
+    [17] B1-1930425*A9-10432541
+  VarRule result:
+    A1 -> 53965093+102289499*A9
+    A2 -> 118188806+107998035*A9
+    A3 -> 18573786+26803708*A9
+    A4 -> 53965093+102289499*A9
+    A5 -> 118188806+107998035*A9
+    A6 -> 18573786+26803708*A9
+    A7 -> 94100511+90178813*A9
+    A8 -> 59607772+10799738*A9
+    [2026-05-13 22:23:01] MBM reduction k=0/2 (2 products)...
+    [2026-05-13 22:23:01] MBM reduction k=1/2 (2 products)...
+  -> 2 region(s) in 108.024 s
+  Found 2 region(s) total
+  [TIMING] Step 3: 108.024 s
+
+[Step 4] Building recursion + ring matrices...
+  Region 0: nb=1
+  Region 1: nb=2
+  [TIMING] Step 4: 0.009 s
+
+[Step 5] Writing .bin files...
+Written 2 regime(s) to workspace/C017-DB313-region-solve-cpp/SectorCache/IBPMat_DB313_sector_011011100.bin
+Written 2 ring cell(s) to workspace/C017-DB313-region-solve-cpp/SectorCache/RingData_DB313_sector_011011100.bin
+  [TIMING] Step 5: 0 s
+
+[TIMING] Total wall-clock: 108.201 s
+
+Done. Output:
+  workspace/C017-DB313-region-solve-cpp/SectorCache/IBPMat_DB313_sector_011011100.bin
+  workspace/C017-DB313-region-solve-cpp/SectorCache/RingData_DB313_sector_011011100.bin

@@ -1,0 +1,1 @@
+<|"FamilyDefinition" -> 0.736362, "RegionSolving" -> 2.294974|>

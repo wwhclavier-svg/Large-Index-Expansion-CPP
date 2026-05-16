@@ -833,6 +833,9 @@ public:
         // 阶数稳定性分析
         int stable_order = -1;                          // -1=未运行, ≥0=已稳定, -2=未能在可用阶数内稳定
         std::vector<std::vector<std::vector<T>>> rows_by_order;  // [k_max+1][row][col] 按阶数分组的行
+        
+        // 最终活跃变量数（builder 可能额外移除了零列）
+        size_t active_count = 0;
     };
     
     // 构造函数：传入配置
@@ -856,6 +859,7 @@ public:
         active_count_ = active_count;
     }
     bool hasColumnMask() const { return !column_mask_.empty(); }
+    size_t getActiveCount() const { return active_count_; }
 
 private:
     AdaptiveSamplingConfig config_;
@@ -1209,6 +1213,7 @@ std::vector<std::vector<T>> RegimeEvaluator<T>::buildFinalMatrix() {
     std::vector<std::vector<T>> mat(rows, std::vector<T>(cols, T(0)));
 
     // 填充矩阵：每列对应一个 (alpha, beta) 对
+    int null_f2_count = 0;
     for (size_t a_idx = 0; a_idx < alphas_.size(); ++a_idx) {
         for (size_t b_idx = 0; b_idx < betas_.size(); ++b_idx) {
             const auto& beta = betas_[b_idx];
@@ -1222,7 +1227,10 @@ std::vector<std::vector<T>> RegimeEvaluator<T>::buildFinalMatrix() {
 
             // 获取该 (alpha, beta) 对应的 f2 数据
             T* f2_ptr = f2_store_->retrieve(alphas_[a_idx], beta);
-            if (!f2_ptr) continue;  // 如果数据不存在，跳过该列
+            if (!f2_ptr) {
+                null_f2_count++;
+                continue;  // 如果数据不存在，跳过该列
+            }
 
             int col_idx = static_cast<int>(a_idx * betas_.size() + b_idx);
 
@@ -1240,6 +1248,26 @@ std::vector<std::vector<T>> RegimeEvaluator<T>::buildFinalMatrix() {
         }
     }
 
+    int zero_f2_count = 0;
+    for (size_t a_idx = 0; a_idx < alphas_.size(); ++a_idx) {
+        for (size_t b_idx = 0; b_idx < betas_.size(); ++b_idx) {
+            T* f2_ptr = f2_store_->retrieve(alphas_[a_idx], betas_[b_idx]);
+            if (f2_ptr) {
+                bool all_zero = true;
+                for (int i = 0; i < nb_ * (k_max_ + 1); ++i) {
+                    if (f2_ptr[i] != T(0)) { all_zero = false; break; }
+                }
+                if (all_zero) {
+                    zero_f2_count++;
+                    std::cerr << "[DIAG] Zero f2 for alpha=[" << alphas_[a_idx][0] << "," << alphas_[a_idx][1] << "," << alphas_[a_idx][2] << "]" << std::endl;
+                }
+            }
+        }
+    }
+    if (null_f2_count > 0 || zero_f2_count > 0) {
+        std::cerr << "[DIAG] buildFinalMatrix: null_f2=" << null_f2_count << " zero_f2=" << zero_f2_count << "/" << (alphas_.size()*betas_.size())
+                  << " (alpha=" << alphas_.size() << ", beta=" << betas_.size() << ")" << std::endl;
+    }
     return mat;
 }
 
@@ -1837,13 +1865,18 @@ AdaptiveEquationBuilder<T>::build(
     // 初始化组件
     AdaptiveSampler<T> sampler(ne, config_);
     GlobalEquationAssembler<T> assembler;
-    IncrementalNullspaceSolver<T> solver(num_vars);  // 只在活跃列上求解
-
+    std::unique_ptr<IncrementalNullspaceSolver<T>> solver;
+    
     // 初始化 assembler（始终使用完整 alphas/betas 以保持列索引一致）
     assembler.init(k_max, config_.lev_hint, config_.deg_hint, alphas, betas, kernel_negated);
     for (size_t r = 0; r < regimes.size(); ++r) {
         assembler.addRegime(regimes[r], nimax_lists[r]);
     }
+    
+    auto create_solver = [&]() {
+        return std::make_unique<IncrementalNullspaceSolver<T>>(hasColumnMask() ? active_count_ : num_vars_full);
+    };
+    solver = create_solver();
 
     // ✅ 改进2：内存预分配
     // 计算单次采样的总行数（所有 regime 和 nimax 的贡献）
@@ -1868,6 +1901,12 @@ AdaptiveEquationBuilder<T>::build(
               << " eff_max=" << effective_max_nu << std::endl;
     std::cout << "    ν points: ";
     int printed_count = 0;
+    
+    // 用于检测全零列（数值层面恒为零的列，对应 MMA RemoveSolvedVariables 的 empty 删除）
+    std::vector<bool> col_has_nonzero(num_vars_full, false);
+    std::vector<std::vector<std::vector<T>>> all_rows_history;
+    bool zero_cols_checked = false;
+    
     while (result.nu_count < effective_max_nu) {
         // 获取下一个采样点
         std::vector<T> nu = sampler.next();
@@ -1877,6 +1916,16 @@ AdaptiveEquationBuilder<T>::build(
 
         // 在该点评估所有 regime 和 nimax
         auto rows = assembler.evaluateAtNu(nu);
+        
+        // 记录原始行用于可能的 solver 重建
+        all_rows_history.push_back(rows);
+        
+        // 更新列非零标记（跨所有采样点累积）
+        for (const auto& row : rows) {
+            for (size_t j = 0; j < row.size() && j < num_vars_full; ++j) {
+                if (row[j] != T(0)) col_has_nonzero[j] = true;
+            }
+        }
 
         // 按展开阶数拆分行，用于后续阶数稳定性分析
         auto rows_by_order_this_nu = assembler.splitRowsByOrder(rows);
@@ -1893,9 +1942,39 @@ AdaptiveEquationBuilder<T>::build(
         // 添加到求解器（如有列掩码，先压缩列）
         if (hasColumnMask()) {
             auto stripped_rows = stripInactiveColumns(rows, column_mask_, active_count_);
-            solver.addRows(stripped_rows);
+            solver->addRows(stripped_rows);
         } else {
-            solver.addRows(rows);
+            solver->addRows(rows);
+        }
+        
+        // 第一次采样后检测全零列并重建 solver
+        if (!zero_cols_checked && result.nu_count >= 0) {
+            zero_cols_checked = true;
+            std::vector<size_t> zero_cols;
+            for (size_t j = 0; j < num_vars_full; ++j) {
+                if (!col_has_nonzero[j]) zero_cols.push_back(j);
+            }
+            if (!zero_cols.empty()) {
+                std::cout << "[ZeroColFix] Found " << zero_cols.size() << " zero columns, rebuilding solver..." << std::endl;
+                // 初始化或更新 column_mask_
+                if (!hasColumnMask()) {
+                    column_mask_.assign(num_vars_full, true);
+                    active_count_ = num_vars_full;
+                }
+                for (size_t zc : zero_cols) {
+                    if (column_mask_[zc]) {
+                        column_mask_[zc] = false;
+                        active_count_--;
+                    }
+                }
+                num_vars = active_count_;
+                // 重建 solver
+                solver = create_solver();
+                for (const auto& prev_rows : all_rows_history) {
+                    auto stripped_rows = stripInactiveColumns(prev_rows, column_mask_, active_count_);
+                    solver->addRows(stripped_rows);
+                }
+            }
         }
 
         // 记录使用的采样点
@@ -1919,14 +1998,14 @@ AdaptiveEquationBuilder<T>::build(
         }
 
         // 每次迭代都调用 update 来跟踪 nullity 稳定性
-        int current_nullity = solver.getNullity();
+        int current_nullity = solver->getNullity();
         sampler.update(current_nullity);
         
         // DIAGNOSTIC: print rank/nullity per ν point
         if (ne == 2 && num_vars >= 30) {  // only for lev>=2 large systems
-            auto info = solver.getNullspace();
+            auto info = solver->getNullspace();
             std::cerr << "      [v#" << result.nu_count << "] rank=" << info.rank 
-                      << " nullity=" << info.nullity << " rows=" << solver.getNumRows() << std::endl;
+                      << " nullity=" << info.nullity << " rows=" << solver->getNumRows() << std::endl;
         }
 
         // 检查是否需要进行收敛检测
@@ -1938,13 +2017,13 @@ AdaptiveEquationBuilder<T>::build(
                 auto verify_points = sampler.getVerificationPoints(config_.verification_points);
                 bool verification_passed = true;
 
-                auto current_info = solver.getNullspace();
+                auto current_info = solver->getNullspace();
                 for (const auto& vnu : verify_points) {
                     auto vrows = assembler.evaluateAtNu(vnu);
                     auto vrows_check = hasColumnMask()
                         ? stripInactiveColumns(vrows, column_mask_, active_count_)
                         : vrows;
-                    T residual = solver.verifyBasis(vrows_check, current_info, T(config_.tolerance));
+                    T residual = solver->verifyBasis(vrows_check, current_info, T(config_.tolerance));
 
                     if constexpr (std::is_floating_point_v<T>) {
                         if (residual > T(config_.tolerance)) {
@@ -1980,6 +2059,7 @@ AdaptiveEquationBuilder<T>::build(
                             rows_by_order_masked, k_max, config_.plateau_size, num_vars);
                         result.stable_order = so;
                     }
+                    result.active_count = num_vars;
                     return result;
                 }
                 // 验证失败：将测试失败的方程加入系统
@@ -1991,9 +2071,9 @@ AdaptiveEquationBuilder<T>::build(
                         : vrows;
                     T residual = T(0);
                     if constexpr (std::is_floating_point_v<T>) {
-                        residual = solver.verifyBasis(vrows_check, current_info, T(config_.tolerance));
+                        residual = solver->verifyBasis(vrows_check, current_info, T(config_.tolerance));
                     } else {
-                        residual = solver.verifyBasis(vrows_check, current_info, T(0));
+                        residual = solver->verifyBasis(vrows_check, current_info, T(0));
                     }
                     // 只有失败的才加入（residual > tolerance for float, or != 0 for FFInt）
                     bool is_failed = false;
@@ -2003,7 +2083,7 @@ AdaptiveEquationBuilder<T>::build(
                         is_failed = (residual != T(0));
                     }
                     if (is_failed) {
-                        solver.addRows(vrows_check);
+                        solver->addRows(vrows_check);
                         result.nu_used.push_back(vnu);
                         if (hasColumnMask()) {
                             result.equations.insert(result.equations.end(),
@@ -2015,14 +2095,14 @@ AdaptiveEquationBuilder<T>::build(
                     }
                 }
                 // 更新 sampler 的 nullity 状态
-                int new_nullity = solver.getNullity();
+                int new_nullity = solver->getNullity();
                 sampler.update(new_nullity);
             }
         }
     }
     
     // 达到最大采样数
-    result.nullspace = solver.getNullspace();
+    result.nullspace = solver->getNullspace();
     result.stop_reason = "Max samples (" + std::to_string(effective_max_nu) + ") reached";
     std::cout << " (+" << (result.nu_count - printed_count) << " more)" << std::endl;
 
@@ -2041,6 +2121,7 @@ AdaptiveEquationBuilder<T>::build(
             rows_by_order_masked, k_max, config_.plateau_size, num_vars);
         result.stable_order = so;
     }
+    result.active_count = num_vars;
     return result;
 }
 
@@ -2566,6 +2647,11 @@ static std::vector<LevDegResult<T>> reconstructAllRelations(
 
             auto build_result = builder.build(regimes, nimax_lists, ne, kernel_negated,
                                                 &alphas, &betas);
+            
+            // 更新 active_count（builder 可能在内部额外移除了零列）
+            if (build_result.active_count > 0) {
+                active_count = build_result.active_count;
+            }
 
             // ---- 展开零空间基到完整变量空间 ----
             auto basis = build_result.nullspace.basis;

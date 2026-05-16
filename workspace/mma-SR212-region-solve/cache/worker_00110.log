@@ -1,0 +1,166 @@
+
+      +++  sector:  {0, 0, 1, 1, 0}  (1/1)  +++ 
+                     SINGULAR                                 /  Development
+ A Computer Algebra System for Polynomial Computations       /   version 4.3.2
+                                                           0<
+ by: W. Decker, G.-M. Greuel, G. Pfister, H. Schoenemann     \   Feb 2023
+FB Mathematik der Universitaet, D-67653 Kaiserslautern        \  Debian 1:4.3.2-p10+ds-1.1build1
+compute hilbert series with std in ring (ZZ/179424673),(x10,x9,x8,x7,x6,x5,x4,x3,x2,x1,@),(dp(11),C)
+weights used for hilbert series: 1,1,1,1,1,1,1,1,1,1,1
+[65535:3]2(7)s(6)s(5)s(4)s(3)s(2)s(3)s(4)s3(6)s(8)s(11)s(12)s(14)s(19)s(22)s4(26)s(29)-s(32)---s(35)-----s-----s(36)--s(39)--5--------------s(30)s(36)----------s(32)--------6-s(29)------------s(24)---------7---------------
+product criterion:119 chain criterion:97
+std with hilb in (ZZ/179424673),(x10,x9,x8,x7,x6,x5,x4,x3,x2,x1,@),(lp(10),dp(1),C)
+[65535:3]2(25)s(24)s(23)s(22)s(21)s(20)s(21)s(22)s3(24)s(26)s(28)s(29)s(31)s(36)s(40)shhhhhhh4(36)s(39)-s(41)s(47)-------s(46)-s(49)s(54)shhhhhhhhhhhhhhhh5(45)---s(50)---s(53)shhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh6(28)-----s(29)-shhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh
+product criterion:120 chain criterion:117
+hilbert series criterion:91
+dehomogenization
+simplification
+imap to ring (ZZ/179424673),(x10,x9,x8,x7,x6,x5,x4,x3,x2,x1),(lp(10),C)
+Auf Wiedersehen.
+                     SINGULAR                                 /  Development
+ A Computer Algebra System for Polynomial Computations       /   version 4.3.2
+                                                           0<
+ by: W. Decker, G.-M. Greuel, G. Pfister, H. Schoenemann     \   Feb 2023
+FB Mathematik der Universitaet, D-67653 Kaiserslautern        \  Debian 1:4.3.2-p10+ds-1.1build1
+// ** loaded /usr/bin/../share/singular/LIB/primdec.lib (4.3.2.9,Oct_2023)
+// ** loaded /usr/bin/../share/singular/LIB/ring.lib (4.3.1.3,Feb_2023)
+// ** loaded /usr/bin/../share/singular/LIB/absfact.lib (4.1.2.0,Feb_2019)
+// ** loaded /usr/bin/../share/singular/LIB/triang.lib (4.1.2.0,Feb_2019)
+// ** loaded /usr/bin/../share/singular/LIB/matrix.lib (4.3.2.3,Aug_2023)
+// ** loaded /usr/bin/../share/singular/LIB/nctools.lib (4.1.2.0,Feb_2019)
+// ** loaded /usr/bin/../share/singular/LIB/inout.lib (4.1.2.0,Feb_2019)
+// ** loaded /usr/bin/../share/singular/LIB/random.lib (4.1.2.0,Feb_2019)
+// ** loaded /usr/bin/../share/singular/LIB/polylib.lib (4.2.0.0,Dec_2020)
+// ** loaded /usr/bin/../share/singular/LIB/elim.lib (4.3.2.5,Jul_2023)
+// ** loaded /usr/bin/../share/singular/LIB/general.lib (4.1.2.0,Feb_2019)
+map with cache
+map with cache
+map with cache
+map with cache
+map with cache
+std in (ZZ/179424673),(x10,x9,x8,x7,x6,x5,x4,x3,x2,x1),(dp(10),C)
+[65535:4]1(9)s(8)s(7)s(6)s(5)s2(4)s(3)s(2)s3s(3)s(4)4----
+(S:9)---------
+product criterion:37 chain criterion:3
+1(9)s(8)s(7)s(6)s(5)s2(4)s(3)s(2)s3s(3)s(4)4----
+(S:9)---------
+product criterion:37 chain criterion:3
+map is a permutation
+[65535:4]1(10)s(9)s(8)s(7)s(6)s(5)s2(4)s(3)s(2)s3s(3)s(4)4----
+product criterion:47 chain criterion:3
+[65535:4]1(9)s(8)s(7)s(6)s(5)s2(4)s(3)s(2)s3s(3)s(4)4----
+product criterion:37 chain criterion:3
+{1}[65535:6]1(9)s(8)s(7)s(6)s(5)s2(4)s(8)s(13)s3(19)------------s(14)----s4(18)------------------
+product criterion:0 chain criterion:0
+(S:10)rrrrrrrrrr
+[65535:4]1(9)s(8)s(7)s(6)s(5)s2(4)s(3)s(2)s3s(3)s(4)4----
+product criterion:37 chain criterion:3
+compute hilbert series with std in ring (ZZ/179424673),(x10,x9,x8,x7,x6,x5,x4,x3,x2,x1,@),(dp(11),C)
+weights used for hilbert series: 1,1,1,1,1,1,1,1,1,1,1
+[65535:3]1(9)s(8)s(7)s(6)s(5)s2(4)s(3)s(2)s3s(3)s(4)4----
+(S:9)---------
+product criterion:37 chain criterion:3
+std with hilb in (ZZ/179424673),(x10,x9,x8,x7,x6,x5,x4,x3,x2,x1,@),(C,lp(10),dp(1))
+[65535:3]1(9)s(8)s(7)s(6)s(5)s2(4)s(3)s(2)s3s(3)shhhhh
+(S:9)---------
+product criterion:37 chain criterion:3
+hilbert series criterion:5
+dehomogenization
+simplification
+imap to ring (ZZ/179424673),(x10,x9,x8,x7,x6,x5,x4,x3,x2,x1),(C,lp(10))
+//interreduction
+[65535:3]1(9)s(8)s3(7)s2(6)s3(5)s1(4)s(3)s2(2)ss1s
+(S:9)---------
+
+map is a permutation
+std in (ZZ/179424673),(x9,x6,x5,x4,x1),(C,dp(5))
+[1048575:3]2(4)s(3)s(2)s3s(3)s(4)4----
+product criterion:2 chain criterion:3
+map is a permutation
+compute hilbert series with std in ring (ZZ/179424673),(x5,x4,x1,x9,x6,@),(dp(6),C)
+weights used for hilbert series: 1,1,1,1,1,1
+[1048575:2]2(4)s(3)s(2)s3s(3)-s4---
+(S:4)----
+product criterion:2 chain criterion:3
+std with hilb in (ZZ/179424673),(x5,x4,x1,x9,x6,@),(lp(5),dp(1),C)
+[1048575:2]2(4)s(3)s(2)s3s(3)-shhhh
+(S:4)----
+product criterion:2 chain criterion:3
+hilbert series criterion:4
+dehomogenization
+simplification
+imap to ring (ZZ/179424673),(x5,x4,x1,x9,x6),(lp(5),C)
+//interreduction
+[1048575:2]2(4)s(3)s(2)s3ss
+(S:4)----
+
+map is a permutation
+[1048575:1]1(2)sss
+(S:2)--
+
+[1048575:1]1(2)sss
+(S:2)--
+
+[1048575:1]1(2)sss
+(S:2)--
+
+(S:1)[1048575:1]1(2)sss
+
+[1048575:1]1(2)sss
+
+[1048575:3]2(2)sss3s4s5--
+product criterion:2 chain criterion:3
+{1}[1048575:5]4(4)s(7)s(9)s5(11)s(14)s(17)s(19)-s(17)s--s(16)6-s(17)----s(16)-----7----------8-
+product criterion:0 chain criterion:14
+[1048575:2]2(4)s(3)s(2)s3s(3)s(4)4----
+product criterion:2 chain criterion:3
+{1}[1048575:5]4(4)s(7)s(9)s5(11)s(14)s(17)s(19)-s(17)s--s(16)6-s(17)----s(16)-----7----------8-
+product criterion:0 chain criterion:14
+intersect by elimination method
+[1048575:4]1(5)s3(4)s(3)s(2)s4s(3)s(4)5----
+product criterion:7 chain criterion:3
+intersect by elimination method
+[1048575:4]1(5)s3(4)s(3)s(2)s4s(3)s(4)5----
+product criterion:7 chain criterion:3
+[1048575:3]
+product criterion:5 chain criterion:0
+intersect by elimination method
+[65535:5]1(10)s2(9)s(8)s(7)s(6)s(5)s3(4)s(3)s(2)s4s(3)s(4)5----
+product criterion:47 chain criterion:3
+map is a permutation
+[65535:4]1(10)s(9)s(8)s(7)s(6)s2(5)s(4)--3--.5
+product criterion:15 chain criterion:0
+map is a permutation
+[65535:4]1(10)s(9)s(8)s(7)s(6)s2(5)s(4)--3--.5
+product criterion:15 chain criterion:0
+map is a permutation
+[65535:4]1(10)s(9)s(8)s(7)s(6)s2(5)s(4)--3--.5
+product criterion:15 chain criterion:0
+map is a permutation
+[65535:4]1(10)s(9)s(8)s(7)s(6)s2(5)s(4)--3--.5
+product criterion:15 chain criterion:0
+map is a permutation
+[65535:4]1(10)s(9)s(8)s(7)s(6)s2(5)s(4)--3--.5
+product criterion:15 chain criterion:0
+map is a permutation
+[65535:4]1(10)s(9)s(8)s(7)s(6)s2(5)s(4)s(3)s3s-.6
+product criterion:35 chain criterion:1
+map is a permutation
+[65535:4]1(10)s(9)s(8)s(7)s(6)s2(5)s(4)s(3)s3s-.6
+product criterion:35 chain criterion:1
+map is a permutation
+[65535:4]1(10)s(9)s(8)s(7)s(6)s2(5)s(4)s(3)s3s-.6
+product criterion:35 chain criterion:1
+map is a permutation
+[65535:4]1(10)s(9)s(8)s(7)s(6)s2(5)s(4)s(3)s3s(4)s(5)4-----s
+product criterion:47 chain criterion:3
+map is a permutation
+[65535:4]1(10)s(9)s(8)s(7)s(6)s2(5)s(4)s(3)s3s(4)s(5)4-----s
+product criterion:47 chain criterion:3
+// ** _ is no standard basis
+Auf Wiedersehen.
+  >> 0 regions (all trivial): expReg=0.808s
+  [sector total: 0.811s]
+#Non-triv Sectors = 0
+
+[SECTOR_RESULT] key=00110 tier=Quick state=trivial time=0.810882 regions=0

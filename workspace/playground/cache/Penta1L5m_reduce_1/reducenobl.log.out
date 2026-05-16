@@ -1,0 +1,11 @@
+CalcLoop: a tool for automated multiloop calculation in quantum field theory.
+Version 2022/07/10.
+Number of defined symbols=45. Please see ?CalcLoop`* for help.
+"BladeIBP: a package for generating IBP, LI and Symmetry relations."
+
+FrontEndObject::notavail: A front end is not available; certain operations require a front end.
+Number of Families = 1. Number of Sectors = 27.
+"1 zero sectors found, 31 nonzero sectors found."
+"27 unique sectors found, 4 mapped sectors found, 0 extmapped sectors found."
+"26 subgraph-unique sectors found, 0 subgraph-mapped sectors found"
+"number of integrals" -> {60, 22}

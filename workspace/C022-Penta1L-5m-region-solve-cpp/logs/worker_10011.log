@@ -1,0 +1,48 @@
+=== FamilyGenerate ===
+Family: Penta1L-5m (L=1 E=4 N=5)
+Modulus: 179424673
+
+[Step 1] Generating IBP equations...
+[IBPEqGenerator] Family Penta1L-5m: ne=5 nl=1 nE=4 nIBP=5 subsectors=31
+[IBPEqGenerator] Step 1: Running SP2PD...
+[IBPEqGenerator] SP2PD OK: 5 scalar products → z-basis
+[IBPEqGenerator] Step 2: Computing derivatives...
+[IBPEqGenerator] Derivatives OK: 25 polynomials computed
+[IBPEqGenerator] Step 3: Assembling IBP equations (mon2F)...
+[IBPEqGenerator] Generated 5 IBP equations with 67 total g-operator terms.
+  ne=5 nibp=5 subsectors=31
+  [TIMING] Step 1: 0.049 s
+
+[Step 2] Extracting FTable...
+  nibp=5 ne=5
+  [TIMING] Step 2: 0 s
+
+[Step 3] Solving sectors...
+  Filtering: sector = 10011
+  Solving sector [10011]
+  [2026-05-14 02:39:41] Singular minAssGTZ starting...
+  [Singular minAssGTZ] 0.0658526 s, kept=3
+  [2026-05-14 02:39:41] Singular minAssGTZ done
+  [2026-05-14 02:39:41] Component 0/3 (10 polys)
+  [2026-05-14 02:39:41] Component 1/3 (10 polys)
+  [2026-05-14 02:39:41] Component 2/3 (10 polys)
+  -> 3 region(s) in 0.094 s
+  Found 3 region(s) total
+  [TIMING] Step 3: 0.094 s
+
+[Step 4] Building recursion + ring matrices...
+  Region 0: nb=1
+  Region 1: nb=1
+  Region 2: nb=1
+  [TIMING] Step 4: 0.002 s
+
+[Step 5] Writing .bin files...
+Written 3 regime(s) to workspace/C022-Penta1L-5m-region-solve-cpp/SectorCache/IBPMat_Penta1L-5m_sector_10011.bin
+Written 3 ring cell(s) to workspace/C022-Penta1L-5m-region-solve-cpp/SectorCache/RingData_Penta1L-5m_sector_10011.bin
+  [TIMING] Step 5: 0 s
+
+[TIMING] Total wall-clock: 0.152 s
+
+Done. Output:
+  workspace/C022-Penta1L-5m-region-solve-cpp/SectorCache/IBPMat_Penta1L-5m_sector_10011.bin
+  workspace/C022-Penta1L-5m-region-solve-cpp/SectorCache/RingData_Penta1L-5m_sector_10011.bin
