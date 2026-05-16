@@ -1,0 +1,70 @@
+=== FamilyGenerate ===
+Family: Penta1L-5m (L=1 E=4 N=5)
+Modulus: 179424673
+
+[Step 1] Generating IBP equations...
+[IBPEqGenerator] Family Penta1L-5m: ne=5 nl=1 nE=4 nIBP=5 subsectors=31
+[IBPEqGenerator] Step 1: Running SP2PD...
+[IBPEqGenerator] SP2PD OK: 5 scalar products → z-basis
+[IBPEqGenerator] Step 2: Computing derivatives...
+[IBPEqGenerator] Derivatives OK: 25 polynomials computed
+[IBPEqGenerator] Step 3: Assembling IBP equations (mon2F)...
+[IBPEqGenerator] Generated 5 IBP equations with 67 total g-operator terms.
+  ne=5 nibp=5 subsectors=31
+  [TIMING] Step 1: 0.046 s
+
+[Step 2] Extracting FTable...
+  nibp=5 ne=5
+  [TIMING] Step 2: 0 s
+
+[Step 3] Solving sectors...
+  Filtering: sector = 01111
+  Solving sector [01111]
+  [2026-05-14 02:39:53] Singular minAssGTZ starting...
+  [Singular minAssGTZ] 0.0907175 s, kept=4
+  [2026-05-14 02:39:53] Singular minAssGTZ done
+  [2026-05-14 02:39:53] Component 0/4 (10 polys)
+  [2026-05-14 02:39:53] Component 1/4 (10 polys)
+  [2026-05-14 02:39:53] Component 2/4 (10 polys)
+  [2026-05-14 02:39:53] Component 3/4 (10 polys)
+
+[DEBUG solveVarRule] sector=[0,1,1,1,1] nb=2 VarIndep=[A5] VarDep=[A1,A2,A3,A4]
+  compGb:
+    [0] A5^2-71052708*A5-89487270
+    [1] A4-40960864*A5-64183976
+    [2] A3+2562628*A5+13788607
+    [3] A2-43523493*A5-77972583
+    [4] A1-4923119*A5+47938140
+    [5] B5+65791930*A5-66214367
+    [6] B4+38733863*A5+78843422
+    [7] B3+85032010*A5+3160617
+    [8] B2+89560644*A5-49610932
+    [9] B1+63936297*A5-17091435
+  VarRule result:
+    A1 -> 131486533+4923119*A5
+    A2 -> 77972583+43523493*A5
+    A3 -> 165636066+176862045*A5
+    A4 -> 64183976+40960864*A5
+    [2026-05-14 02:39:53] MBM reduction k=0/2 (2 products)...
+    [2026-05-14 02:39:53] MBM reduction k=1/2 (2 products)...
+  -> 4 region(s) in 0.143 s
+  Found 4 region(s) total
+  [TIMING] Step 3: 0.143 s
+
+[Step 4] Building recursion + ring matrices...
+  Region 0: nb=1
+  Region 1: nb=1
+  Region 2: nb=1
+  Region 3: nb=2
+  [TIMING] Step 4: 0.005 s
+
+[Step 5] Writing .bin files...
+Written 4 regime(s) to workspace/C022-Penta1L-5m-region-solve-cpp/SectorCache/IBPMat_Penta1L-5m_sector_01111.bin
+Written 4 ring cell(s) to workspace/C022-Penta1L-5m-region-solve-cpp/SectorCache/RingData_Penta1L-5m_sector_01111.bin
+  [TIMING] Step 5: 0 s
+
+[TIMING] Total wall-clock: 0.2 s
+
+Done. Output:
+  workspace/C022-Penta1L-5m-region-solve-cpp/SectorCache/IBPMat_Penta1L-5m_sector_01111.bin
+  workspace/C022-Penta1L-5m-region-solve-cpp/SectorCache/RingData_Penta1L-5m_sector_01111.bin

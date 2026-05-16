@@ -85,6 +85,8 @@ cd /path/to/Large-Index-Expansion-CPP
 
 生成 `Compare-CPPResult-[famname].m`。
 
+> **CLI 速查**: `../../docs/CommandGuideline.md` — test_expandFF、test_relationFF 参数说明与输入输出路径。
+
 ### Step 3: MMA 展开
 
 ```bash

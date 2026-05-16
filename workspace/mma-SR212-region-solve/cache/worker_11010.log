@@ -1,0 +1,24 @@
+
+      +++  sector:  {1, 1, 0, 1, 0}  (1/1)  +++ 
+                     SINGULAR                                 /  Development
+ A Computer Algebra System for Polynomial Computations       /   version 4.3.2
+                                                           0<
+ by: W. Decker, G.-M. Greuel, G. Pfister, H. Schoenemann     \   Feb 2023
+FB Mathematik der Universitaet, D-67653 Kaiserslautern        \  Debian 1:4.3.2-p10+ds-1.1build1
+compute hilbert series with std in ring (ZZ/179424673),(x10,x9,x8,x7,x6,x5,x4,x3,x2,x1,@),(dp(11),C)
+weights used for hilbert series: 1,1,1,1,1,1,1,1,1,1,1
+[65535:3]2(10)s(9)s(8)s(7)s(6)s(5)s(6)s(5)s(7)s(9)s(10)s3(12)s(14)-s(15)---s(18)s(23)---s(25)4---------s(20)---------s(14)---5-----------
+product criterion:79 chain criterion:16
+std with hilb in (ZZ/179424673),(x10,x9,x8,x7,x6,x5,x4,x3,x2,x1,@),(lp(10),dp(1),C)
+[65535:3]2(17)s(16)s(15)s(14)s(13)s(12)sss(13)s(14)s(17)s3(20)s(23)s(27)-s(32)s(38)-s(41)-shhhhhhhhhh4(34)--s(39)--shhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh
+product criterion:86 chain criterion:23
+hilbert series criterion:54
+dehomogenization
+simplification
+imap to ring (ZZ/179424673),(x10,x9,x8,x7,x6,x5,x4,x3,x2,x1),(lp(10),C)
+Auf Wiedersehen.
+  >> 0 regions (all trivial): expReg=0.428s
+  [sector total: 0.43s]
+#Non-triv Sectors = 0
+
+[SECTOR_RESULT] key=11010 tier=Quick state=trivial time=0.430556 regions=0

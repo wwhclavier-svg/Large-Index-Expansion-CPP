@@ -265,3 +265,4 @@ The C++ binary also runs EquationVerify internally and prints per-config residua
 - `../../docs/algorithms/ReconstructAlgorithm.md` — MMA vs C++ 关系重构算法对比
 - `CPP-KiraVerify-Debugger.md` — Kira 验证 g 格式 bug 修复记录
 - `Test-Expand.md` — 展开一致性验证（管线上游）
+- `../../docs/CommandGuideline.md` — test_relationFF CLI 速查、参数说明、输入输出路径

@@ -1,0 +1,44 @@
+=== FamilyGenerate ===
+Family: NP222 (L=2 E=2 N=7)
+Modulus: 179424673
+
+[Step 1] Generating IBP equations...
+[IBPEqGenerator] Family NP222: ne=7 nl=2 nE=2 nIBP=8 subsectors=57
+[IBPEqGenerator] Step 1: Running SP2PD...
+[IBPEqGenerator] SP2PD OK: 7 scalar products → z-basis
+[IBPEqGenerator] Step 2: Computing derivatives...
+[IBPEqGenerator] Derivatives OK: 56 polynomials computed
+[IBPEqGenerator] Step 3: Assembling IBP equations (mon2F)...
+[IBPEqGenerator] Generated 8 IBP equations with 137 total g-operator terms.
+  ne=7 nibp=8 subsectors=57
+  [TIMING] Step 1: 0.052 s
+
+[Step 2] Extracting FTable...
+  nibp=8 ne=7
+  [TIMING] Step 2: 0 s
+
+[Step 3] Solving sectors...
+  Filtering: sector = 1110010
+  Solving sector [1110010]
+  [2026-05-13 19:48:01] Singular minAssGTZ starting...
+  [Singular minAssGTZ] 0.0459871 s, kept=1
+  [2026-05-13 19:48:01] Singular minAssGTZ done
+  [2026-05-13 19:48:01] Component 0/1 (14 polys)
+  -> 1 region(s) in 0.056 s
+  Found 1 region(s) total
+  [TIMING] Step 3: 0.056 s
+
+[Step 4] Building recursion + ring matrices...
+  Region 0: nb=1
+  [TIMING] Step 4: 0.002 s
+
+[Step 5] Writing .bin files...
+Written 1 regime(s) to workspace/C018-NP222-region-solve-cpp/SectorCache/IBPMat_NP222_sector_1110010.bin
+Written 1 ring cell(s) to workspace/C018-NP222-region-solve-cpp/SectorCache/RingData_NP222_sector_1110010.bin
+  [TIMING] Step 5: 0 s
+
+[TIMING] Total wall-clock: 0.115 s
+
+Done. Output:
+  workspace/C018-NP222-region-solve-cpp/SectorCache/IBPMat_NP222_sector_1110010.bin
+  workspace/C018-NP222-region-solve-cpp/SectorCache/RingData_NP222_sector_1110010.bin

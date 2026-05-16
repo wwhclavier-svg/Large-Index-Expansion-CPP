@@ -20,12 +20,12 @@ Modulus: 179424673
 [Step 3] Solving sectors...
   Filtering: sector = 0011000
   Solving sector [0011000]
-  [2026-05-13 19:46:36] Singular minAssGTZ starting...
-  [Singular minAssGTZ] 0.0293511 s, kept=0
-  [2026-05-13 19:46:36] Singular minAssGTZ done
-  -> 0 region(s) in 0.031 s
+  [2026-05-13 19:47:19] Singular minAssGTZ starting...
+  [Singular minAssGTZ] 0.0211803 s, kept=0
+  [2026-05-13 19:47:19] Singular minAssGTZ done
+  -> 0 region(s) in 0.021 s
   Found 0 region(s) total
-  [TIMING] Step 3: 0.032 s
+  [TIMING] Step 3: 0.021 s
   No regions found. Writing empty output.
 
 [Step 5] Writing .bin files...
@@ -33,7 +33,7 @@ Written 0 regime(s) to workspace/C018-NP222-region-solve-cpp/SectorCache/IBPMat_
 Written 0 ring cell(s) to workspace/C018-NP222-region-solve-cpp/SectorCache/RingData_NP222_sector_0011000.bin
   [TIMING] Step 5: 0 s
 
-[TIMING] Total wall-clock: 0.091 s
+[TIMING] Total wall-clock: 0.08 s
 
 Done. Output:
   workspace/C018-NP222-region-solve-cpp/SectorCache/IBPMat_NP222_sector_0011000.bin

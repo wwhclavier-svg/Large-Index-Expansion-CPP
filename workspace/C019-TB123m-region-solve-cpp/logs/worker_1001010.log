@@ -1,0 +1,128 @@
+=== FamilyGenerate ===
+Family: TB123m (L=2 E=2 N=7)
+Modulus: 179424673
+
+[Step 1] Generating IBP equations...
+[IBPEqGenerator] Family TB123m: ne=7 nl=2 nE=2 nIBP=8 subsectors=57
+[IBPEqGenerator] Step 1: Running SP2PD...
+[IBPEqGenerator] SP2PD OK: 7 scalar products → z-basis
+[IBPEqGenerator] Step 2: Computing derivatives...
+[IBPEqGenerator] Derivatives OK: 56 polynomials computed
+[IBPEqGenerator] Step 3: Assembling IBP equations (mon2F)...
+[IBPEqGenerator] Generated 8 IBP equations with 114 total g-operator terms.
+  ne=7 nibp=8 subsectors=57
+  [TIMING] Step 1: 0.045 s
+
+[Step 2] Extracting FTable...
+  nibp=8 ne=7
+  [TIMING] Step 2: 0 s
+
+[Step 3] Solving sectors...
+  Filtering: sector = 1001010
+  Solving sector [1001010]
+  [2026-05-13 21:12:15] Singular minAssGTZ starting...
+  [Singular minAssGTZ] 0.206694 s, kept=4
+  [2026-05-13 21:12:15] Singular minAssGTZ done
+  [2026-05-13 21:12:15] Component 0/4 (14 polys)
+
+[DEBUG solveVarRule] sector=[1,0,0,1,0,1,0] nb=2 VarIndep=[A7] VarDep=[A1,A2,A3,A4,A5,A6]
+  compGb:
+    [0] A7^2-89712336*A7-53162866
+    [1] A6+89712332*A7-1
+    [2] A5+40515247*A7+69454712
+    [3] A4-89712332*A7+2
+    [4] A3+40515247*A7+69454712
+    [5] A2-10554392*A7+10554393
+    [6] A1-89712332*A7+2
+    [7] B7-89712323*A7+44856175
+    [8] B6+18*A7+5
+    [9] B5-89712323*A7+44856174
+    [10] B4+89712332*A7+44856168
+    [11] B3-89712323*A7+44856174
+    [12] B2+89712332*A7+44856170
+    [13] B1+89712332*A7+44856168
+  VarRule result:
+    A1 -> 179424671+89712332*A7
+    A2 -> 168870280+10554392*A7
+    A3 -> 109969961+138909426*A7
+    A4 -> 179424671+89712332*A7
+    A5 -> 109969961+138909426*A7
+    A6 -> 1+89712341*A7
+    [2026-05-13 21:12:15] MBM reduction k=0/2 (2 products)...
+    [2026-05-13 21:12:15] MBM reduction k=1/2 (2 products)...
+  [2026-05-13 21:12:15] Component 1/4 (14 polys)
+
+[DEBUG solveVarRule] sector=[1,0,0,1,0,1,0] nb=2 VarIndep=[A7] VarDep=[A1,A2,A3,A4,A5,A6]
+  compGb:
+    [0] A7^2-89712336*A7-53162866
+    [1] A6-89712332*A7+2
+    [2] A5+40515247*A7+69454712
+    [3] A4-89712332*A7+2
+    [4] A3-89712332*A7-44856167
+    [5] A2-71769871*A7+71769869
+    [6] A1+89712332*A7-1
+    [7] B7-89712323*A7+44856175
+    [8] B6+89712332*A7+44856168
+    [9] B5-89712323*A7+44856174
+    [10] B4+89712332*A7+44856168
+    [11] B3-18*A7-4
+    [12] B2+18*A7+7
+    [13] B1+18*A7+5
+  VarRule result:
+    A1 -> 1+89712341*A7
+    A2 -> 107654804+71769871*A7
+    A3 -> 44856167+89712332*A7
+    A4 -> 179424671+89712332*A7
+    A5 -> 109969961+138909426*A7
+    A6 -> 179424671+89712332*A7
+    [2026-05-13 21:12:15] MBM reduction k=0/2 (2 products)...
+    [2026-05-13 21:12:15] MBM reduction k=1/2 (2 products)...
+  [2026-05-13 21:12:15] Component 2/4 (14 polys)
+  [2026-05-13 21:12:15] Component 3/4 (14 polys)
+
+[DEBUG solveVarRule] sector=[1,0,0,1,0,1,0] nb=2 VarIndep=[A7] VarDep=[A1,A2,A3,A4,A5,A6]
+  compGb:
+    [0] A7^2-89712336*A7-29904112
+    [1] A6+89712335*A7-89712336
+    [2] A5+89712335*A7+44856168
+    [3] A4-89712335*A7-89712336
+    [4] A3+46303142*A7-63666819
+    [5] A2+63326355*A7+73880748
+    [6] A1+89712335*A7-89712336
+    [7] B7+6*A7+3
+    [8] B6-89712335*A7-44856167
+    [9] B5+6*A7+2
+    [10] B4-6*A7-1
+    [11] B3+89712332*A7-44856167
+    [12] B2-89712335*A7-44856165
+    [13] B1-89712335*A7-44856167
+  VarRule result:
+    A1 -> 89712336+89712338*A7
+    A2 -> 105543925+116098318*A7
+    A3 -> 63666819+133121531*A7
+    A4 -> 89712336+89712335*A7
+    A5 -> 134568505+89712338*A7
+    A6 -> 89712336+89712338*A7
+    [2026-05-13 21:12:15] MBM reduction k=0/2 (2 products)...
+    [2026-05-13 21:12:15] MBM reduction k=1/2 (2 products)...
+  -> 4 region(s) in 0.276 s
+  Found 4 region(s) total
+  [TIMING] Step 3: 0.276 s
+
+[Step 4] Building recursion + ring matrices...
+  Region 0: nb=2
+  Region 1: nb=2
+  Region 2: nb=1
+  Region 3: nb=2
+  [TIMING] Step 4: 0.01 s
+
+[Step 5] Writing .bin files...
+Written 4 regime(s) to workspace/C019-TB123m-region-solve-cpp/SectorCache/IBPMat_TB123m_sector_1001010.bin
+Written 4 ring cell(s) to workspace/C019-TB123m-region-solve-cpp/SectorCache/RingData_TB123m_sector_1001010.bin
+  [TIMING] Step 5: 0 s
+
+[TIMING] Total wall-clock: 0.337 s
+
+Done. Output:
+  workspace/C019-TB123m-region-solve-cpp/SectorCache/IBPMat_TB123m_sector_1001010.bin
+  workspace/C019-TB123m-region-solve-cpp/SectorCache/RingData_TB123m_sector_1001010.bin

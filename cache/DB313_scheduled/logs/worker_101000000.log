@@ -11,7 +11,7 @@ Modulus: 179424673
 [IBPEqGenerator] Step 3: Assembling IBP equations (mon2F)...
 [IBPEqGenerator] Generated 10 IBP equations with 159 total g-operator terms.
   ne=9 nibp=10 subsectors=120
-  [TIMING] Step 1: 0.04 s
+  [TIMING] Step 1: 0.553 s
 
 [Step 2] Extracting FTable...
   nibp=10 ne=9
@@ -20,20 +20,20 @@ Modulus: 179424673
 [Step 3] Solving sectors...
   Filtering: sector = 101000000
   Solving sector [101000000]
-  [2026-05-13 19:33:05] Singular minAssGTZ starting...
-  [Singular minAssGTZ] 0.0131565 s, kept=0
-  [2026-05-13 19:33:05] Singular minAssGTZ done
-  -> 0 region(s) in 0.013 s
+  [2026-05-14 04:00:21] Singular minAssGTZ starting...
+  [Singular minAssGTZ] 0.0179986 s, kept=0
+  [2026-05-14 04:00:21] Singular minAssGTZ done
+  -> 0 region(s) in 0.018 s
   Found 0 region(s) total
-  [TIMING] Step 3: 0.013 s
+  [TIMING] Step 3: 0.018 s
   No regions found. Writing empty output.
 
 [Step 5] Writing .bin files...
 Written 0 regime(s) to /home/ykm/Large-Index-Expansion-CPP/cache/DB313_scheduled/SectorCache/IBPMat_DB313_sector_101000000.bin
 Written 0 ring cell(s) to /home/ykm/Large-Index-Expansion-CPP/cache/DB313_scheduled/SectorCache/RingData_DB313_sector_101000000.bin
-  [TIMING] Step 5: 0 s
+  [TIMING] Step 5: 0.082 s
 
-[TIMING] Total wall-clock: 0.056 s
+[TIMING] Total wall-clock: 0.709 s
 
 Done. Output:
   /home/ykm/Large-Index-Expansion-CPP/cache/DB313_scheduled/SectorCache/IBPMat_DB313_sector_101000000.bin

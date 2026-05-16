@@ -11,7 +11,7 @@ Modulus: 179424673
 [IBPEqGenerator] Step 3: Assembling IBP equations (mon2F)...
 [IBPEqGenerator] Generated 8 IBP equations with 137 total g-operator terms.
   ne=7 nibp=8 subsectors=57
-  [TIMING] Step 1: 0.068 s
+  [TIMING] Step 1: 0.052 s
 
 [Step 2] Extracting FTable...
   nibp=8 ne=7
@@ -20,12 +20,12 @@ Modulus: 179424673
 [Step 3] Solving sectors...
   Filtering: sector = 0100100
   Solving sector [0100100]
-  [2026-05-13 19:46:33] Singular minAssGTZ starting...
-  [Singular minAssGTZ] 0.0215569 s, kept=0
-  [2026-05-13 19:46:33] Singular minAssGTZ done
-  -> 0 region(s) in 0.021 s
+  [2026-05-13 19:47:16] Singular minAssGTZ starting...
+  [Singular minAssGTZ] 0.0286616 s, kept=0
+  [2026-05-13 19:47:16] Singular minAssGTZ done
+  -> 0 region(s) in 0.029 s
   Found 0 region(s) total
-  [TIMING] Step 3: 0.022 s
+  [TIMING] Step 3: 0.029 s
   No regions found. Writing empty output.
 
 [Step 5] Writing .bin files...
@@ -33,7 +33,7 @@ Written 0 regime(s) to workspace/C018-NP222-region-solve-cpp/SectorCache/IBPMat_
 Written 0 ring cell(s) to workspace/C018-NP222-region-solve-cpp/SectorCache/RingData_NP222_sector_0100100.bin
   [TIMING] Step 5: 0 s
 
-[TIMING] Total wall-clock: 0.094 s
+[TIMING] Total wall-clock: 0.085 s
 
 Done. Output:
   workspace/C018-NP222-region-solve-cpp/SectorCache/IBPMat_NP222_sector_0100100.bin

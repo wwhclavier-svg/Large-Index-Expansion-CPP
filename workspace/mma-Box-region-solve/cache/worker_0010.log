@@ -1,0 +1,24 @@
+
+      +++  sector:  {0, 0, 1, 0}  (1/1)  +++ 
+                     SINGULAR                                 /  Development
+ A Computer Algebra System for Polynomial Computations       /   version 4.3.2
+                                                           0<
+ by: W. Decker, G.-M. Greuel, G. Pfister, H. Schoenemann     \   Feb 2023
+FB Mathematik der Universitaet, D-67653 Kaiserslautern        \  Debian 1:4.3.2-p10+ds-1.1build1
+compute hilbert series with std in ring (ZZ/179424673),(x8,x7,x6,x5,x4,x3,x2,x1,@),(dp(9),C)
+weights used for hilbert series: 1,1,1,1,1,1,1,1,1
+[1048575:3]2(7)s(6)s(5)s(4)s(3)s(4)s(6)s(9)s3(8)--s(9)s(12)----4--------
+product criterion:23 chain criterion:2
+std with hilb in (ZZ/179424673),(x8,x7,x6,x5,x4,x3,x2,x1,@),(lp(8),dp(1),C)
+[1048575:3]2(9)s(8)s(7)s(6)s(5)sss(7)s3(10)s(14)shhhhhhhhhhhhhhhhhhhh
+product criterion:23 chain criterion:2
+hilbert series criterion:20
+dehomogenization
+simplification
+imap to ring (ZZ/179424673),(x8,x7,x6,x5,x4,x3,x2,x1),(lp(8),C)
+Auf Wiedersehen.
+  >> 0 regions (all trivial): expReg=0.424s
+  [sector total: 0.426s]
+#Non-triv Sectors = 0
+
+[SECTOR_RESULT] key=0010 tier=Quick state=trivial time=0.426375 regions=0
