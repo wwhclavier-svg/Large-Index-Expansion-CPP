@@ -907,30 +907,32 @@ inline std::vector<std::vector<int>> generateSubsectors(const std::vector<int>& 
 //   3. Collect results with correct limitSector labels
 //
 // Skips subsectors that produce no zero-dimensional components.
-// Deduplicates identical regions across subsectors (matches MMA's LIESolveRegion
-// which filters out trivial sectors whose ring structure duplicates higher sectors).
+// When deduplicate=true (default), sorts subsectors top-first and deduplicates
+// identical regions across subsectors by nb+FracRule+MBM
+// (matches MMA's LIESolveRegion).
 // ==========================================
 
 inline std::vector<RegionData> solveAllSectors(
     const IBPEqGenerator::IBPEquations& ibp,
     const std::vector<int>& topSector,
-    int64_t modulus)
+    int64_t modulus,
+    bool deduplicate = false)
 {
     int ne = ibp.ne;
     int nl = ibp.nl;
     std::vector<RegionData> allResults;
     auto subsectors = generateSubsectors(topSector, nl);
 
-    // Sort: highest propagator count first (top sector → lowest),
-    // so deduplication keeps the top sector's label.
-    std::sort(subsectors.begin(), subsectors.end(),
-        [](const std::vector<int>& a, const std::vector<int>& b) {
-            int sa = 0, sb = 0;
-            for (int v : a) sa += v;
-            for (int v : b) sb += v;
-            if (sa != sb) return sa > sb;
-            return a > b;
-        });
+    if (deduplicate) {
+        std::sort(subsectors.begin(), subsectors.end(),
+            [](const std::vector<int>& a, const std::vector<int>& b) {
+                int sa = 0, sb = 0;
+                for (int v : a) sa += v;
+                for (int v : b) sb += v;
+                if (sa != sb) return sa > sb;
+                return a > b;
+            });
+    }
 
     int sectorIdx = 0, totalSectors = (int)subsectors.size();
     for (const auto& sub : subsectors) {
@@ -969,22 +971,24 @@ inline std::vector<RegionData> solveAllSectors(
         int nreg = (int)regions.size();
         std::cerr << "  -> " << nreg << " region(s) in " << sec_s << " s" << std::endl;
 
-        // Deduplicate: skip regions whose ring structure (nb + FractionRule + MonomialBasisIndex)
-        // is identical to an already-collected region. Matches MMA's LIESolveRegion
-        // which filters out trivial subsectors that don't contribute independent regions.
-        for (auto& reg : regions) {
-            bool isDuplicate = false;
-            for (const auto& existing : allResults) {
-                if (reg.nb != existing.nb) continue;
-                if (reg.FractionRule != existing.FractionRule) continue;
-                if (reg.MonomialBasisIndex != existing.MonomialBasisIndex) continue;
-                isDuplicate = true;
-                std::cerr << "  -> skipping duplicate region (nb=" << reg.nb
-                          << ", sector=[" << (reg.limitSector.empty()?-1:reg.limitSector[0])
-                          << "...])" << std::endl;
-                break;
+        if (deduplicate) {
+            for (auto& reg : regions) {
+                bool isDuplicate = false;
+                for (const auto& existing : allResults) {
+                    if (reg.nb != existing.nb) continue;
+                    if (reg.FractionRule != existing.FractionRule) continue;
+                    if (reg.MonomialBasisIndex != existing.MonomialBasisIndex) continue;
+                    isDuplicate = true;
+                    std::cerr << "  -> skipping duplicate region (nb=" << reg.nb
+                              << ", sector=[" << (reg.limitSector.empty()?-1:reg.limitSector[0])
+                              << "...])" << std::endl;
+                    break;
+                }
+                if (!isDuplicate)
+                    allResults.push_back(std::move(reg));
             }
-            if (!isDuplicate)
+        } else {
+            for (auto& reg : regions)
                 allResults.push_back(std::move(reg));
         }
     }
