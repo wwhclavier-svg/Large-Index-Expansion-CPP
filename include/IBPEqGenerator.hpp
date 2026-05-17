@@ -1156,8 +1156,9 @@ inline std::vector<IBPEquationG> assembleIBPFromDerivatives(
                     for (int m = 0; m < ne; ++m) {
                         if (m != i - 1) multiplied.exps[m] += 1;
                     }
-                    // The n_i factor (SP2PD aligned with MMA convention C*sp+Cconst=z)
-                    // No negation — MMA's Coefficient["n"] extraction doesn't negate
+                    // Apply -deriv: negate coefficient to match MMA's IBP formula
+                    // IBP eq = d*δ_jk*∏z_m + Σ_i n_i*(-deriv[i,j,k])*∏_{m≠i}z_m
+                    multiplied.coeff = (-multiplied.coeff) % modulus;
                     if (multiplied.coeff < 0) multiplied.coeff += modulus;
                     multiplied.nIdx = i;
 

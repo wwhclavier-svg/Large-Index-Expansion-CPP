@@ -164,11 +164,14 @@ inline std::vector<std::string> buildABEquations(
         PolyArith::Polynomial poly;
 
         for (const auto& term : eq.terms) {
-            // Include ALL terms: d-terms (nIdx=0), active and inactive n_i.
-            // MMA uses the FULL ideal via sectorLimitIBP + Coefficient[n],
-            // which evaluates all IBP equations with the sector mask applied
-            // at the g-operator argument level. Filtering by nIdx here would
-            // miss cross-terms connecting active and inactive propagators.
+            // d-terms (nIdx=0) are skipped: MMA's expRegSolve2 uses
+            // sectorLimitIBP to restrict to the leading order,
+            // after sectorLimitIBP, Coefficient[..., "n"] filters them out.
+            if (term.nIdx == 0)
+                continue;
+            // Skip inactive n_i (sector element is 0)
+            if (term.nIdx > 0 && sector[term.nIdx - 1] == 0)
+                continue;
             int64_t coeff = term.coeff % modulus;
             if (coeff < 0) coeff += modulus;
             // Active n_i: coeff stays as-is (×1, matching MMA's n→0 path)
