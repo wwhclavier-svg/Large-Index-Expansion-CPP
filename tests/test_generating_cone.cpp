@@ -40,8 +40,11 @@ int testSeedGeneration() {
     auto topSeeds = generateDotSeeds(2, 2, true, 2);
     std::cout << "  TopRankOnly, minRank=2: " << topSeeds.size() << " seeds\n";
 
-    auto minusSeeds = generateMinusSeeds(2, 2);
-    std::cout << "  MinusSeeds NE=2, level=2: " << minusSeeds.size() << " seeds\n";
+    auto minusSeeds = generateMinusSeeds(2, 1, std::vector<int>{0, 0});
+    std::cout << "  MinusSeeds NE=2, mrnk=1, sector={0,0}: " << minusSeeds.size() << " seeds\n";
+    for (auto& s : minusSeeds) {
+        std::cout << "    [" << s[0] << "," << s[1] << "]\n";
+    }
 
     std::cout << "  PASSED\n";
     return 0;

@@ -1,0 +1,1678 @@
+<!DOCTYPE html><html><head>
+      <title>Benchmark_Results</title>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      
+      <link rel="stylesheet" href="file:////root/.vscode-server/extensions/shd101wyy.markdown-preview-enhanced-0.8.25/crossnote/dependencies/katex/katex.min.css">
+      
+      
+      
+      
+      
+      
+      
+      <style>
+      code[class*=language-],pre[class*=language-]{color:#333;background:0 0;font-family:Consolas,"Liberation Mono",Menlo,Courier,monospace;text-align:left;white-space:pre;word-spacing:normal;word-break:normal;word-wrap:normal;line-height:1.4;-moz-tab-size:8;-o-tab-size:8;tab-size:8;-webkit-hyphens:none;-moz-hyphens:none;-ms-hyphens:none;hyphens:none}pre[class*=language-]{padding:.8em;overflow:auto;border-radius:3px;background:#f5f5f5}:not(pre)>code[class*=language-]{padding:.1em;border-radius:.3em;white-space:normal;background:#f5f5f5}.token.blockquote,.token.comment{color:#969896}.token.cdata{color:#183691}.token.doctype,.token.macro.property,.token.punctuation,.token.variable{color:#333}.token.builtin,.token.important,.token.keyword,.token.operator,.token.rule{color:#a71d5d}.token.attr-value,.token.regex,.token.string,.token.url{color:#183691}.token.atrule,.token.boolean,.token.code,.token.command,.token.constant,.token.entity,.token.number,.token.property,.token.symbol{color:#0086b3}.token.prolog,.token.selector,.token.tag{color:#63a35c}.token.attr-name,.token.class,.token.class-name,.token.function,.token.id,.token.namespace,.token.pseudo-class,.token.pseudo-element,.token.url-reference .token.variable{color:#795da3}.token.entity{cursor:help}.token.title,.token.title .token.punctuation{font-weight:700;color:#1d3e81}.token.list{color:#ed6a43}.token.inserted{background-color:#eaffea;color:#55a532}.token.deleted{background-color:#ffecec;color:#bd2c00}.token.bold{font-weight:700}.token.italic{font-style:italic}.language-json .token.property{color:#183691}.language-markup .token.tag .token.punctuation{color:#333}.language-css .token.function,code.language-css{color:#0086b3}.language-yaml .token.atrule{color:#63a35c}code.language-yaml{color:#183691}.language-ruby .token.function{color:#333}.language-markdown .token.url{color:#795da3}.language-makefile .token.symbol{color:#795da3}.language-makefile .token.variable{color:#183691}.language-makefile .token.builtin{color:#0086b3}.language-bash .token.keyword{color:#0086b3}pre[data-line]{position:relative;padding:1em 0 1em 3em}pre[data-line] .line-highlight-wrapper{position:absolute;top:0;left:0;background-color:transparent;display:block;width:100%}pre[data-line] .line-highlight{position:absolute;left:0;right:0;padding:inherit 0;margin-top:1em;background:hsla(24,20%,50%,.08);background:linear-gradient(to right,hsla(24,20%,50%,.1) 70%,hsla(24,20%,50%,0));pointer-events:none;line-height:inherit;white-space:pre}pre[data-line] .line-highlight:before,pre[data-line] .line-highlight[data-end]:after{content:attr(data-start);position:absolute;top:.4em;left:.6em;min-width:1em;padding:0 .5em;background-color:hsla(24,20%,50%,.4);color:#f4f1ef;font:bold 65%/1.5 sans-serif;text-align:center;vertical-align:.3em;border-radius:999px;text-shadow:none;box-shadow:0 1px #fff}pre[data-line] .line-highlight[data-end]:after{content:attr(data-end);top:auto;bottom:.4em}html body{font-family:'Helvetica Neue',Helvetica,'Segoe UI',Arial,freesans,sans-serif;font-size:16px;line-height:1.6;color:#333;background-color:#fff;overflow:initial;box-sizing:border-box;word-wrap:break-word}html body>:first-child{margin-top:0}html body h1,html body h2,html body h3,html body h4,html body h5,html body h6{line-height:1.2;margin-top:1em;margin-bottom:16px;color:#000}html body h1{font-size:2.25em;font-weight:300;padding-bottom:.3em}html body h2{font-size:1.75em;font-weight:400;padding-bottom:.3em}html body h3{font-size:1.5em;font-weight:500}html body h4{font-size:1.25em;font-weight:600}html body h5{font-size:1.1em;font-weight:600}html body h6{font-size:1em;font-weight:600}html body h1,html body h2,html body h3,html body h4,html body h5{font-weight:600}html body h5{font-size:1em}html body h6{color:#5c5c5c}html body strong{color:#000}html body del{color:#5c5c5c}html body a:not([href]){color:inherit;text-decoration:none}html body a{color:#08c;text-decoration:none}html body a:hover{color:#00a3f5;text-decoration:none}html body img{max-width:100%}html body>p{margin-top:0;margin-bottom:16px;word-wrap:break-word}html body>ol,html body>ul{margin-bottom:16px}html body ol,html body ul{padding-left:2em}html body ol.no-list,html body ul.no-list{padding:0;list-style-type:none}html body ol ol,html body ol ul,html body ul ol,html body ul ul{margin-top:0;margin-bottom:0}html body li{margin-bottom:0}html body li.task-list-item{list-style:none}html body li>p{margin-top:0;margin-bottom:0}html body .task-list-item-checkbox{margin:0 .2em .25em -1.8em;vertical-align:middle}html body .task-list-item-checkbox:hover{cursor:pointer}html body blockquote{margin:16px 0;font-size:inherit;padding:0 15px;color:#5c5c5c;background-color:#f0f0f0;border-left:4px solid #d6d6d6}html body blockquote>:first-child{margin-top:0}html body blockquote>:last-child{margin-bottom:0}html body hr{height:4px;margin:32px 0;background-color:#d6d6d6;border:0 none}html body table{margin:10px 0 15px 0;border-collapse:collapse;border-spacing:0;display:block;width:100%;overflow:auto;word-break:normal;word-break:keep-all}html body table th{font-weight:700;color:#000}html body table td,html body table th{border:1px solid #d6d6d6;padding:6px 13px}html body dl{padding:0}html body dl dt{padding:0;margin-top:16px;font-size:1em;font-style:italic;font-weight:700}html body dl dd{padding:0 16px;margin-bottom:16px}html body code{font-family:Menlo,Monaco,Consolas,'Courier New',monospace;font-size:.85em;color:#000;background-color:#f0f0f0;border-radius:3px;padding:.2em 0}html body code::after,html body code::before{letter-spacing:-.2em;content:'\00a0'}html body pre>code{padding:0;margin:0;word-break:normal;white-space:pre;background:0 0;border:0}html body .highlight{margin-bottom:16px}html body .highlight pre,html body pre{padding:1em;overflow:auto;line-height:1.45;border:#d6d6d6;border-radius:3px}html body .highlight pre{margin-bottom:0;word-break:normal}html body pre code,html body pre tt{display:inline;max-width:initial;padding:0;margin:0;overflow:initial;line-height:inherit;word-wrap:normal;background-color:transparent;border:0}html body pre code:after,html body pre code:before,html body pre tt:after,html body pre tt:before{content:normal}html body blockquote,html body dl,html body ol,html body p,html body pre,html body ul{margin-top:0;margin-bottom:16px}html body kbd{color:#000;border:1px solid #d6d6d6;border-bottom:2px solid #c7c7c7;padding:2px 4px;background-color:#f0f0f0;border-radius:3px}@media print{html body{background-color:#fff}html body h1,html body h2,html body h3,html body h4,html body h5,html body h6{color:#000;page-break-after:avoid}html body blockquote{color:#5c5c5c}html body pre{page-break-inside:avoid}html body table{display:table}html body img{display:block;max-width:100%;max-height:100%}html body code,html body pre{word-wrap:break-word;white-space:pre}}.markdown-preview{width:100%;height:100%;box-sizing:border-box}.markdown-preview ul{list-style:disc}.markdown-preview ul ul{list-style:circle}.markdown-preview ul ul ul{list-style:square}.markdown-preview ol{list-style:decimal}.markdown-preview ol ol,.markdown-preview ul ol{list-style-type:lower-roman}.markdown-preview ol ol ol,.markdown-preview ol ul ol,.markdown-preview ul ol ol,.markdown-preview ul ul ol{list-style-type:lower-alpha}.markdown-preview .newpage,.markdown-preview .pagebreak{page-break-before:always}.markdown-preview pre.line-numbers{position:relative;padding-left:3.8em;counter-reset:linenumber}.markdown-preview pre.line-numbers>code{position:relative}.markdown-preview pre.line-numbers .line-numbers-rows{position:absolute;pointer-events:none;top:1em;font-size:100%;left:0;width:3em;letter-spacing:-1px;border-right:1px solid #999;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none}.markdown-preview pre.line-numbers .line-numbers-rows>span{pointer-events:none;display:block;counter-increment:linenumber}.markdown-preview pre.line-numbers .line-numbers-rows>span:before{content:counter(linenumber);color:#999;display:block;padding-right:.8em;text-align:right}.markdown-preview .mathjax-exps .MathJax_Display{text-align:center!important}.markdown-preview:not([data-for=preview]) .code-chunk .code-chunk-btn-group{display:none}.markdown-preview:not([data-for=preview]) .code-chunk .status{display:none}.markdown-preview:not([data-for=preview]) .code-chunk .output-div{margin-bottom:16px}.markdown-preview .md-toc{padding:0}.markdown-preview .md-toc .md-toc-details{margin:0;padding:0;border:none}.markdown-preview .md-toc summary.md-toc-link-wrapper{cursor:pointer;list-style-position:outside}.markdown-preview .md-toc summary.md-toc-link-wrapper::marker{font-size:.85em}.markdown-preview .md-toc .md-toc-link-wrapper .md-toc-link{display:inline;padding:.25rem 0}.markdown-preview .md-toc .md-toc-link-wrapper .md-toc-link div,.markdown-preview .md-toc .md-toc-link-wrapper .md-toc-link p{display:inline}.markdown-preview .md-toc .md-toc-link-wrapper.highlighted .md-toc-link{font-weight:800}.markdown-preview .md-toc .md-toc-link-wrapper[data-level='0']{margin-left:12px}.markdown-preview .md-toc .md-toc-link-wrapper[data-level='1']{margin-left:28px}.markdown-preview .md-toc .md-toc-link-wrapper[data-level='2']{margin-left:44px}.markdown-preview .md-toc .md-toc-link-wrapper[data-level='3']{margin-left:60px}.markdown-preview .md-toc .md-toc-link-wrapper[data-level='4']{margin-left:76px}.markdown-preview .md-toc .md-toc-link-wrapper[data-level='5']{margin-left:80px}.markdown-preview a.tag,.markdown-preview a.tag:active,.markdown-preview a.tag:link,.markdown-preview a.tag:visited,.markdown-preview span.tag{display:inline-block;background-color:var(--vscode-badge-background,rgba(127,127,127,.18));color:var(--vscode-badge-foreground,currentColor);border-radius:2em;font-size:.85em;font-weight:500;padding:.05em .55em;line-height:1.5;white-space:nowrap;text-decoration:none;text-shadow:none;box-shadow:none;transition:background-color .12s ease,opacity .12s ease}.markdown-preview a.tag{cursor:pointer}.markdown-preview a.tag:focus,.markdown-preview a.tag:hover{background-color:var(--vscode-badge-background,rgba(127,127,127,.32));color:var(--vscode-badge-foreground,currentColor);opacity:.85;text-decoration:none;outline:0}.markdown-preview .wikilink-embed-content{border-left:3px solid var(--vscode-textBlockQuote-border,rgba(128,128,128,.3));background:var(--vscode-textBlockQuote-background,rgba(128,128,128,.05));margin:.5em 0;padding:.5em .75em;border-radius:0 3px 3px 0}.markdown-preview .wikilink-embed-content.wikilink-embed-error{border-left-color:var(--vscode-errorForeground,#cf222e);color:var(--vscode-errorForeground,#cf222e);font-style:italic;opacity:.8}.markdown-preview .wikilink-embed-content h1:first-child,.markdown-preview .wikilink-embed-content h2:first-child,.markdown-preview .wikilink-embed-content h3:first-child,.markdown-preview .wikilink-embed-content h4:first-child,.markdown-preview .wikilink-embed-content h5:first-child,.markdown-preview .wikilink-embed-content h6:first-child{margin-top:.25em}.markdown-preview .wikilink-embed-content .wikilink-embed-content{margin:.25em 0;padding:.25em .5em}.markdown-preview .block-id{display:none}.scrollbar-style::-webkit-scrollbar{width:8px}.scrollbar-style::-webkit-scrollbar-track{border-radius:10px;background-color:transparent}.scrollbar-style::-webkit-scrollbar-thumb{border-radius:5px;background-color:rgba(150,150,150,.66);border:4px solid rgba(150,150,150,.66);background-clip:content-box}html body[for=html-export]:not([data-presentation-mode]){position:relative;width:100%;height:100%;top:0;left:0;margin:0;padding:0;overflow:auto}html body[for=html-export]:not([data-presentation-mode]) .markdown-preview{position:relative;top:0;min-height:100vh}@media screen and (min-width:914px){html body[for=html-export]:not([data-presentation-mode]) .markdown-preview{padding:2em calc(50% - 457px + 2em)}}@media screen and (max-width:914px){html body[for=html-export]:not([data-presentation-mode]) .markdown-preview{padding:2em}}@media screen and (max-width:450px){html body[for=html-export]:not([data-presentation-mode]) .markdown-preview{font-size:14px!important;padding:1em}}@media print{html body[for=html-export]:not([data-presentation-mode]) #sidebar-toc-btn{display:none}}html body[for=html-export]:not([data-presentation-mode]) #sidebar-toc-btn{position:fixed;bottom:8px;left:8px;font-size:28px;cursor:pointer;color:inherit;z-index:99;width:32px;text-align:center;opacity:.4}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] #sidebar-toc-btn{opacity:1}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc{position:fixed;top:0;left:0;width:300px;height:100%;padding:32px 0 48px 0;font-size:14px;box-shadow:0 0 4px rgba(150,150,150,.33);box-sizing:border-box;overflow:auto;background-color:inherit}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc::-webkit-scrollbar{width:8px}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc::-webkit-scrollbar-track{border-radius:10px;background-color:transparent}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc::-webkit-scrollbar-thumb{border-radius:5px;background-color:rgba(150,150,150,.66);border:4px solid rgba(150,150,150,.66);background-clip:content-box}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc a{text-decoration:none}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc .md-toc{padding:0 16px}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc .md-toc .md-toc-details{margin:0;padding:0;border:none}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc .md-toc .md-toc-link-wrapper .md-toc-link{display:inline;padding:.25rem 0}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc .md-toc .md-toc-link-wrapper .md-toc-link div,html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc .md-toc .md-toc-link-wrapper .md-toc-link p{display:inline}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc .md-toc .md-toc-link-wrapper.highlighted .md-toc-link{font-weight:800}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc .md-toc .md-toc-link-wrapper[data-level='0']{padding-left:0}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc .md-toc .md-toc-link-wrapper[data-level='1']{padding-left:16px}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc .md-toc .md-toc-link-wrapper[data-level='2']{padding-left:32px}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc .md-toc .md-toc-link-wrapper[data-level='3']{padding-left:48px}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc .md-toc .md-toc-link-wrapper[data-level='4']{padding-left:64px}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc .md-toc .md-toc-link-wrapper[data-level='5']{padding-left:80px}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .markdown-preview{left:300px;width:calc(100% - 300px);padding:2em calc(50% - 457px - 300px / 2);margin:0;box-sizing:border-box}@media screen and (max-width:1274px){html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .markdown-preview{padding:2em}}@media screen and (max-width:450px){html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .markdown-preview{width:100%}}html body[for=html-export]:not([data-presentation-mode]):not([html-show-sidebar-toc]) .markdown-preview{left:50%;transform:translateX(-50%)}html body[for=html-export]:not([data-presentation-mode]):not([html-show-sidebar-toc]) .md-sidebar-toc{display:none}
+/* Please visit the URL below for more information: */
+/*   https://shd101wyy.github.io/markdown-preview-enhanced/#/customize-css */
+
+      </style>
+      <script type="text/javascript">
+  document.addEventListener("DOMContentLoaded", function () {
+    // your code here
+  });
+</script>
+    </head>
+    <body for="html-export">
+      <div class="crossnote markdown-preview  ">
+      
+<h1 id="benchmark-results--test_relationff">Benchmark Results — test_relationFF </h1>
+<h2 id="一-测试环境">一、测试环境 </h2>
+<ul>
+<li>模数: 179424673 (Prime[10000000])</li>
+<li>参数: lev ∈ [1,3], deg ∈ [0,2]</li>
+<li>优化: Incremental RREF + nimax={0} 削减（2026-05-05）</li>
+</ul>
+<hr>
+<h2 id="二-算法优化效果-o0-order3">二、算法优化效果（-O0, order=3） </h2>
+<table>
+<thead>
+<tr>
+<th>Family</th>
+<th>L</th>
+<th>ne</th>
+<th>Regimes</th>
+<th>优化前</th>
+<th>优化后</th>
+<th>加速比</th>
+<th>eq/sample 变化</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Box</td>
+<td>1</td>
+<td>4</td>
+<td>15</td>
+<td>71.6s</td>
+<td><strong>7.50s</strong></td>
+<td>9.5x</td>
+<td>17410→68</td>
+</tr>
+<tr>
+<td>SR212</td>
+<td>2</td>
+<td>5</td>
+<td>6</td>
+<td>53.6s</td>
+<td><strong>9.85s</strong></td>
+<td>5.4x</td>
+<td>7480→24</td>
+</tr>
+<tr>
+<td>SR212-3m</td>
+<td>2</td>
+<td>5</td>
+<td>8</td>
+<td>80.2s</td>
+<td><strong>12.75s</strong></td>
+<td>6.3x</td>
+<td>7480→32</td>
+</tr>
+<tr>
+<td>SR212-5m</td>
+<td>2</td>
+<td>5</td>
+<td>45</td>
+<td>OOM</td>
+<td><strong>69.77s</strong></td>
+<td>∞</td>
+<td>—</td>
+</tr>
+<tr>
+<td>TB123</td>
+<td>2</td>
+<td>7</td>
+<td>37</td>
+<td>38min+¹</td>
+<td><strong>300.52s</strong></td>
+<td>~7.5x</td>
+<td>7480→280</td>
+</tr>
+<tr>
+<td>NP222</td>
+<td>2</td>
+<td>7</td>
+<td>92</td>
+<td>—</td>
+<td><strong>441.21s</strong></td>
+<td>new</td>
+<td>—</td>
+</tr>
+<tr>
+<td>TB123</td>
+<td>2</td>
+<td>7</td>
+<td>37</td>
+<td>—</td>
+<td><strong>1115.49s</strong></td>
+<td>new (k=2, lev=3)</td>
+<td>210</td>
+</tr>
+</tbody>
+</table>
+<p>¹ 仅 (lev=2,deg=1) 就超过38分钟，其他配置无法完成</p>
+<hr>
+<h2 id="三-编译优化影响--o3--dndebug-vs-默认--o0">三、编译优化影响 (-O3 -DNDEBUG vs 默认 -O0) </h2>
+<h3 id="bub00-ne2-1-regime">bub00 (ne=2, 1 regime) </h3>
+<table>
+<thead>
+<tr>
+<th>k</th>
+<th>-O0 T_total</th>
+<th>-O3 T_total</th>
+<th>加速比</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>4</td>
+<td>0.05</td>
+<td>0.01</td>
+<td>5.0x</td>
+</tr>
+<tr>
+<td>6</td>
+<td>0.07</td>
+<td>0.02</td>
+<td>3.5x</td>
+</tr>
+<tr>
+<td>8</td>
+<td>0.12</td>
+<td>0.04</td>
+<td>3.0x</td>
+</tr>
+<tr>
+<td>10</td>
+<td>0.19</td>
+<td>0.07</td>
+<td>2.7x</td>
+</tr>
+<tr>
+<td>12</td>
+<td>0.31</td>
+<td>0.14</td>
+<td>2.2x</td>
+</tr>
+</tbody>
+</table>
+<h3 id="bub11-ne2-5-regimes">bub11 (ne=2, 5 regimes) </h3>
+<table>
+<thead>
+<tr>
+<th>k</th>
+<th>-O0 T_total</th>
+<th>-O3 T_total</th>
+<th>加速比</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>4</td>
+<td>0.18</td>
+<td>0.03</td>
+<td>6.0x</td>
+</tr>
+<tr>
+<td>6</td>
+<td>0.28</td>
+<td>0.07</td>
+<td>4.0x</td>
+</tr>
+<tr>
+<td>8</td>
+<td>0.48</td>
+<td>0.16</td>
+<td>3.0x</td>
+</tr>
+<tr>
+<td>10</td>
+<td>0.80</td>
+<td>0.32</td>
+<td>2.5x</td>
+</tr>
+<tr>
+<td>12</td>
+<td>1.36</td>
+<td>0.58</td>
+<td>2.3x</td>
+</tr>
+</tbody>
+</table>
+<h3 id="sr212-ne5-6-regimes">SR212 (ne=5, 6 regimes) </h3>
+<table>
+<thead>
+<tr>
+<th>k</th>
+<th>-O0 T_total</th>
+<th>-O3 T_total</th>
+<th>加速比</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>2</td>
+<td>3.55</td>
+<td>0.68</td>
+<td>5.2x</td>
+</tr>
+<tr>
+<td>3</td>
+<td>7.75</td>
+<td>2.21</td>
+<td>3.5x</td>
+</tr>
+<tr>
+<td>4</td>
+<td>13.30</td>
+<td>4.49</td>
+<td>3.0x</td>
+</tr>
+<tr>
+<td>5</td>
+<td>28.31</td>
+<td>10.72</td>
+<td>2.6x</td>
+</tr>
+</tbody>
+</table>
+<p><strong>小结</strong>: -O3 带来 2-5x 加速，scaling 指数不变（常数因子移位）。</p>
+<hr>
+<h2 id="四-展开时间-scaling-o3">四、展开时间 scaling（-O3） </h2>
+<blockquote>
+<p>此分析基于小 ne 家族（需高 k 才能收敛）的测量数据。大 ne 下 k 由 stable_order 决定（通常 ≤3），展开成本在绝对量上不大，瓶颈转向求解阶段的变量空间膨胀（见第五节和第十一节）。</p>
+</blockquote>
+<h3 id="数据表t_expand--秒">数据表（T_expand / 秒） </h3>
+<table>
+<thead>
+<tr>
+<th>k</th>
+<th>bub00 (ne=2)</th>
+<th>bub10 (ne=2)</th>
+<th>bub11 (ne=2)</th>
+<th>Tri (ne=3)</th>
+<th>Box (ne=4)</th>
+<th>SR212 (ne=5)</th>
+<th>TB123 (ne=7)</th>
+<th>NP222 (ne=7)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>0.000</td>
+<td>0.000</td>
+<td>0.000</td>
+<td>0.000</td>
+<td>0.000</td>
+<td>—</td>
+<td>0.02</td>
+<td>0.02</td>
+</tr>
+<tr>
+<td>2</td>
+<td>0.000</td>
+<td>0.000</td>
+<td>0.000</td>
+<td>0.001</td>
+<td>0.002</td>
+<td>0.008</td>
+<td>1.48</td>
+<td>1.57</td>
+</tr>
+<tr>
+<td>3</td>
+<td>0.000</td>
+<td>0.000</td>
+<td>0.001</td>
+<td>0.003</td>
+<td>0.010</td>
+<td>0.103</td>
+<td>54.69</td>
+<td>37.05</td>
+</tr>
+<tr>
+<td>4</td>
+<td>0.000</td>
+<td>0.001</td>
+<td>0.002</td>
+<td>0.010</td>
+<td>0.061</td>
+<td>0.843</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>5</td>
+<td>0.001</td>
+<td>0.003</td>
+<td>0.004</td>
+<td>0.033</td>
+<td>0.331</td>
+<td>5.037</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>6</td>
+<td>0.002</td>
+<td>0.007</td>
+<td>0.008</td>
+<td>0.085</td>
+<td>1.522</td>
+<td>23.664</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>7</td>
+<td>0.003</td>
+<td>0.011</td>
+<td>0.017</td>
+<td>0.208</td>
+<td>18.768</td>
+<td>92.926</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>8</td>
+<td>0.006</td>
+<td>0.019</td>
+<td>0.028</td>
+<td>0.465</td>
+<td>52.184</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>9</td>
+<td>0.009</td>
+<td>0.032</td>
+<td>0.048</td>
+<td>0.872</td>
+<td>129.061</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>10</td>
+<td>0.015</td>
+<td>0.052</td>
+<td>0.074</td>
+<td>1.683</td>
+<td>272.195</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>11</td>
+<td>0.025</td>
+<td>0.092</td>
+<td>0.117</td>
+<td>3.090</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>12</td>
+<td>0.037</td>
+<td>0.112</td>
+<td>0.170</td>
+<td>5.087</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>13</td>
+<td>0.050</td>
+<td>0.165</td>
+<td>0.262</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>14</td>
+<td>0.070</td>
+<td>0.239</td>
+<td>0.351</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>TB123: 37 regimes, nb∈[1,6]; NP222: 92 regimes, nb∈[1,3], 均 -O0 全扇区。NP222 k=3 比 TB123 快（37 vs 55s），因为大 nb regime 少（<a class="tag" data-tag="root" href="tag://root">#root</a>=113 vs 70 但每个 regime 的矩阵开销更均衡）。</p>
+</blockquote>
+<h3 id="power-law-拟合-t_expand--a--kblog-log-线性回归">Power-law 拟合 T_expand = A · k^b（log-log 线性回归） </h3>
+<table>
+<thead>
+<tr>
+<th>ne</th>
+<th>b (指数)</th>
+<th>拟合范围</th>
+<th>代表性家族</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>2</td>
+<td><strong>4.2</strong></td>
+<td>k=5..14</td>
+<td>bub00/bub10/bub11</td>
+</tr>
+<tr>
+<td>3</td>
+<td><strong>5.8</strong></td>
+<td>k=4..12</td>
+<td>Tri</td>
+</tr>
+<tr>
+<td>4</td>
+<td><strong>8.0</strong></td>
+<td>k=4..6*</td>
+<td>Box</td>
+</tr>
+<tr>
+<td>5</td>
+<td><strong>8.3</strong></td>
+<td>k=3..7</td>
+<td>SR212</td>
+</tr>
+<tr>
+<td>7</td>
+<td><strong>7.1 / 6.9</strong></td>
+<td>k=1..3</td>
+<td>TB123 / NP222（-O0，一致）</td>
+</tr>
+</tbody>
+</table>
+<p>*Box 在 k≥7 出现异常跳跃（18.8s vs 预期 ~5s），取 k=4..6 拟合</p>
+<h3 id="b-与-ne-的关系">b 与 ne 的关系 </h3>
+<p>近似线性：<strong>b ≈ 1.5·ne + 1</strong></p>
+<table>
+<thead>
+<tr>
+<th>ne</th>
+<th>实测 b</th>
+<th>1.5·ne+1</th>
+<th>偏差</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>2</td>
+<td>4.2</td>
+<td>4.0</td>
+<td>+0.2</td>
+</tr>
+<tr>
+<td>3</td>
+<td>5.8</td>
+<td>5.5</td>
+<td>+0.3</td>
+</tr>
+<tr>
+<td>4</td>
+<td>8.0</td>
+<td>7.0</td>
+<td>+1.0</td>
+</tr>
+<tr>
+<td>5</td>
+<td>8.3</td>
+<td>8.5</td>
+<td>-0.2</td>
+</tr>
+<tr>
+<td>7</td>
+<td>6.9-7.1</td>
+<td>11.5</td>
+<td><strong>-4.4</strong>（TB123/NP222 一致，大 ne 下指数显著放缓）</td>
+</tr>
+</tbody>
+</table>
+<p>理论背景：每个 order k 的展开计算量与 binom(l+ne-1, ne-1) × nb 相关，l 遍历 0..k*incre。积分后大致给出 k^ne 的渐进行为，额外的 +1~2 来自矩阵运算和 nb 随 l 的增长。</p>
+<h3 id="预测公式-o3">预测公式（-O3） </h3>
+<pre data-role="codeBlock" data-info="" class="language-text"><code>T_expand(ne, k) ≈ C(ne) · k^(1.5·ne + 1)  秒
+
+其中 C(ne=2) ≈ 3e-7, C(ne=3) ≈ 3e-7, C(ne=5) ≈ 1e-5, C(ne=7) ≈ 待拟合
+</code></pre><h3 id="实测-vs-预测">实测 vs 预测 </h3>
+<table>
+<thead>
+<tr>
+<th>ne</th>
+<th>k</th>
+<th>实测 T_expand(s)</th>
+<th>预测 (s)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>2</td>
+<td>6</td>
+<td>0.002</td>
+<td>0.003</td>
+</tr>
+<tr>
+<td>2</td>
+<td>10</td>
+<td>0.015</td>
+<td>0.016</td>
+</tr>
+<tr>
+<td>2</td>
+<td>14</td>
+<td>0.070</td>
+<td>0.12</td>
+</tr>
+<tr>
+<td>3</td>
+<td>6</td>
+<td>0.085</td>
+<td>0.054</td>
+</tr>
+<tr>
+<td>3</td>
+<td>10</td>
+<td>1.683</td>
+<td>1.1</td>
+</tr>
+<tr>
+<td>5</td>
+<td>4</td>
+<td>0.843</td>
+<td>0.4</td>
+</tr>
+<tr>
+<td>5</td>
+<td>7</td>
+<td>92.9</td>
+<td>130</td>
+</tr>
+<tr>
+<td>7</td>
+<td>2</td>
+<td>1.48 / 1.57</td>
+<td>k^7.1→~137×A</td>
+</tr>
+<tr>
+<td>7</td>
+<td>3</td>
+<td>54.69 / 37.05</td>
+<td>k^7.1→~2440×A</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>TB123 / NP222，ne=7，-O0 编译。两者 b≈7.0，远低于 1.5·ne+1=11.5 的预测。大 ne 下 scaling 指数放缓（大 nb regime 的 O(nb³) 矩阵运算比组合数增长更早成为瓶颈）。需 -O3 数据确认。</p>
+</blockquote>
+<hr>
+<h2 id="五-求解时间-scaling">五、求解时间 scaling </h2>
+<p>求解阶段（ν采样 + RREF）主要取决于 lev_max/deg_max/<em>ne</em>（固定参数），而非 k：</p>
+<ul>
+<li><strong>变量数</strong> = binom(ne+lev_max, ne) × binom(ne+deg_max, ne)，与 k 无关</li>
+<li><strong>eq/sample</strong> ∝ Σ_r nb_r × (k_max+1)，与 k 线性相关</li>
+<li><strong>T_solve ∝ k^1.0~1.3</strong>，远低于展开的 k^(5~8)</li>
+</ul>
+<p>k 较小时求解主导，k 增大后展开逐渐成为瓶颈——但这仅适用于小 ne 家族（需高 k 才能收敛）。大 ne 下稳定阶数低（k=2~3），展开成本绝对值不大，瓶颈在求解阶段：变量空间 ∝ binom(ne+lev, ne)×binom(ne+deg, ne) 随 ne 两项式级膨胀，RREF 消元成为主导。</p>
+<h3 id="tb123--np222-求解时间与内存-o0-lev12-deg02-全扇区">TB123 / NP222 求解时间与内存（-O0, lev=1..2, deg=0..2, 全扇区） </h3>
+<p><strong>TB123</strong> (37 regimes, nb∈[1,6], <a class="tag" data-tag="root" href="tag://root">#root</a>=70):</p>
+<table>
+<thead>
+<tr>
+<th>k</th>
+<th>T_expand (s)</th>
+<th>T_solve (s)</th>
+<th>T_total (s)</th>
+<th>Max RSS</th>
+<th>eq/sample</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>0.02</td>
+<td>3.17</td>
+<td>3.19</td>
+<td>34 MB</td>
+<td>70</td>
+</tr>
+<tr>
+<td>2</td>
+<td>1.48</td>
+<td>50.65</td>
+<td>52.13</td>
+<td>274 MB</td>
+<td>210</td>
+</tr>
+<tr>
+<td>3</td>
+<td>54.69</td>
+<td>44.18</td>
+<td>98.87</td>
+<td>3.4 GB</td>
+<td>350</td>
+</tr>
+</tbody>
+</table>
+<p><strong>NP222</strong> (92 regimes, nb∈[1,3], <a class="tag" data-tag="root" href="tag://root">#root</a>=113):</p>
+<table>
+<thead>
+<tr>
+<th>k</th>
+<th>T_expand (s)</th>
+<th>T_solve (s)</th>
+<th>T_total (s)</th>
+<th>Max RSS</th>
+<th>eq/sample</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>0.02</td>
+<td>6.56</td>
+<td>6.58</td>
+<td>50 MB</td>
+<td>175</td>
+</tr>
+<tr>
+<td>2</td>
+<td>1.57</td>
+<td>45.15</td>
+<td>46.72</td>
+<td>244 MB</td>
+<td>525</td>
+</tr>
+<tr>
+<td>3</td>
+<td>37.05</td>
+<td>91.27</td>
+<td>128.32</td>
+<td>2.4 GB</td>
+<td>875</td>
+</tr>
+</tbody>
+</table>
+<p><strong>对比</strong>:</p>
+<ul>
+<li>NP222 regimes 多 2.5x (92 vs 37)，但 k=3 展开快了 32% (37s vs 55s)——大 nb regime (nb=6) 的矩阵运算开销远超多个 nb=1 regime。</li>
+<li>NP222 k=3 求解慢了 2x (91s vs 44s)——eq/sample 多 2.5x (875 vs 350)，每个 ν 采样的矩阵行数更多，RREF 更重。</li>
+<li>内存：NP222 反而低 (2.4 vs 3.4 GB)，因为最大 nb 较小，RREF 工作矩阵更紧凑。</li>
+</ul>
+<h3 id="展开-vs-求解-交叉分析">展开 vs 求解 交叉分析 </h3>
+<p>随 k 增大，展开时间 (∝ k^b) 最终超越求解时间 (∝ k^1~1.3)。交叉点位置取决于 ne：</p>
+<pre data-role="codeBlock" data-info="" class="language-text"><code>           k=1          k=2           k=3           k=4           k=5          交叉点
+         Exp   Sol    Exp    Sol    Exp    Sol    Exp    Sol    Exp    Sol
+SR212      —     —   0.01   0.67   0.10   2.11   0.84   3.65   5.04   5.68    k≈5.5
+(ne=5)
+TB123    0.02   3.2   1.48  50.7   54.7   44.2     —      —      —      —     k≈2.7
+(ne=7)
+NP222    0.02   6.6   1.57  45.2   37.0   91.3     —      —      —      —     k≈3.6
+(ne=7)
+DB313    0.05   574     —      —      —      —      —      —      —      —     k≈2-3*
+(ne=9)
+</code></pre><p><strong>粗体</strong> = 该 k 值的主导阶段。SR212: -O3 (来源 section 三/四); TB123/NP222/DB313: -O0 实测。Box (ne=4) 数据文件过期，无法纳入。</p>
+<p>*DB313 k=2 total=217s (section 八)，展开估计 40-140s (取决于 b 取值)，交叉在 k=2.5 附近。</p>
+<p><strong>规律</strong>:</p>
+<ul>
+<li><strong>ne=5</strong>: 交叉点在 k≈5.5——对于典型 use case (k=5)，求解仍是瓶颈。低 ne 下展开的 k^ne 组合增长起点低，需到 k=6 才追上。</li>
+<li><strong>ne=7</strong>: 交叉点在 k≈3——展开在 k=3 已超越 (TB123) 或接近 (NP222) 求解。NP222 的交叉略靠后 (3.6 vs 2.7)，因为 <a class="tag" data-tag="root" href="tag://root">#root</a> 更大 (113 vs 70) 使求解更重。</li>
+<li><strong>ne=9</strong>: 交叉点在 k≈2-3——展开 ∝ k^b (b≈10) 增长极快，k=1 时展开仅 0.05s (求解的 0.01%)，k=3 时已暴涨至估算数千秒。但实际 use case (k≤3) 中求解始终占主导 (ne=9, lev=2 下变量数 3025，RREF 极重)。</li>
+</ul>
+<p><strong>交叉点随 ne 左移</strong> (ne=5→k≈5.5, ne=7→k≈3, ne=9→k≈2.5)，因为展开的指数增长 (b≈1.5ne) 随 ne 增大而加速，更快追上求解的线性增长。</p>
+<p><strong>实践含义</strong>:</p>
+<ul>
+<li><strong>小 ne (≤4)</strong>：提高 order 的成本主要在求解（更多 ν 采样 → 更多 RREF 行），展开几乎免费。应优先提高 order 以增加采样方程数。</li>
+<li><strong>中 ne (5-6)</strong>：展开和求解在某 k 处交叉。在交叉点以下应优先提高 order；以上应优先扩展 regime 覆盖。</li>
+<li><strong>大 ne (≥7)</strong>：展开在低 k 即超越求解（ne=7: k≈3, ne=9: k≈2.5）。考虑到 stable_order 通常 ≤3，实际瓶颈取决于是否已收敛：未收敛时需提高 order（展开成本巨高），已收敛时展开成本可控。展开系数可落盘缓解内存，但计算本身的 CPU 时间不可绕过。</li>
+</ul>
+<hr>
+<h2 id="六-全量测试结果-o3各家族最佳已知结果">六、全量测试结果（-O3，各家族最佳已知结果） </h2>
+<h3 id="关系计数矩阵">关系计数矩阵 </h3>
+<pre data-role="codeBlock" data-info="" class="language-text"><code>Box (ne=4, k=5):           SR212 (ne=5, k=5):         SR212-3m (ne=5, k=5):
+       0  1  2                  0  1  2                    0  1  2
+  1    0  0  0             1    0  3  1               1    0  0  0
+  2    0  0  0             2    0  7 11               2    0  8  9
+  3    6  0  0             3   10  0  0               3   10  4 19
+
+SR212-5m (ne=5, k=5):      TB123 (ne=7, k=4, top):      NP222 (ne=7, k=4, top):      TB123 (ne=7, k=2, full):
+       0  1  2                  0  1  2                      0  1  2                      0  1  2
+  1    0  0  0             1    0  0  0                 1    0  0  0                 1    0  0  0
+  2    0  0  0             2    0  0  0                 2    0  0  0                 2    0  0  0
+  3   10  0  0             3    —  —  —                 3   21  0 1862*               3   21  0 284*
+
+DB313 (ne=9, k=2):           NP322 (ne=9, k=2, top):
+       0  1                       0  1
+  1    0  0                  1    0  0
+  2    0  0                  2    0  0
+  3   36  0                  3   36  0
+</code></pre><p>*NP222 (3,2)=1862 但 stable_order=-2，欠采样假阳性；TB123 (3,2)=284 同样 stable_order=-2<br>
+<code>top</code> = --topsector 模式，<code>—</code> = 超出该配置的 lev/deg 范围</p>
+<h3 id="稳定阶数矩阵">稳定阶数矩阵 </h3>
+<pre data-role="codeBlock" data-info="" class="language-text"><code>Box (k=5):                  SR212 (k=5):                SR212-3m (k=5):
+       0  1  2                  0  1  2                    0  1  2
+  1    0  0  0             1    0  0  2               1    0  0  1
+  2    0  0  3             2    0  2  3               2    0  1  2
+  3    0  2  4             3    0  2  4               3    0  2  4
+
+SR212-5m (k=5):             TB123 (k=4, top):            NP222 (k=4, top):            TB123 (k=2, full):
+       0  1  2                  0  1  2                      0  1  2                      0  1  2
+  1    0  0  0             1    0  0  0                 1    0  0  1                 1    0  0  0
+  2    0  0  0             2    0  0  0                 2    0  2  4                 2    0  0  1
+  3    0  0  2             3    —  —  —                 3    1  3 -2                 3    0  1 -2
+
+DB313 (k=2):                 NP322 (k=2, top):
+       0  1                       0  1
+  1    -  -                  1    0  0
+  2    -  -                  2    0  1
+  3    -  1                  3    0  2
+</code></pre><p><code>top</code> = --topsector 模式，<code>—</code> = 超出该配置的 lev/deg 范围</p>
+<p><strong>关键改进（相对 order=3, lev_max=2）：</strong></p>
+<ul>
+<li>所有稳定阶数 ≥0，不再出现 -2（之前 SR212 (2,2) 为 -2 → 现在为 3）</li>
+<li>lev=3 引入后，Box/SR212-5m 在 (3,0) 发现了非零关系（之前 lev≤2 全为零）</li>
+<li>SR212 在 (2,2) 的关系从 40（不稳定）收敛到 11（稳定）</li>
+</ul>
+<h3 id="特征根数-root--σnb">特征根数 (<a class="tag" data-tag="root" href="tag://root">#root</a> = Σnb) </h3>
+<table>
+<thead>
+<tr>
+<th>Family</th>
+<th>ne</th>
+<th><a class="tag" data-tag="regimes" href="tag://regimes">#regimes</a></th>
+<th>nb 值</th>
+<th><a class="tag" data-tag="root" href="tag://root">#root</a> (Σnb)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Box</td>
+<td>4</td>
+<td>15</td>
+<td>[1, 2]</td>
+<td><strong>17</strong></td>
+</tr>
+<tr>
+<td>SR212</td>
+<td>5</td>
+<td>6</td>
+<td>1</td>
+<td><strong>6</strong></td>
+</tr>
+<tr>
+<td>SR212-3m</td>
+<td>5</td>
+<td>8</td>
+<td>1</td>
+<td><strong>8</strong></td>
+</tr>
+<tr>
+<td>SR212-5m</td>
+<td>5</td>
+<td>45</td>
+<td>1</td>
+<td><strong>45</strong></td>
+</tr>
+<tr>
+<td>TB123</td>
+<td>7</td>
+<td>37</td>
+<td>[1, 2, 3, 4, 6]</td>
+<td><strong>70</strong></td>
+</tr>
+<tr>
+<td>NP222</td>
+<td>7</td>
+<td>92</td>
+<td>[1, 2, 3]</td>
+<td><strong>113</strong></td>
+</tr>
+<tr>
+<td>DB313</td>
+<td>9</td>
+<td>63</td>
+<td>[1, 2, 3]</td>
+<td><strong>87</strong></td>
+</tr>
+<tr>
+<td>NP322</td>
+<td>9</td>
+<td>605</td>
+<td>—</td>
+<td><strong>1537</strong></td>
+</tr>
+</tbody>
+</table>
+<h3 id="独立变量详情">独立变量详情 </h3>
+<table>
+<thead>
+<tr>
+<th>Family</th>
+<th>(lev,deg)</th>
+<th>vars</th>
+<th>active</th>
+<th>sol_dim</th>
+<th>independent</th>
+<th>stable_order</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Box</td>
+<td>(3,0)</td>
+<td>35</td>
+<td>35</td>
+<td>6</td>
+<td>6</td>
+<td>0</td>
+</tr>
+<tr>
+<td>SR212</td>
+<td>(1,1)</td>
+<td>36</td>
+<td>36</td>
+<td>3</td>
+<td>3</td>
+<td>0</td>
+</tr>
+<tr>
+<td></td>
+<td>(1,2)</td>
+<td>126</td>
+<td>109</td>
+<td>1</td>
+<td>1</td>
+<td>2</td>
+</tr>
+<tr>
+<td></td>
+<td>(2,1)</td>
+<td>126</td>
+<td>109</td>
+<td>7</td>
+<td>7</td>
+<td>2</td>
+</tr>
+<tr>
+<td></td>
+<td>(2,2)</td>
+<td>441</td>
+<td>314</td>
+<td>11</td>
+<td>11</td>
+<td>3</td>
+</tr>
+<tr>
+<td></td>
+<td>(3,0)</td>
+<td>56</td>
+<td>56</td>
+<td>10</td>
+<td>10</td>
+<td>0</td>
+</tr>
+<tr>
+<td>SR212-3m</td>
+<td>(2,1)</td>
+<td>126</td>
+<td>126</td>
+<td>8</td>
+<td>8</td>
+<td>1</td>
+</tr>
+<tr>
+<td></td>
+<td>(2,2)</td>
+<td>441</td>
+<td>401</td>
+<td>9</td>
+<td>9</td>
+<td>2</td>
+</tr>
+<tr>
+<td></td>
+<td>(3,0)</td>
+<td>56</td>
+<td>56</td>
+<td>10</td>
+<td>10</td>
+<td>0</td>
+</tr>
+<tr>
+<td></td>
+<td>(3,1)</td>
+<td>336</td>
+<td>244</td>
+<td>4</td>
+<td>4</td>
+<td>2</td>
+</tr>
+<tr>
+<td></td>
+<td>(3,2)</td>
+<td>1176</td>
+<td>772</td>
+<td>19</td>
+<td>19</td>
+<td>4</td>
+</tr>
+<tr>
+<td>SR212-5m</td>
+<td>(3,0)</td>
+<td>56</td>
+<td>56</td>
+<td>10</td>
+<td>10</td>
+<td>0</td>
+</tr>
+<tr>
+<td>NP222</td>
+<td>(3,0)</td>
+<td>120</td>
+<td>120</td>
+<td>21</td>
+<td>21</td>
+<td>1</td>
+</tr>
+<tr>
+<td>NP222</td>
+<td>(3,1)</td>
+<td>960</td>
+<td>792</td>
+<td>0</td>
+<td>0</td>
+<td>3</td>
+</tr>
+<tr>
+<td>NP222</td>
+<td>(3,2)</td>
+<td>4320</td>
+<td>3564</td>
+<td>1862</td>
+<td>1862</td>
+<td>-2</td>
+</tr>
+<tr>
+<td>TB123</td>
+<td>(3,0)</td>
+<td>120</td>
+<td>120</td>
+<td>21</td>
+<td>21</td>
+<td>0</td>
+</tr>
+<tr>
+<td>TB123</td>
+<td>(3,1)</td>
+<td>960</td>
+<td>792</td>
+<td>0</td>
+<td>0</td>
+<td>1</td>
+</tr>
+<tr>
+<td>TB123</td>
+<td>(3,2)</td>
+<td>4320</td>
+<td>3564</td>
+<td>284</td>
+<td>284</td>
+<td>-2</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="七-topsector-测试tb123-np222">七、--topsector 测试（TB123, NP222） </h2>
+<h3 id="order3">order=3 </h3>
+<table>
+<thead>
+<tr>
+<th>Family</th>
+<th>L</th>
+<th>ne</th>
+<th>Regimes</th>
+<th>nb</th>
+<th>展开(s)</th>
+<th>总计(s)</th>
+<th>关系</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>TB123</td>
+<td>2</td>
+<td>7</td>
+<td>4</td>
+<td>1-4</td>
+<td>34.3</td>
+<td><strong>122.71</strong></td>
+<td>全零</td>
+</tr>
+<tr>
+<td>NP222</td>
+<td>2</td>
+<td>7</td>
+<td>8</td>
+<td>1-3</td>
+<td>11.7</td>
+<td><strong>162.16</strong></td>
+<td>(2,2):194</td>
+</tr>
+</tbody>
+</table>
+<h3 id="order4">order=4 </h3>
+<table>
+<thead>
+<tr>
+<th>Family</th>
+<th>L</th>
+<th>ne</th>
+<th>Regimes</th>
+<th>lev</th>
+<th>总计(s)</th>
+<th>关系</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>TB123</td>
+<td>2</td>
+<td>7</td>
+<td>4</td>
+<td>2</td>
+<td><strong>203.73</strong></td>
+<td>全零</td>
+</tr>
+<tr>
+<td>NP222</td>
+<td>2</td>
+<td>7</td>
+<td>8</td>
+<td>2</td>
+<td><strong>98.51</strong></td>
+<td>全零</td>
+</tr>
+<tr>
+<td>NP222</td>
+<td>2</td>
+<td>7</td>
+<td>8</td>
+<td><strong>3</strong></td>
+<td><strong>566.18</strong></td>
+<td>(3,0):21, (3,2):1862*</td>
+</tr>
+</tbody>
+</table>
+<p>*stable_order=-2，欠采样假阳性（vars=4320, active=3564, max_nu=50 &lt; min_req=72）</p>
+<h3 id="关系计数--topsector">关系计数 (--topsector) </h3>
+<pre data-role="codeBlock" data-info="" class="language-text"><code>TB123 (k=3):               NP222 (k=3):               TB123 (k=4):               NP222 (k=4):
+       0  1  2                  0  1  2                    0  1  2                    0  1  2
+  1    0  0  0             1    0  0  0               1    0  0  0               1    0  0  0
+  2    0  0  0             2    0  0 194              2    0  0  0               2    0  0  0
+  3    —  —  —             —  —  —  —             3    —  —  —               3   21  0 1862*
+</code></pre><h3 id="np222-k3-详情">NP222 (k=3) 详情 </h3>
+<table>
+<thead>
+<tr>
+<th>(lev,deg)</th>
+<th>vars</th>
+<th>active</th>
+<th>sol_dim</th>
+<th>independent</th>
+<th>stable_order</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>(2,2)</td>
+<td>1296</td>
+<td>1296</td>
+<td>194</td>
+<td>194</td>
+<td>-2</td>
+</tr>
+</tbody>
+</table>
+<h3 id="np222-k4-详情">NP222 (k=4) 详情 </h3>
+<table>
+<thead>
+<tr>
+<th>(lev,deg)</th>
+<th>vars</th>
+<th>active</th>
+<th>sol_dim</th>
+<th>independent</th>
+<th>stable_order</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>(1,0)</td>
+<td>8</td>
+<td>8</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+</tr>
+<tr>
+<td>(1,1)</td>
+<td>64</td>
+<td>64</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+</tr>
+<tr>
+<td>(1,2)</td>
+<td>288</td>
+<td>288</td>
+<td>0</td>
+<td>0</td>
+<td>1</td>
+</tr>
+<tr>
+<td>(2,0)</td>
+<td>36</td>
+<td>36</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+</tr>
+<tr>
+<td>(2,1)</td>
+<td>288</td>
+<td>288</td>
+<td>0</td>
+<td>0</td>
+<td>2</td>
+</tr>
+<tr>
+<td>(2,2)</td>
+<td>1296</td>
+<td>1296</td>
+<td>0</td>
+<td>0</td>
+<td>4</td>
+</tr>
+<tr>
+<td>(3,0)</td>
+<td>120</td>
+<td>120</td>
+<td><strong>21</strong></td>
+<td><strong>21</strong></td>
+<td><strong>1</strong></td>
+</tr>
+<tr>
+<td>(3,1)</td>
+<td>960</td>
+<td>792</td>
+<td>0</td>
+<td>0</td>
+<td>3</td>
+</tr>
+<tr>
+<td>(3,2)</td>
+<td>4320</td>
+<td>3564</td>
+<td>1862</td>
+<td>1862</td>
+<td>-2</td>
+</tr>
+</tbody>
+</table>
+<p><strong>关键发现</strong>:</p>
+<ul>
+<li><strong>(3,0) 发现 21 个收敛关系</strong>（stable_order=1）——这是 NP222 topsector 在 lev≤2 时全零后，lev=3 首次发现的非零信号。</li>
+<li>(3,1) sol_dim=0 且 stable_order=3，已收敛——被 (3,0) 的独立变量和子扇区解消去后无剩余关系。</li>
+<li>(3,2) 的 1862 个关系 stable_order=-2，是<strong>欠采样假阳性</strong>：vars=4320 中 RemoveSolvedVariables 压缩到 3564 active，但 max_nu=50 仅提供 50×60=3000 个方程 &lt; 3564，系统本质上欠定。需要增大 max_nu（理论最小 72）或增加 order。</li>
+<li>lev=2 的 (2,2) 在 k=4 完全不出现关系（k=3 的 194 个确认为假阳性）。</li>
+</ul>
+<h3 id="tb123-k2-lev3-全扇区-详情">TB123 (k=2, lev=3, 全扇区) 详情 </h3>
+<table>
+<thead>
+<tr>
+<th>阶段</th>
+<th>时间(s)</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>展开</td>
+<td>1.46</td>
+<td>37 regimes, nb=1-6, order=2</td>
+</tr>
+<tr>
+<td>求解</td>
+<td>1114.0</td>
+<td>lev=1..3, deg=0..2</td>
+</tr>
+<tr>
+<td><strong>总计</strong></td>
+<td><strong>1115.49</strong></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th>(lev,deg)</th>
+<th>vars</th>
+<th>active</th>
+<th>sol_dim</th>
+<th>independent</th>
+<th>stable_order</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>(1,0)</td>
+<td>8</td>
+<td>8</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+</tr>
+<tr>
+<td>(1,1)</td>
+<td>64</td>
+<td>64</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+</tr>
+<tr>
+<td>(1,2)</td>
+<td>288</td>
+<td>288</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+</tr>
+<tr>
+<td>(2,0)</td>
+<td>36</td>
+<td>36</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+</tr>
+<tr>
+<td>(2,1)</td>
+<td>288</td>
+<td>288</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+</tr>
+<tr>
+<td>(2,2)</td>
+<td>1296</td>
+<td>1296</td>
+<td>0</td>
+<td>0</td>
+<td>1</td>
+</tr>
+<tr>
+<td>(3,0)</td>
+<td>120</td>
+<td>120</td>
+<td><strong>21</strong></td>
+<td><strong>21</strong></td>
+<td><strong>0</strong></td>
+</tr>
+<tr>
+<td>(3,1)</td>
+<td>960</td>
+<td>792</td>
+<td>0</td>
+<td>0</td>
+<td>1</td>
+</tr>
+<tr>
+<td>(3,2)</td>
+<td>4320</td>
+<td>3564</td>
+<td>284</td>
+<td>284</td>
+<td>-2</td>
+</tr>
+</tbody>
+</table>
+<p><strong>与 NP222 --topsector k=4 对比</strong>:</p>
+<ul>
+<li>(3,0) 同为 21 个关系，但 TB123 全扇区在 <strong>k=2</strong> 即收敛 (stable_order=0 vs NP222 的 1)。子扇区解消去了噪声，更低 order 更稳定。</li>
+<li>(3,1) 均 sol_dim=0，被 (3,0) 和子扇区解传播后消去。</li>
+<li>(3,2) 均出现欠采样假阳性（284 vs 1862），但 TB123 的量级更小——全扇区的子扇区解传播继续有效缩减 nullspace 维数。</li>
+<li><strong>eq/sample 对比</strong>: TB123 全扇区 210 vs NP222 topsector 60（因数 3.5x），更多子扇区贡献更多方程行。</li>
+</ul>
+<hr>
+<h2 id="八-db313-double-box-2l4p-ne9">八、DB313 (double box 2L4P, ne=9) </h2>
+<h3 id="-topsector-结果">--topsector 结果 </h3>
+<table>
+<thead>
+<tr>
+<th>Order</th>
+<th>时间(s)</th>
+<th>Max RSS</th>
+<th>(3,0) 关系</th>
+<th>(3,1) 关系</th>
+<th>(3,1) stable</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>2</td>
+<td>66.65</td>
+<td>197 MB</td>
+<td>36</td>
+<td>1168</td>
+<td>-2</td>
+</tr>
+<tr>
+<td>3</td>
+<td>306.20</td>
+<td>3.79 GB</td>
+<td>36</td>
+<td>568</td>
+<td>-2</td>
+</tr>
+</tbody>
+</table>
+<p>其他配置 (lev≤2) 在 order=2 和 order=3 下关系数均为 0。</p>
+<h3 id="全扇区结果非--topsector">全扇区结果（非 --topsector） </h3>
+<table>
+<thead>
+<tr>
+<th>Order</th>
+<th>时间(s)</th>
+<th>Max RSS</th>
+<th>(3,0) 关系</th>
+<th>(3,1) 关系</th>
+<th>(3,1) stable</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>2</td>
+<td>216.79</td>
+<td>699 MB</td>
+<td>36</td>
+<td><strong>0</strong></td>
+<td><strong>1 (收敛)</strong></td>
+</tr>
+</tbody>
+</table>
+<p><strong>关键发现</strong>：全扇区模式下，(3,1) 的 1168 个独立变量被 RemoveSolvedVariables 传播的子扇区解完全消去，sol_dim=0 且 stable_order=1（已收敛）。--topsector 孤立测试顶扇区，缺少子扇区约束，因此关系数虚高且不收敛。</p>
+<h3 id="关系计数矩阵--topsector">关系计数矩阵 (--topsector) </h3>
+<pre data-role="codeBlock" data-info="" class="language-text"><code>DB313 (ne=9):
+       0  1
+  1    0  0
+  2    0  0
+  3   36  568*
+</code></pre><p>*stable_order=-2，未收敛</p>
+<h3 id="内存-scaling-分析">内存 Scaling 分析 </h3>
+<table>
+<thead>
+<tr>
+<th>k</th>
+<th>l-count¹</th>
+<th>Max RSS</th>
+<th>展开部分²</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>2</td>
+<td>715</td>
+<td>197 MB</td>
+<td>~0 MB</td>
+</tr>
+<tr>
+<td>3</td>
+<td>5,005</td>
+<td>3,885 MB</td>
+<td>~3,680 MB</td>
+</tr>
+<tr>
+<td><strong>4</strong></td>
+<td><strong>24,310</strong></td>
+<td><strong>~18 GB (预测)</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>5</td>
+<td>92,378</td>
+<td>~68 GB (预测)</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<p>¹ l-count = binom(2k+ne, ne) = binom(2k+9, 9)，控制展开系数缓存大小<br>
+² 扣除固定 RREF 矩阵 (~200 MB)</p>
+<p>每 l-value 内存消耗 ≈ 0.74 MB（包含 FFInt 系数、nb×nimax 数据）。</p>
+<blockquote>
+<p>上表中 Max RSS 的 95%+ 来自展开系数缓存（"展开部分"列），这部分数据可落盘——展开完成后写盘、求解时按需加载，内存即可降至 RREF 矩阵规模（~200 MB）。因此 order=4 的实际内存压力远低于 18 GB，瓶颈在求解时间而非内存。</p>
+</blockquote>
+<p><strong>order=4 预测</strong>：18.2 GB RSS，在 33.5 GB 物理内存内，有 ~15 GB 安全余量。耗时预计 ~25 分钟（展开部分主导）。</p>
+<p><strong>order=5 预测</strong>：68 GB RSS，超出物理内存。</p>
+<hr>
+<h2 id="九-np322-non-planar-2l4p-ne9">九、NP322 (Non-Planar 2L4P, ne=9) </h2>
+<ul>
+<li>非平面双圈四点，massless (s=1, t=5)</li>
+<li>605 个扇区·regime 组合，<a class="tag" data-tag="root" href="tag://root">#root</a> (Σnb) = 1537</li>
+<li>IBP 矩阵: 105 MB (vs DB313 1.3 MB，大 80 倍)</li>
+</ul>
+<h3 id="-topsector-order2">--topsector, order=2 </h3>
+<table>
+<thead>
+<tr>
+<th>时间(s)</th>
+<th>Max RSS</th>
+<th>(3,0) 关系</th>
+<th>(3,1) 关系</th>
+<th>(3,1) stable</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>163.67</td>
+<td>3.25 GB</td>
+<td>36</td>
+<td><strong>0</strong></td>
+<td><strong>2 (收敛)</strong></td>
+</tr>
+</tbody>
+</table>
+<p>其他配置 (lev≤2) 关系数均为 0。</p>
+<h3 id="关系计数矩阵-order2--topsector">关系计数矩阵 (order=2, --topsector) </h3>
+<pre data-role="codeBlock" data-info="" class="language-text"><code>NP322 (ne=9):
+        deg=0  deg=1
+  lev=1     0      0
+  lev=2     0      0
+  lev=3    36      0
+</code></pre><h3 id="稳定阶数矩阵-order2--topsector">稳定阶数矩阵 (order=2, --topsector) </h3>
+<pre data-role="codeBlock" data-info="" class="language-text"><code>NP322 (ne=9):
+        deg=0  deg=1
+  lev=1     0      0
+  lev=2     0      1
+  lev=3     0      2
+</code></pre><h3 id="独立变量详情-1">独立变量详情 </h3>
+<table>
+<thead>
+<tr>
+<th>(lev,deg)</th>
+<th>vars</th>
+<th>active</th>
+<th>sol_dim</th>
+<th>independent</th>
+<th>stable_order</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>(3,0)</td>
+<td>220</td>
+<td>220</td>
+<td>36</td>
+<td>36</td>
+<td>0</td>
+</tr>
+<tr>
+<td>(3,1)</td>
+<td>2200</td>
+<td>1840</td>
+<td>0</td>
+<td>0</td>
+<td>2</td>
+</tr>
+</tbody>
+</table>
+<h3 id="db313-vs-np322-对比-ne9-order2--topsector">DB313 vs NP322 对比 (ne=9, order=2 --topsector) </h3>
+<table>
+<thead>
+<tr>
+<th>家族</th>
+<th>拓扑</th>
+<th>IBP 矩阵</th>
+<th><a class="tag" data-tag="root" href="tag://root">#root</a></th>
+<th>时间</th>
+<th>内存</th>
+<th>(3,1) 收敛?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>DB313</td>
+<td>平面 Double Box</td>
+<td>1.3 MB</td>
+<td>—</td>
+<td>66.65s</td>
+<td>197 MB</td>
+<td>✗ (1168, -2)</td>
+</tr>
+<tr>
+<td>NP322</td>
+<td>非平面</td>
+<td>105 MB</td>
+<td>1537</td>
+<td>163.67s</td>
+<td>3.25 GB</td>
+<td>✓ (0, +2)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>关键发现</strong>：非平面拓扑的 IBP 矩阵规模远大于平面拓扑（80x），但<strong>变量空间约束更强</strong>——(3,1) 在 order=2 即收敛于零。代价是内存消耗显著增加（3.25 GB vs 197 MB），因为更大的 nb 和 <a class="tag" data-tag="root" href="tag://root">#root</a> 导致展开数据膨胀。605 个 regime 意味着全扇区模式预计内存远超 33.5 GB，不可行。</p>
+<hr>
+<h2 id="十-bin-生成管线mma--singular">十、.bin 生成管线（MMA + Singular） </h2>
+<h3 id="测试环境">测试环境 </h3>
+<ul>
+<li>管道: Mathematica → Singular CAS (Groebner 基 + 准素分解)</li>
+<li>脚本: <code>verify/VerifyUtility/Compare-FamilyGenerate.wl</code></li>
+<li>运行方式: <code>wolframscript -file Compare-FamilyGenerate.wl &lt;famname&gt;</code></li>
+<li>注: 需将 <code>verify/</code> 复制到纯 ASCII 路径以绕过中文编码问题</li>
+</ul>
+<h3 id="计时分解">计时分解 </h3>
+<table>
+<thead>
+<tr>
+<th>Family</th>
+<th>ne</th>
+<th>#总扇区</th>
+<th>#非平凡扇区</th>
+<th>族定义 (s)</th>
+<th>Singular 区域求解 (s)</th>
+<th><strong>总计 (s)</strong></th>
+<th><a class="tag" data-tag="regimes" href="tag://regimes">#regimes</a></th>
+<th><a class="tag" data-tag="root" href="tag://root">#root</a></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>TB123</td>
+<td>7</td>
+<td>57</td>
+<td>21</td>
+<td>0.66</td>
+<td>128.90</td>
+<td><strong>129.6</strong></td>
+<td>37</td>
+<td>70</td>
+</tr>
+<tr>
+<td>NP222</td>
+<td>7</td>
+<td>—</td>
+<td>47</td>
+<td>0.66</td>
+<td>15.96</td>
+<td><strong>16.6</strong></td>
+<td>92</td>
+<td>113</td>
+</tr>
+</tbody>
+</table>
+<h3 id="关键发现">关键发现 </h3>
+<ol>
+<li><strong>族定义与拓扑无关</strong> — 两个 family 均为 0.66s（仅 IBP 方程代数生成，不涉及 Singular）</li>
+<li><strong>Singular 耗时与 <a class="tag" data-tag="regimes" href="tag://regimes">#regimes</a> / <a class="tag" data-tag="root" href="tag://root">#root</a> 无直接关系</strong> — NP222 的 <a class="tag" data-tag="regimes" href="tag://regimes">#regimes</a> (92) 和 <a class="tag" data-tag="root" href="tag://root">#root</a> (113) 均大于 TB123 (37, 70)，但 Singular 快 8 倍 (16s vs 129s)</li>
+<li><strong>真正的成本驱动因素是扇区多项式复杂度</strong> — 每个扇区的 Groebner 基计算复杂度取决于极限方程组的变量数、次数和方程结构，而非最终产出的 region 数量</li>
+<li><strong>二进制导出不计时</strong> — IBPMat/RingData 写入为纯 I/O，远小于 1s</li>
+</ol>
+<hr>
+<h2 id="十一-关键发现与策略建议">十一、关键发现与策略建议 </h2>
+<h3 id="算法与性能">算法与性能 </h3>
+<ol>
+<li><strong>Incremental RREF + nimax={0}</strong> 使 eq/sample 削减 25-250x，总时间加速 5-10x，SR212-5m 从 OOM 变为可计算</li>
+<li><strong>-O3 编译</strong>带来 2-5x 常数加速，不改变 scaling 指数</li>
+<li><strong>T_expand ∝ k^(1.5·ne+1)</strong> — 对小 ne 家族（需 k≥5 才收敛），展开在 k 增大后成为瓶颈（T_solve ∝ k^1.0~1.3 增长远慢于展开）。大 ne 下 k 由 stable_order 决定（通常 ≤3），瓶颈转向求解阶段的变量空间膨胀</li>
+</ol>
+<h3 id="收敛性">收敛性 </h3>
+<ol start="4">
+<li><strong>提升 order (3→5) 实现了稳定收敛</strong>：之前 SR212 (2,2) 的 stable_order=-2（nullity 未收敛），现变为 3；所有家庭所有配置的稳定阶数均 ≥0</li>
+<li><strong>扩大 lev (2→3) 发掘了新的关系层</strong>：Box 和 SR212-5m 在 (3,0) 分别发现 6 和 10 个关系，之前 lev≤2 全为零；SR212-3m 在 lev=3 层额外发现 33 个关系</li>
+</ol>
+<h3 id="全扇区-vs--topsector">全扇区 vs --topsector </h3>
+<ol start="6">
+<li><strong>NP222 --topsector</strong> 发现 194 个关系 at (2,2)，但全子扇区测试中被淹没为零 — 顶扇区信号被噪声覆盖</li>
+<li><strong>DB313 全扇区模式</strong>：(3,1) 的 1168 个独立变量被 RemoveSolvedVariables 传播的子扇区解完全消去 (sol_dim=0, stable_order=1)；--topsector 孤立测试则虚高且不收敛</li>
+<li><strong>NP322 非平面拓扑</strong>：(3,1) 在 order=2 即收敛于零，变量空间约束强于平面拓扑，但 IBP 矩阵大 80 倍（105 MB vs 1.3 MB）</li>
+</ol>
+<h3 id="策略建议regime-覆盖-vs-order-增长">策略建议：Regime 覆盖 vs Order 增长 </h3>
+<p>DB313 (3,1) 和 NP322 (3,1) 的对比揭示了结构性质：</p>
+<table>
+<thead>
+<tr>
+<th>策略</th>
+<th>作用</th>
+<th>代价</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>增加 order (k)</td>
+<td>更多 ν 采样 → 更多方程约束<strong>同一批变量</strong></td>
+<td>展开：∝ k^(1.5·ne+1)（可落盘缓解）；求解：每 ν 加一行，线性增长</td>
+</tr>
+<tr>
+<td>增加 regimes (全扇区)</td>
+<td>子扇区解 → <strong>缩减顶扇区变量空间</strong></td>
+<td>子扇区矩阵更小，加法增长</td>
+</tr>
+<tr>
+<td>增加 lev/deg</td>
+<td>扩大变量搜索空间 → 发现高层关系</td>
+<td>变量数 ∝ binom(ne+lev, ne)×binom(ne+deg, ne)，两项式级膨胀</td>
+</tr>
+</tbody>
+</table>
+<p><strong>核心机制</strong>：RemoveSolvedVariables 模拟 Laporta 的层级消去逻辑——子扇区先确定独立变量，传播到顶扇区后变量数从 1840 缩减到 0。order 只决定每方程的行数（线性增长），但<strong>变量空间维度由 (ne, lev, deg) 决定</strong>（两项式级膨胀）。ν 采样密度信息远不及 sector 层级约束有效。</p>
+<p><strong>实践建议</strong>：对于大 ne 家族，优先扩展 regime 覆盖（全扇区模式）而非提高 order 或 lev/deg；前者在更低 order 即可实现收敛，且内存/时间可控。当必须增加 lev/deg 时，要注意变量空间的两项式膨胀远快于 order 的线性增长。</p>
+<h3 id="数据管线">数据管线 </h3>
+<ol start="9">
+<li><strong>.bin 生成瓶颈在 Singular Groebner 基计算</strong>，与 <a class="tag" data-tag="regimes/" href="tag://regimes%2F">#regimes/</a>#root 无直接关系，取决于扇区多项式复杂度</li>
+<li><strong>展开与求解的内存需求不同</strong>：展开系数可落盘（软限制），RREF 矩阵必须在 RAM 中消元（硬限制）。DB313 k=3 的 3.79 GB 中 95% 是展开缓存（可落盘 → 降至 ~200 MB），真正不可压缩的是求解阶段的 RREF 工作矩阵。NP322 全扇区 605 regime 在展开落盘后也变得可行——逐个 regime 流式处理，内存压力从展开转移到求解矩阵规模</li>
+</ol>
+<h3 id="仍待完成">仍待完成 </h3>
+<ol start="11">
+<li><strong>TB123 k=2 全扇区完成</strong>：21 关系 at (3,0)，stable_order=0。NP222 topsector k=4 同样 21 at (3,0) 但需要更高 order 收敛。(3,2) 仍欠采样，需增大 max_nu 或提高 order。</li>
+</ol>
+
+      </div>
+      
+      
+    
+    
+    
+    
+    
+    
+  
+    </body></html>

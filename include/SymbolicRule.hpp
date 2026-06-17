@@ -97,15 +97,38 @@ inline std::vector<std::vector<int>> generateDotSeeds(int ne, int level, bool to
     return seeds;
 }
 
-inline std::vector<std::vector<int>> generateMinusSeeds(int ne, int level, int sectorUp=0) {
+// MinusRank seeds (MMA minusranklist, SymbolicBTForm.wl:242-245)
+// Flat mode: generate sparse 0/1 vectors with 1's on ISP positions
+// from Subsets[ispset, mrnkLevel] — each represents a supersector shift
+inline std::vector<std::vector<int>> generateMinusSeeds(
+    int ne, int mrnkLevel, const std::vector<int>& sector)
+{
     std::vector<std::vector<int>> seeds;
-    std::vector<int> cur(ne,0);
-    int mv=level+sectorUp;
-    std::function<void(int,int)> rec = [&](int p, int r) {
-        if (p==ne) { if (!r) seeds.push_back(cur); return; }
-        for (int v=0;v<=mv;++v) { cur[p]=v; rec(p+1,r-v); }
+    if (mrnkLevel <= 0) return seeds;
+
+    // Collect ISP positions (sector[i] == 0)
+    std::vector<int> ispPos;
+    for (int i = 0; i < ne; ++i)
+        if (i < (int)sector.size() && sector[i] == 0) ispPos.push_back(i);
+
+    int nIsp = (int)ispPos.size();
+    if (mrnkLevel > nIsp || nIsp == 0) return seeds;
+
+    // Generate all subsets of ispPos of size mrnkLevel (MMA: Subsets[ispset, mrnklevel])
+    std::vector<int> subset(mrnkLevel);
+    std::function<void(int, int)> genSubsets = [&](int start, int depth) {
+        if (depth == mrnkLevel) {
+            std::vector<int> vec(ne, 0);
+            for (int pos : subset) vec[pos] = 1;
+            seeds.push_back(vec);
+            return;
+        }
+        for (int i = start; i < nIsp; ++i) {
+            subset[depth] = ispPos[i];
+            genSubsets(i + 1, depth + 1);
+        }
     };
-    for (int t=0;t<=level+sectorUp;++t) rec(0,t);
+    genSubsets(0, 0);
     return seeds;
 }
 
@@ -458,14 +481,16 @@ inline EliminatedRuleResult eliminatedRule(
         res.flags.FullFlag1 = rnk>=nCols;
         for (int c=0;c<(int)pivotCols.size();++c) res.reducedVarTable.push_back(pivotCols[c]);
 
-        // 4. 模块 GB: 用 ν-多项式系数构建 Singular 模块（MMA L160-175）
+        // 4. 模块 GB: 用 ν-多项式系数构建 Singular 多分量模块（MMA L160-175）
+        // 使用 gen(i) 模块分量（Singular 1-indexed），POT 排序 (lp(nCols), dp(ne))
+        // MMA: SingularGroebnerBasis with "PositionOverTerm"->True
         // 只在提供了 entriesForModule 时启用
         bool useModuleGB = (entriesForModule != nullptr && seedsForModule != nullptr && sectorForModule != nullptr && !entriesForModule->empty());
         if (useModuleGB) {
             try {
                 // 构建模块生成器: 每个 (entry, seed, relation_k) 一行
-                // gen(0)*c_0(ν-sd) + gen(1)*c_1(ν-sd) + ... + gen(m-1)*c_{m-1}(ν-sd)
-                // 其中 m = nCols (= blockEnd)
+                // poly(ν)*gen(1) + poly(ν)*gen(2) + ... + poly(ν)*gen(nCols)
+                // Singular gen(i) 是 1-indexed，gen(1) 对应第 0 列
                 std::vector<std::string> moduleGens;
 
                 for (auto& entry : *entriesForModule) {
@@ -474,10 +499,6 @@ inline EliminatedRuleResult eliminatedRule(
                     int na = (int)entry.alphas.size();
 
                     for (auto& seed : *seedsForModule) {
-                        // 每行对应所有 α_i 的贡献, 每个 α_i 对应一列
-                        // 构建 [col0, col1, ..., col_{nCols-1}] 向量
-                        // 其中 col_j 是 vorder[j] 位置的 ν-多项式系数
-
                         for (int k = 0; k < entry.numRelations; ++k) {
                             // 初始化 nCols 个 ν-多项式的字符串数组
                             std::vector<std::string> polyByCol(nCols, "0");
@@ -507,7 +528,6 @@ inline EliminatedRuleResult eliminatedRule(
                                 if (vpos < 0) continue;
 
                                 // 构建 ν-多项式系数: Σ_j b0[α_i, β_j] · (ν-sd)^{β_j}
-                                // b0Row = coefficients[ai*nb + bj][k+1] for all bj
                                 std::vector<firefly::FFInt> b0Row;
                                 for (int bj = 0; bj < nb; ++bj) {
                                     int ri = ai * nb + bj;
@@ -520,10 +540,11 @@ inline EliminatedRuleResult eliminatedRule(
                                 std::string nuPoly = buildNuPolynomial(b0Row, entry.betas, seed,
                                     *sectorForModule, ne, modulus);
 
-                                // 如果 numericReduce 提供，将 ν 替换为常数
+                                // 如果 numericReduce 提供，将 ν 替换为常数（B2: ISP→0, B3: ISP→0+prop→1）
                                 if (numericReduce) {
                                     for (size_t ni = 0; ni < (size_t)ne && ni < numericReduce->size(); ++ni) {
                                         long long val = (*numericReduce)[ni];
+                                        if (val < 0) continue;  // -1 = no substitution
                                         std::string target = "nu" + std::to_string(ni);
                                         size_t p;
                                         while ((p = nuPoly.find(target)) != std::string::npos) {
@@ -543,12 +564,13 @@ inline EliminatedRuleResult eliminatedRule(
                                 polyByCol[vpos] = nuPoly;
                             }
 
-                            // 构建 Singular 理想多项式字符串: (coeff)*e0 + ...
+                            // 构建 Singular 模块生成器: (coeff)*gen(1) + (coeff)*gen(2) + ...
+                            // Singular gen(i) 是 1-indexed 模块分量
                             std::string modElem;
                             for (int ci = 0; ci < nCols; ++ci) {
                                 if (polyByCol[ci] == "0") continue;
                                 if (!modElem.empty()) modElem += "+";
-                                modElem += "(" + polyByCol[ci] + ")*e" + std::to_string(ci);
+                                modElem += "(" + polyByCol[ci] + ")*gen(" + std::to_string(ci + 1) + ")";
                             }
                             if (!modElem.empty()) moduleGens.push_back(modElem);
                         }
@@ -556,80 +578,108 @@ inline EliminatedRuleResult eliminatedRule(
                 }
 
                 // 调用 Singular 模块 GB（POT 排序）
+                // Ring 仅含 ν 变量，模块分量通过 gen(i) 提供，排序为 (lp(nCols), dp(ne))
                 if (!moduleGens.empty()) {
-                    std::vector<std::string> allVars;
-                    for (int i = 0; i < nCols; ++i) allVars.push_back("e" + std::to_string(i));
-                    for (int i = 0; i < ne; ++i) allVars.push_back("nu" + std::to_string(i));
+                    std::vector<std::string> nuVars;
+                    for (int i = 0; i < ne; ++i) nuVars.push_back("nu" + std::to_string(i));
 
-                    std::string potOrd = "lp(" + std::to_string(nCols) + "),dp(" + std::to_string(ne) + ")";
-                    auto gbList = SingularRunner::groebnerBasis(moduleGens, allVars, modulus, potOrd);
+                    auto gbList = SingularRunner::modulePOTGroebner(moduleGens, nCols, nuVars, modulus);
 
-                    // 解析理想 GB: 每个多项式为 coeff_i(ν)*e_i + coeff_j(ν)*e_j + ...
-                    // 按 firstNonZero e_i 分组提取对角元（MMA L166-167）
+                    // 解析模块 GB: 每个元素为 coeff_i(ν)*gen(pos_i) + coeff_j(ν)*gen(pos_j) + ...
+                    // 按 firstNonZero gen(i) 分组提取对角元（MMA L166-167）
+                    // Singular gen() 是 1-indexed；转换为 0-indexed
                     std::map<int, std::string> diagByPos;
 
                     for (auto& element : gbList) {
-                        // 按 + 拆分为单项 (sign)(coeff)*e_i
-                        std::vector<std::string> terms;
-                        std::string buf; int sign=1;
-                        for (char c : element) {
-                            if (c=='+') { if (!buf.empty()) { terms.push_back((sign==1?"":"-")+buf); buf.clear(); } sign=1; }
-                            else if (c=='-') { if (!buf.empty()) { terms.push_back((sign==1?"":"-")+buf); buf.clear(); } sign=-1; }
-                            else if (c!=' ') buf+=c;
-                        }
-                        if (!buf.empty()) terms.push_back((sign==1?"":"-")+buf);
+                        // 按 gen(N) 拆分，第一个出现的 gen(N) 即 firstNonZero 分量
+                        // 解析: "(coeff)*gen(N)" 格式，可能前有符号
+                        struct GenTerm { int idx; std::string coeff; };
+                        std::vector<GenTerm> gterms;
 
-                        int firstPos = -1;
-                        std::string firstCoeff;
-                        std::vector<std::pair<int, std::string>> targets;
+                        size_t pos = 0;
+                        while (pos < element.size()) {
+                            // 跳过空格
+                            while (pos < element.size() && element[pos] == ' ') ++pos;
+                            if (pos >= element.size()) break;
 
-                        for (auto& term : terms) {
-                            size_t ep = term.find("e");
-                            if (ep==std::string::npos) continue;
-                            size_t estart = ep+1;
-                            size_t eend = estart;
-                            while (eend<term.size() && term[eend]>='0' && term[eend]<='9') ++eend;
-                            int ei = std::stoi(term.substr(estart, eend-estart));
+                            // 判断符号
+                            int sgn = 1;
+                            if (element[pos] == '+') { sgn = 1; ++pos; }
+                            else if (element[pos] == '-') { sgn = -1; ++pos; }
+                            while (pos < element.size() && element[pos] == ' ') ++pos;
 
-                            // 提取 e_i 的系数（系数在 "e" 之前，包在括号中："(coeff)*e_i"）
+                            // 读取系数（在括号中或直接是数字/1）
                             std::string coeff;
-                            size_t cp = term.find("(");
-                            size_t cb = term.find(")");
-                            if (cp != std::string::npos && cb != std::string::npos && cb > cp)
-                                coeff = term.substr(cp+1, cb-cp-1);
-                            else {
-                                coeff = term.substr(0, ep);
-                                if (coeff.empty() || coeff=="+" || coeff=="-") coeff=(coeff=="-")?"-1":"1";
-                                if (!coeff.empty() && coeff.back()=='*') coeff.pop_back();
+                            if (pos < element.size() && element[pos] == '(') {
+                                ++pos;
+                                int depth = 1;
+                                while (pos < element.size() && depth > 0) {
+                                    if (element[pos] == '(') ++depth;
+                                    else if (element[pos] == ')') --depth;
+                                    if (depth > 0) coeff += element[pos];
+                                    ++pos;
+                                }
+                                // 跳过 "*gen"
+                                while (pos < element.size() && element[pos] != 'g') ++pos;
+                            } else {
+                                // 无括号: 系数是 "1" 或数字
+                                while (pos < element.size() && element[pos] != 'g' && element[pos] != '+' && element[pos] != '-') {
+                                    coeff += element[pos];
+                                    ++pos;
+                                }
+                                if (coeff.empty() || coeff == "*") coeff = "1";
                             }
 
-                            if (firstPos<0 || ei<firstPos) {
-                                if (firstPos>=0)
-                                    targets.push_back({firstPos, firstCoeff});
-                                firstPos = ei; firstCoeff = coeff;
-                            } else {
-                                targets.push_back({ei, coeff});
+                            // 跳过 "gen("
+                            while (pos < element.size() && element[pos] != '(') ++pos;
+                            if (pos >= element.size()) break;
+                            ++pos; // skip '('
+
+                            // 读取 gen 索引
+                            std::string idxStr;
+                            while (pos < element.size() && element[pos] >= '0' && element[pos] <= '9') {
+                                idxStr += element[pos];
+                                ++pos;
+                            }
+                            // skip ')'
+                            if (pos < element.size() && element[pos] == ')') ++pos;
+
+                            if (!idxStr.empty()) {
+                                int gi = std::stoi(idxStr) - 1;  // 1-indexed → 0-indexed
+                                std::string fullCoeff = (sgn == -1) ? "-" + coeff : coeff;
+                                if (fullCoeff.empty()) fullCoeff = "1";
+                                gterms.push_back({gi, fullCoeff});
                             }
                         }
 
-                        if (firstPos>=0 && firstPos<res.blockEnd) {
+                        if (gterms.empty()) continue;
+
+                        // firstNonZero = smallest gen-index (POT 排序下首个分量)
+                        int firstPos = gterms[0].idx;
+                        std::string firstCoeff = gterms[0].coeff;
+
+                        // target: 所有 gen-index > firstPos 的分量
+                        std::vector<std::pair<int, std::string>> targets;
+                        for (size_t t = 1; t < gterms.size(); ++t) {
+                            if (gterms[t].idx > firstPos && gterms[t].idx < res.blockEnd)
+                                targets.push_back({gterms[t].idx, gterms[t].coeff});
+                        }
+
+                        if (firstPos >= 0 && firstPos < res.blockEnd) {
                             diagByPos[firstPos] = firstCoeff;
                             res.gbDiagonal.push_back("gen("+std::to_string(firstPos)+"): coeff="+firstCoeff);
 
                             ModuleReductionRule mr;
                             mr.srcCol = firstPos;
                             mr.srcCoeffStr = firstCoeff;
-                            for (auto& [ei, cs] : targets) {
-                                if (ei>=res.blockEnd) continue;
-                                mr.targets.push_back({ei, cs});
-                            }
+                            mr.targets = targets;
                             res.moduleRules.push_back(mr);
 
-                            // ISP singularity detection
-                            bool hasNu=false;
+                            // ISP singularity detection: 检查对角系数的分母依赖
+                            bool hasNu = false;
                             std::vector<int> nuV;
-                            for (int j=0;j<ne;++j)
-                                if (firstCoeff.find("nu"+std::to_string(j))!=std::string::npos) { hasNu=true; nuV.push_back(j); }
+                            for (int j = 0; j < ne; ++j)
+                                if (firstCoeff.find("nu" + std::to_string(j)) != std::string::npos) { hasNu = true; nuV.push_back(j); }
                             if (hasNu) res.singularISP.push_back(nuV);
                         }
                     }
@@ -649,7 +699,7 @@ inline EliminatedRuleResult eliminatedRule(
                         for (int vi = 0; vi < res.blockEnd; ++vi)
                             if (diagByPos.find(vi) == diagByPos.end()) { allBlockCovered = false; break; }
 
-                        for (auto& [pos, coeff] : diagByPos) {
+                        for (auto& [pos_, coeff] : diagByPos) {
                             bool hn = false;
                             for (int j = 0; j < ne; ++j)
                                 if (coeff.find("nu" + std::to_string(j)) != std::string::npos) { hn = true; break; }
@@ -709,7 +759,7 @@ inline ConeRule sectorBlockReducible(
     auto seeds = topRankOnly
         ? generateDotSeeds(ne, level, true, level)
         : generateDotSeeds(ne, level+sectorUp, false, 0);
-    auto mSeeds = generateMinusSeeds(ne, level, sectorUp);
+    auto mSeeds = generateMinusSeeds(ne, sectorUp, sector);
     for (auto& s : mSeeds) seeds.push_back(s);
 
     auto bm = buildBlockMatrix(entries, seeds, sector, ne, modulus);
@@ -757,10 +807,16 @@ inline GeneratingConeResult setupGeneratingCone(
     for (auto& e : rd.entries) if (e.ansatzMode=="Pyramid") pent.push_back(e);
     if (pent.empty()) { std::cerr<<"[setupGeneratingCone] No Pyramid entries\n"; return res; }
 
-    // ── B1: High-rank cone ──
+    // MMA: rgen = Length@rel — number of relation levels
+    // B1 starts at rgen-1 (not topRank-1)
+    int rgen = 0;
+    for (auto& e : pent) rgen = std::max(rgen, (int)e.alphas.size());
+    if (rgen == 0) rgen = topRank;
+
+    // ── B1: High-rank cone (MMA L288-300) ──
     {
         bool done=false;
-        for (int lvl=topRank-1; lvl<levelBound && !done; ++lvl) {
+        for (int lvl = std::max(topRank, rgen-1); lvl < levelBound && !done; ++lvl) {
             auto cr = sectorBlockReducible(pent, sector, lvl, mod, ne, true, 0);
             res.B1.push_back(cr);
             done = cr.flags.TopFlag2;
@@ -769,17 +825,59 @@ inline GeneratingConeResult setupGeneratingCone(
 
     // ── B2: Mid-rank cone (MMA L312-328) ──
     // B2 uses NumericReduce: ISP vars → 0 (MMA L316)
+    // Convergence: Most[B2mistab] === B2mistab0 (L324)
     {
         std::vector<int> nr2(ne, -1); // -1 = no substitution
         for (size_t i = 0; i < (size_t)ne; ++i)
             if (i < sector.size() && sector[i] == 0) nr2[i] = 0; // ISP→0
 
         int b1lvl = res.B1.empty() ? topRank : res.B1.back().level;
-        bool done=false;
-        for (int lvl=std::max(1,b1lvl-1); lvl<levelBound && !done; ++lvl) {
+
+        // Count ISP-only dimensions for mistab generation
+        int ne_isp = 0;
+        for (size_t i = 0; i < (size_t)ne; ++i)
+            if (sector[i] == 0) ++ne_isp;
+
+        std::vector<std::vector<int>> prevMistabB2;
+        bool done = false;
+        for (int lvl = std::max(1, b1lvl - 1); lvl < levelBound && !done; ++lvl) {
             auto cr = sectorBlockReducible(pent, sector, lvl, mod, ne, false, 0, &nr2);
             res.B2.push_back(cr);
-            done = cr.flags.FullFlag2;
+
+            // Build B2 mistab: per-ISP-rank list of non-reduced integrals (MMA L321-323)
+            std::vector<std::vector<int>> curMistab;
+            for (int r = 0; r <= lvl; ++r) {
+                std::vector<int> nonRed;
+                auto rankSeeds = generateDotSeeds(ne_isp, r);
+                for (auto& seed : rankSeeds) {
+                    std::vector<int> full(ne, 0);
+                    int idx = 0;
+                    for (int i = 0; i < ne; ++i) {
+                        if (sector[i] == 0 && idx < (int)seed.size()) {
+                            full[i] = seed[idx];
+                            ++idx;
+                        }
+                    }
+                    // Check if integral is in reducedVarIdx
+                    auto it = std::find(cr.alphaShifts.begin(), cr.alphaShifts.end(), full);
+                    int pos = -1;
+                    if (it != cr.alphaShifts.end()) pos = (int)(it - cr.alphaShifts.begin());
+                    if (pos >= 0 && std::find(cr.reducedVarIdx.begin(), cr.reducedVarIdx.end(), pos) == cr.reducedVarIdx.end())
+                        nonRed.push_back(pos);
+                }
+                curMistab.push_back(nonRed);
+            }
+
+            // MMA convergence: Most[B2mistab] === B2mistab0 (L324)
+            // Most drops the last (highest ISP rank) level
+            if (!prevMistabB2.empty() && curMistab.size() > 1 && prevMistabB2.size() > 1) {
+                bool same = true;
+                size_t cmpLen = std::min(curMistab.size() - 1, prevMistabB2.size() - 1);
+                for (size_t i = 0; i < cmpLen; ++i)
+                    if (curMistab[i] != prevMistabB2[i]) { same = false; break; }
+                if (same) done = true;
+            }
+            if (!done) prevMistabB2 = curMistab;
         }
     }
 
@@ -810,7 +908,7 @@ inline GeneratingConeResult setupGeneratingCone(
         int sup = 1, maxSup = 3;
         int maxIter = 12;
 
-        for (int lvl = topRank-1, iter = 0; lvl < levelBound && !done && iter < maxIter; ++lvl, ++iter) {
+        for (int lvl = std::max(topRank, rgen-1), iter = 0; lvl < levelBound && !done && iter < maxIter; ++lvl, ++iter) {
             auto cr = sectorBlockReducible(pent, sector, lvl, mod, ne, false, sup, &nr3);
             res.B3.push_back(cr);
 
@@ -841,11 +939,15 @@ inline GeneratingConeResult setupGeneratingCone(
             }
 
             // MMA convergence: Most[B3mistab] === B3mistab0 (MMA L346)
-            if (!prevMistab.empty() && curMistab == prevMistab) {
-                done = true;
-            } else {
-                prevMistab = curMistab;
+            // Most drops the last (highest ISP rank) level — it naturally changes as level increases
+            if (!prevMistab.empty() && curMistab.size() > 1 && prevMistab.size() > 1) {
+                bool same = true;
+                size_t cmpLen = std::min(curMistab.size() - 1, prevMistab.size() - 1);
+                for (size_t i = 0; i < cmpLen; ++i)
+                    if (curMistab[i] != prevMistab[i]) { same = false; break; }
+                if (same) done = true;
             }
+            if (!done) prevMistab = curMistab;
 
             if (iter >= maxIter - 2 && !done && sup < maxSup) ++sup;
         }
@@ -959,12 +1061,182 @@ inline std::vector<SymbolicRule> generateSymbolicRules(
                 sr.coeffStrs.push_back(ruleCoeff);
             }
 
-            if (!sr.targetShifts.empty()) {
-                rules.push_back(sr);
-            }
+            // Include rule even if empty targets (reduces to 0)
+            rules.push_back(sr);
         }
     }
     return rules;
+}
+
+// ═════════════════════════════════════════════════════════════
+// reduceTargetsByCone  (MMA SymbolicBTForm.wl:383-446)
+// 对目标积分列表逐项尝试 B1→B2→B3 规则进行约化
+// nuBase: propagator vars → 1, ISP vars → 0 (MMA L391-392)
+// ═════════════════════════════════════════════════════════════
+
+struct ConeReductionResult {
+    std::vector<std::vector<int>> sourceShifts;      // 每个目标的原始 shift
+    std::vector<std::string> coneLabels;              // "B1"/"B2"/"B3" 或 "NONE"
+    std::vector<std::string> reducedExprs;            // 约化结果字符串
+    int totalTargets = 0, reducibleTargets = 0;
+};
+
+// Evaluate a ν-polynomial string at nuBase values
+// This is a simplified numeric evaluator: substitutes nu0, nu1, ... with their values
+// and computes the result in the finite field
+inline int64_t evaluateNuPoly(const std::string& poly, const std::vector<int>& nuVals, int64_t modulus) {
+    // Simple approach: replace nu<N> with its value, then evaluate via Singular
+    // For pure constants and simple expressions, do inline evaluation
+    // For complex polynomials, we return 0 as a fallback (the target is not checked via this path)
+
+    // Count occurrences of nu variables
+    bool hasAnyNu = false;
+    for (size_t i = 0; i < nuVals.size(); ++i)
+        if (poly.find("nu" + std::to_string(i)) != std::string::npos) { hasAnyNu = true; break; }
+
+    if (!hasAnyNu) {
+        // Pure constant — parse directly
+        try {
+            long long val = std::stoll(poly);
+            val = val % modulus;
+            if (val < 0) val += modulus;
+            return val;
+        } catch (...) { return 0; }
+    }
+
+    // For ν-dependent polynomials, substitute ν values and evaluate
+    std::string evald = poly;
+    for (size_t i = 0; i < nuVals.size(); ++i) {
+        std::string target = "nu" + std::to_string(i);
+        std::string repl = std::to_string(nuVals[i]);
+        size_t p = 0;
+        while ((p = evald.find(target, p)) != std::string::npos) {
+            // Check if followed by exponent: nu<N>^exp
+            size_t end = p + target.size();
+            int exp = 1;
+            if (end < evald.size() && evald[end] == '^') {
+                size_t expStart = end + 1;
+                size_t expEnd = expStart;
+                while (expEnd < evald.size() && evald[expEnd] >= '0' && evald[expEnd] <= '9') ++expEnd;
+                exp = std::stoi(evald.substr(expStart, expEnd - expStart));
+                end = expEnd;
+            }
+            // Compute nuVal^exp
+            long long powVal = 1;
+            for (int e = 0; e < exp; ++e) powVal = (powVal * nuVals[i]) % modulus;
+            evald.replace(p, end - p, std::to_string(powVal));
+            p += std::to_string(powVal).size();
+        }
+    }
+
+    // Now evaluate the constant expression: sum of terms like "a*b*c"
+    // Simple evaluator for product-of-constants
+    try {
+        long long total = 0, cur = 0, prod = 1;
+        bool inNum = false, inProd = false;
+        char lastOp = '+';
+        std::string numBuf;
+
+        for (size_t i = 0; i <= evald.size(); ++i) {
+            char c = (i < evald.size()) ? evald[i] : '\0';
+            if (c == ' ' || c == '*') continue;
+            if (c == '+' || c == '-' || c == '\0') {
+                if (!numBuf.empty()) {
+                    long long v = std::stoll(numBuf) % modulus;
+                    if (v < 0) v += modulus;
+                    prod = (prod * v) % modulus;
+                    numBuf.clear();
+                }
+                if (lastOp == '+') total = (total + prod) % modulus;
+                else if (lastOp == '-') total = (total - prod + modulus) % modulus;
+                prod = 1;
+                lastOp = (c == '-') ? '-' : '+';
+            } else if (c >= '0' && c <= '9') {
+                numBuf += c;
+            }
+        }
+        return total;
+    } catch (...) { return 0; }
+}
+
+inline ConeReductionResult reduceTargetsByCone(
+    const GeneratingConeResult& gcr,
+    const std::vector<std::vector<int>>& targetShifts,
+    const std::vector<int>& sector,
+    int ne)
+{
+    ConeReductionResult result;
+    result.totalTargets = (int)targetShifts.size();
+    result.sourceShifts = targetShifts;
+    result.coneLabels.resize(targetShifts.size(), "NONE");
+    result.reducedExprs.resize(targetShifts.size());
+
+    // Build rule lookup: shift → {coneLabel, moduleRules}
+    // For each cone in B1, B2, B3, map alphaShifts entries to their module rules
+    struct RuleEntry {
+        std::string coneName;
+        const ModuleReductionRule* rule;
+        const std::vector<std::vector<int>>* shifts;
+    };
+    std::map<std::vector<int>, RuleEntry> ruleMap;
+
+    auto addConeRules = [&](const std::vector<ConeRule>& cones, const std::string& name) {
+        for (auto& cone : cones) {
+            for (auto& mr : cone.moduleRules) {
+                if (mr.srcCol >= (int)cone.alphaShifts.size()) continue;
+                auto shift = cone.alphaShifts[mr.srcCol];
+                // Don't overwrite B1 with B2/B3 (B1 has highest priority)
+                if (ruleMap.find(shift) == ruleMap.end())
+                    ruleMap[shift] = {name, &mr, &cone.alphaShifts};
+            }
+        }
+    };
+    addConeRules(gcr.B1, "B1");
+    addConeRules(gcr.B2, "B2");
+    addConeRules(gcr.B3, "B3");
+
+    // nuBase: propagator → 1, ISP → 0 (MMA L391-392)
+    std::vector<int> nuBase(ne, 0);
+    for (int i = 0; i < ne; ++i)
+        if (i < (int)sector.size() && sector[i] == 1) nuBase[i] = 1;
+
+    // For each target, try to find and apply a reduction rule
+    for (size_t ti = 0; ti < targetShifts.size(); ++ti) {
+        auto& ts = targetShifts[ti];
+
+        // The g-key for rule lookup: g(ν_base - target) → rule maps g(shift)
+        // In MMA: sh = g@@(nuBase - List@@jx) where jx is the target integral
+        // j[x] = g(ν_base - x), so g_key = ν_base - target
+        std::vector<int> gKey(ne);
+        for (int i = 0; i < ne; ++i)
+            gKey[i] = nuBase[i] - ts[i];
+
+        auto it = ruleMap.find(gKey);
+        if (it != ruleMap.end()) {
+            result.coneLabels[ti] = it->second.coneName;
+            ++result.reducibleTargets;
+
+            // Build reduction expression: source = Σ coeff * target
+            auto& mr = *it->second.rule;
+            std::ostringstream expr;
+            expr << "g(v-[" << gKey[0];
+            for (int i = 1; i < ne; ++i) expr << "," << gKey[i];
+            expr << "]) =";
+            for (size_t j = 0; j < mr.targets.size(); ++j) {
+                if (j > 0) expr << " + ";
+                auto& tgt = mr.targets[j];
+                expr << "(" << tgt.second << ")*g(v-[";
+                for (int i = 0; i < ne; ++i) {
+                    if (i) expr << ",";
+                    expr << (*it->second.shifts)[tgt.first][i];
+                }
+                expr << "])";
+            }
+            result.reducedExprs[ti] = expr.str();
+        }
+    }
+
+    return result;
 }
 
 // ═════════════════════════════════════════════════════════════
@@ -1000,11 +1272,19 @@ inline VerificationReport runVerification(
     auto srs = generateSymbolicRules(gcr, pent, rd.ne, sector);
     rpt.symbolicRules = srs.size();
 
-    for (int l=0;l<=levelBound;++l) {
+    // Build target list and check reducibility via reduceTargetsByCone
+    std::vector<std::vector<int>> allTargets;
+    for (int l = 0; l <= levelBound; ++l) {
         auto ss = generateDotSeeds(rd.ne, l);
-        rpt.totalTargets += ss.size();
+        for (auto& s : ss) allTargets.push_back(s);
     }
+    rpt.totalTargets = (int)allTargets.size();
+    auto cr = reduceTargetsByCone(gcr, allTargets, sector, rd.ne);
+    rpt.reducibleTargets = cr.reducibleTargets;
+
     if (!gcr.fullCoverage) rpt.warnings.push_back("Not all targets covered");
+    if (rpt.reducibleTargets < rpt.totalTargets)
+        rpt.warnings.push_back(std::to_string(rpt.totalTargets - rpt.reducibleTargets) + " targets not reducible");
 
     rpt.allConesPass = gcr.fullCoverage;
     for (auto& b1 : gcr.B1) if (!b1.flags.TopFlag1) rpt.allConesPass=false;

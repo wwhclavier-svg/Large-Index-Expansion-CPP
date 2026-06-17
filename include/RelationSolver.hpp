@@ -559,7 +559,7 @@ public:
     void clearTemporaryStorage();
     
     // 获取该 regime 在单个 nu 下的贡献行数
-    size_t rowsPerNu() const { return nb_ * (k_max_ + 1); }
+    size_t rowsPerNu() const { return nb_ * (deg_eff_ + k_max_ + 1); }
     
     // 获取该 regime 支持的最大 nimax
     int maxNimax() const { return C_ ? C_->getNimax() : 0; }
@@ -570,6 +570,7 @@ public:
     // 供 GlobalEquationAssembler::splitRowsByOrder 使用的访问器
     int getKMax() const { return k_max_; }
     int getNb() const { return nb_; }
+    int getDegEff() const { return deg_eff_; }
 
     // 核符号：false = ν-α (Pyramid), true = ν+α (DotPyramid, Star)
     void setNegatedKernel(bool neg) { negatedKernel_ = neg; }
@@ -1195,12 +1196,11 @@ std::vector<std::vector<T>> RegimeEvaluator<T>::buildFinalMatrix() {
         throw std::runtime_error("buildFinalMatrix: invalid state (empty alphas/betas or invalid dimensions)");
     }
 
-    // Matrix row r = coefficient of n^{deg_eff_ - r}.
-    // f2[s] = coefficient of n^{|β|_{supp(θ)}-s} (from step4).
-    // To align: need n^{deg_eff_-r} = n^{|β|_{supp(θ)}-s} → s = r - (deg_eff_ - |β|_{supp(θ)}).
-    // Per-column shift = deg_eff_ - |β|_{supp(θ)}.
+    // f2[s] = coefficient of n^{|β|_{supp(θ)}-s} for s ∈ [0, k_max_].
+    // Row r = coefficient of n^{deg_eff_ - r} for r ∈ [0, deg_eff_ + k_max_].
+    // So f2[s] at n-exponent (beta_supp - s) maps to row (deg_eff_ - beta_supp + s) = shift + s.
     int total_k = k_max_ + 1;
-    int rows_per_basis = total_k;
+    int rows_per_basis = deg_eff_ + k_max_ + 1;
     int rows = nb_ * rows_per_basis;
     int cols = static_cast<int>(alphas_.size() * betas_.size());
 
@@ -1234,15 +1234,14 @@ std::vector<std::vector<T>> RegimeEvaluator<T>::buildFinalMatrix() {
 
             int col_idx = static_cast<int>(a_idx * betas_.size() + b_idx);
 
-            // Row r: coefficient of n^{deg_eff_-r}.  f2 source index = r - shift.
+            // f2[s] at n-exponent (beta_supp - s) → row_r = shift + s = deg_eff_ - beta_supp + s
             for (int i = 0; i < nb_; ++i) {
-                for (int r = 0; r < total_k; ++r) {
-                    int f2_src = r - shift;
-                    if (f2_src < 0 || f2_src >= total_k) continue;
-                    int row_idx = i * rows_per_basis + r;
-                    if (row_idx >= 0 && row_idx < rows && col_idx < cols) {
-                        mat[row_idx][col_idx] = f2_ptr[i * total_k + f2_src];
-                    }
+                for (int s = 0; s < total_k; ++s) {
+                    T val = f2_ptr[i * total_k + s];
+                    if (val == T(0)) continue;
+                    int row_r = shift + s;
+                    int row_idx = i * rows_per_basis + row_r;
+                    mat[row_idx][col_idx] = val;
                 }
             }
         }
@@ -1724,19 +1723,26 @@ template<typename T>
 std::vector<std::vector<std::vector<T>>> GlobalEquationAssembler<T>::splitRowsByOrder(
     const std::vector<std::vector<T>>& all_rows) const
 {
-    std::vector<std::vector<std::vector<T>>> result(k_max_ + 1);
+    // Find max rows_per_basis across all evaluators to size result
+    int max_rows_per_basis = 0;
+    for (size_t r = 0; r < regimes_.size(); ++r) {
+        int rpb = evaluators_[r].getDegEff() + evaluators_[r].getKMax() + 1;
+        if (rpb > max_rows_per_basis) max_rows_per_basis = rpb;
+    }
+    std::vector<std::vector<std::vector<T>>> result(max_rows_per_basis);
 
     size_t offset = 0;
     for (size_t r = 0; r < regimes_.size(); ++r) {
         int nb = evaluators_[r].getNb();
         int km = evaluators_[r].getKMax();
-        int block_size = nb * (km + 1);
+        int de = evaluators_[r].getDegEff();
+        int rows_per_basis = de + km + 1;
+        int block_size = nb * rows_per_basis;
 
-        for (int nimax_idx : regimes_[r].nimax_indices) {
-            (void)nimax_idx;  // 每个 nimax 贡献相同大小的块
-            for (int order = 0; order <= km; ++order) {
+        for (size_t ni = 0; ni < regimes_[r].nimax_indices.size(); ++ni) {
+            for (int order = 0; order < rows_per_basis; ++order) {
                 for (int i = 0; i < nb; ++i) {
-                    size_t row_idx = offset + i * (km + 1) + order;
+                    size_t row_idx = offset + i * rows_per_basis + order;
                     if (row_idx < all_rows.size()) {
                         result[order].push_back(all_rows[row_idx]);
                     }
@@ -1760,11 +1766,13 @@ static std::pair<int, int> analyzeOrderStability(
     int plateau_size,
     size_t num_vars)
 {
-    std::vector<int> nullity(k_max + 1, -1);
+    int max_order = static_cast<int>(rows_by_order.size()) - 1;
+    if (max_order < 0) return {-2, -1};
+    std::vector<int> nullity(max_order + 1, -1);
 
     IncrementalNullspaceSolver<T> solver(num_vars);
 
-    for (int cur_order = 0; cur_order <= k_max; ++cur_order) {
+    for (int cur_order = 0; cur_order <= max_order; ++cur_order) {
         // 累加当前阶数的所有行（包括之前阶数的行已在 solver 中）
         const auto& order_rows = rows_by_order[cur_order];
         if (!order_rows.empty()) {
@@ -1774,16 +1782,14 @@ static std::pair<int, int> analyzeOrderStability(
         nullity[cur_order] = solver.getNullity();
 
         // 特殊处理: nullity=0 意味着所有变量已确定，这是确定性的终止条件
-        // 对应 MMA trigger 2: Length[bSolAcc] == Length[bVars] (L603-607)
         if (nullity[cur_order] == 0) {
             return {cur_order, 0};
         }
 
     }
-    
-    // 稳定性检查: 从最高阶开始往回找，找到延伸到 k_max 的最长 plateau
-    // 这避免了早期假 plateau 导致的误判
-    for (int start_order = k_max; start_order >= plateau_size; --start_order) {
+
+    // 稳定性检查: 从最高阶开始往回找，找到延伸到 max_order 的最长 plateau
+    for (int start_order = max_order; start_order >= plateau_size; --start_order) {
         bool all_same = true;
         for (int i = 1; i <= plateau_size; ++i) {
             if (nullity[start_order - i] != nullity[start_order]) {
@@ -1792,15 +1798,15 @@ static std::pair<int, int> analyzeOrderStability(
             }
         }
         if (all_same) {
-            // 确认 plateau 延伸到 k_max
-            bool extends_to_kmax = true;
-            for (int o = start_order + 1; o <= k_max; ++o) {
+            // 确认 plateau 延伸到 max_order
+            bool extends_to_end = true;
+            for (int o = start_order + 1; o <= max_order; ++o) {
                 if (nullity[o] != nullity[start_order]) {
-                    extends_to_kmax = false;
+                    extends_to_end = false;
                     break;
                 }
             }
-            if (extends_to_kmax) {
+            if (extends_to_end) {
                 int final_nullity = nullity[start_order];
                 for (int j = 0; j <= start_order; ++j) {
                     if (nullity[j] == final_nullity)
@@ -1809,8 +1815,8 @@ static std::pair<int, int> analyzeOrderStability(
             }
         }
     }
-    
-    return {-2, nullity[k_max]};  // 在可用阶数内未稳定
+
+    return {-2, nullity[max_order]};  // 在可用阶数内未稳定
 }
 
 // ==========================================
@@ -2062,8 +2068,9 @@ AdaptiveEquationBuilder<T>::build(
 
                     // Phase 2: 阶数稳定性分析（零冗余计算——行已在采样时预拆分）
                     if (config_.plateau_size >= 0 && k_max >= 0) {
-                        std::vector<std::vector<std::vector<T>>> rows_by_order_masked(k_max + 1);
-                        for (int r = 0; r <= k_max; ++r) {
+                        int num_orders = static_cast<int>(result.rows_by_order.size());
+                        std::vector<std::vector<std::vector<T>>> rows_by_order_masked(num_orders);
+                        for (int r = 0; r < num_orders; ++r) {
                             if (hasColumnMask()) {
                                 rows_by_order_masked[r] = stripInactiveColumns(
                                     result.rows_by_order[r], column_mask_, active_count_);
@@ -2124,8 +2131,9 @@ AdaptiveEquationBuilder<T>::build(
 
     // Phase 2: 阶数稳定性分析（零冗余计算）
     if (config_.plateau_size >= 0 && k_max >= 0 && !result.rows_by_order.empty()) {
-        std::vector<std::vector<std::vector<T>>> rows_by_order_masked(k_max + 1);
-        for (int r = 0; r <= k_max; ++r) {
+        int num_orders = static_cast<int>(result.rows_by_order.size());
+        std::vector<std::vector<std::vector<T>>> rows_by_order_masked(num_orders);
+        for (int r = 0; r < num_orders; ++r) {
             if (hasColumnMask()) {
                 rows_by_order_masked[r] = stripInactiveColumns(
                     result.rows_by_order[r], column_mask_, active_count_);

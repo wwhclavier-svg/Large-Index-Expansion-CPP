@@ -314,6 +314,129 @@ matrix lm = lift(m, gbs);
     return {gb, liftData};
 }
 
+// Compute Module Groebner basis with Position-Over-Term ordering
+// This is the correct method for eliminatedRule / setupGeneratingCone.
+//
+// moduleGens: each string is of the form "c0*gen(1)+c1*gen(2)+...+ck*gen(k)"
+//   where c_i are ν-polynomials (strings in Singular notation)
+// nComps: number of module components (≡ number of columns in the block matrix)
+// nuVars: names of the ν (ISP) ring variables
+// modulus: prime characteristic
+//
+// Returns GB as list of polynomial strings in gen(i) notation.
+//
+// MMA reference: SingularGroebnerBasis with "PositionOverTerm"->True
+// The ordering (lp(nComps), dp(nuVars.size())) gives:
+//   component 1 > component 2 > ... > component nComps (position)
+//   then degree reverse lex on the ν ring variables (term)
+inline std::vector<std::string> modulePOTGroebner(
+    const std::vector<std::string>& moduleGens,
+    int nComps,
+    const std::vector<std::string>& nuVars,
+    int64_t modulus)
+{
+    if (moduleGens.empty()) return {};
+
+    std::string nuVarsStr;
+    for (size_t i = 0; i < nuVars.size(); ++i) {
+        if (i > 0) nuVarsStr += ",";
+        nuVarsStr += nuVars[i];
+    }
+
+    std::string gensStr;
+    for (size_t i = 0; i < moduleGens.size(); ++i) {
+        if (i > 0) gensStr += ",";
+        gensStr += moduleGens[i];
+    }
+
+    std::string orderStr = "(lp(" + std::to_string(nComps) + "), dp(" + std::to_string(nuVars.size()) + "))";
+
+    std::string script = R"(
+ring r = <char>, (<nuvars>), <order>;
+option(redSB);
+module m = <gens>;
+module gb = groebner(m);
+module gbs = simplify(gb, 34);
+)";
+
+    auto result = runSingularTemplate(script,
+        {{"char", std::to_string(modulus)},
+         {"nuvars", nuVarsStr},
+         {"order", orderStr},
+         {"gens", gensStr}},
+        {"gbs"});
+
+    if (result.count("gbs"))
+        return parseIdeal(result["gbs"]);
+    throw std::runtime_error("Singular modulePOTGroebner: no output");
+}
+
+// Module POT GB with lift matrix (for top-block optimization)
+// Returns {gb, liftData} where liftData is the flat integer lift matrix
+// representing how each GB element is a combination of the original generators.
+inline std::pair<std::vector<std::string>, std::vector<int64_t>>
+modulePOTGroebnerWithLift(
+    const std::vector<std::string>& moduleGens,
+    int nComps,
+    const std::vector<std::string>& nuVars,
+    int64_t modulus)
+{
+    if (moduleGens.empty()) return {{}, {}};
+
+    std::string nuVarsStr;
+    for (size_t i = 0; i < nuVars.size(); ++i) {
+        if (i > 0) nuVarsStr += ",";
+        nuVarsStr += nuVars[i];
+    }
+
+    std::string gensStr;
+    for (size_t i = 0; i < moduleGens.size(); ++i) {
+        if (i > 0) gensStr += ",";
+        gensStr += moduleGens[i];
+    }
+
+    std::string orderStr = "(lp(" + std::to_string(nComps) + "), dp(" + std::to_string(nuVars.size()) + "))";
+
+    std::string script = R"(
+ring r = <char>, (<nuvars>), <order>;
+option(redSB);
+module m = <gens>;
+module gb = groebner(m);
+module gbs = simplify(gb, 34);
+matrix lm = lift(m, gbs);
+)";
+
+    auto result = runSingularTemplate(script,
+        {{"char", std::to_string(modulus)},
+         {"nuvars", nuVarsStr},
+         {"order", orderStr},
+         {"gens", gensStr}},
+        {"gbs", "lm"});
+
+    if (!result.count("gbs"))
+        throw std::runtime_error("Singular modulePOTGroebnerWithLift: no output");
+
+    std::vector<std::string> gb = parseIdeal(result["gbs"]);
+
+    // Parse lift matrix — extract all integers
+    std::vector<int64_t> liftData;
+    if (result.count("lm")) {
+        std::string lmStr = result["lm"];
+        std::string num;
+        for (char c : lmStr) {
+            if ((c >= '0' && c <= '9') || c == '-') {
+                num += c;
+            } else if (!num.empty()) {
+                liftData.push_back(std::stoll(num));
+                num.clear();
+            }
+        }
+        if (!num.empty()) liftData.push_back(std::stoll(num));
+    }
+
+    return {gb, liftData};
+}
+
 // ==========================================
 // Combined Primdec Result
 // ==========================================
