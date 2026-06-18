@@ -349,7 +349,7 @@ inline std::vector<std::string> modulePOTGroebner(
         gensStr += moduleGens[i];
     }
 
-    std::string orderStr = "(lp(" + std::to_string(nComps) + "), dp(" + std::to_string(nuVars.size()) + "))";
+    std::string orderStr = "(C, dp(" + std::to_string(nuVars.size()) + "))";
 
     std::string script = R"(
 ring r = <char>, (<nuvars>), <order>;
@@ -395,14 +395,14 @@ modulePOTGroebnerWithLift(
         gensStr += moduleGens[i];
     }
 
-    std::string orderStr = "(lp(" + std::to_string(nComps) + "), dp(" + std::to_string(nuVars.size()) + "))";
+    std::string orderStr = "(C, dp(" + std::to_string(nuVars.size()) + "))";
 
     std::string script = R"(
 ring r = <char>, (<nuvars>), <order>;
 option(redSB);
 module m = <gens>;
 module gb = groebner(m);
-module gbs = simplify(gb, 34);
+module gbs = simplify(gb, 2);
 matrix lm = lift(m, gbs);
 )";
 

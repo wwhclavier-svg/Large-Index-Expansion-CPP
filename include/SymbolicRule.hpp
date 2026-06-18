@@ -132,6 +132,230 @@ inline std::vector<std::vector<int>> generateMinusSeeds(
     return seeds;
 }
 
+// SectorLevel seeds (MMA SymbolicBTForm.wl:257-261)
+// Separates pdset (dot) and ispset (rank) contributions via outer product.
+// pdset dims get dot seeds (level=dotlevel), ispset dims get rank seeds (level=level).
+// If mrnklevel>0, applies minus-rank supersector shifts.
+inline std::vector<std::vector<int>> generateSectorLevelSeeds(
+    int ne, const std::vector<int>& sector,
+    int level, int dotlevel, int mrnklevel,
+    bool topRankOnly = false, int minRank = 0)
+{
+    std::vector<int> pdPos, ispPos;
+    for (int i = 0; i < ne; ++i) {
+        if (i < (int)sector.size() && sector[i] == 0) ispPos.push_back(i);
+        else pdPos.push_back(i);
+    }
+    int npd = (int)pdPos.size(), nisp = (int)ispPos.size();
+    if (nisp == 0) return generateDotSeeds(ne, level, topRankOnly, minRank);
+
+    // Dot seeds on pdset dims: positive values summing to dotlevel
+    auto dotSeeds = generateDotSeeds(npd, dotlevel, false, 0);
+
+    // Rank seeds on ispset dims: values summing from 0 to level
+    auto rnkSeeds = generateDotSeeds(nisp, level, topRankOnly, minRank);
+
+    // Outer product: sd[pd] = dot, sd[isp] = rnk
+    std::vector<std::vector<int>> seeds;
+    for (auto& dot : dotSeeds) {
+        for (auto& rnk : rnkSeeds) {
+            std::vector<int> sd(ne, 0);
+            for (int pi = 0; pi < npd; ++pi)
+                sd[pdPos[pi]] = dot[pi];
+            for (int ii = 0; ii < nisp; ++ii)
+                sd[ispPos[ii]] = rnk[ii];
+            seeds.push_back(sd);
+        }
+    }
+
+    // Apply minus-rank supersector shifts (MMA L259)
+    if (mrnklevel > 0) {
+        auto minusSeeds = generateMinusSeeds(ne, mrnklevel, sector);
+        std::vector<std::vector<int>> extended;
+        for (auto& sd : seeds)
+            for (auto& ms : minusSeeds) {
+                std::vector<int> ext(ne);
+                for (int j = 0; j < ne; ++j)
+                    ext[j] = sd[j] - ms[j];  // MMA: sd - minusranklist
+                extended.push_back(ext);
+            }
+        // Union (dedup)
+        std::set<std::vector<int>> seen(seeds.begin(), seeds.end());
+        for (auto& e : extended) if (seen.insert(e).second) seeds.push_back(e);
+    }
+
+    return seeds;
+}
+
+// ═════════════════════════════════════════════════════════════
+// IntgSort: multi-key variable ordering (MMA SymbolicBTForm.wl:230-244)
+// sortingOrder:
+//   0 - dot-corner: GS block first, then by subsector/rank within pdset/ispset
+//   2 - corner-GS + dot-level: as order-0 but with extra negIndOf/posIndOf keys
+//   3 - supersector: as order-2 but with extra total ispset/mrnk key prefix
+// ═════════════════════════════════════════════════════════════
+
+inline std::vector<int> intgSortOrder(
+    const std::vector<std::vector<int>>& shifts,
+    const std::vector<int>& sector,
+    int sortingOrder = 0)
+{
+    int ne = (int)(shifts.empty() ? 0 : shifts[0].size());
+    int n = (int)shifts.size();
+
+    // Precompute pdset/ispset indices
+    std::vector<int> pdPos, ispPos;
+    for (int i = 0; i < ne; ++i) {
+        if (i < (int)sector.size() && sector[i] == 0) ispPos.push_back(i);
+        else pdPos.push_back(i);
+    }
+    int npd = (int)pdPos.size(), nisp = (int)ispPos.size();
+
+    // Build sort keys for each shift
+    // order-0 keys (MMA L232-233):
+    //   {-Plus@@sectorOf[pd], Plus@@pd, -Reverse[pd], Plus@@isp, -Reverse[isp]}
+    // order-2 adds (L240-241):
+    //   prepend: {-Plus@@sectorOf[pd], Plus@@negIndOf[pd], -Reverse[negIndOf[pd]], Plus@@posIndOf[pd], -Reverse[posIndOf[pd]], ...order0...}
+    // order-3 adds (L243-244):
+    //   prepend: {Total@ispNeg, -Reverse[ispNeg], ...order2...}
+
+    struct Key {
+        int negSectorCount;    // -sum(sectorOf(pd))
+        int totalPd;           // sum(pd)
+        // For order-2/3:
+        int totalPdNeg;        // sum(negIndOf(pd))
+        int totalPdPos;        // sum(posIndOf(pd))
+        int totalIspNeg;       // sum(negIndOf(isp)) = sum(isp) (since ispset >=0)
+        int totalIsp;          // sum(isp)
+    };
+
+    std::vector<Key> keys(n);
+    for (int s = 0; s < n; ++s) {
+        auto& sh = shifts[s];
+        Key k{};
+        for (int pi : pdPos) {
+            int v = (pi < (int)sh.size()) ? sh[pi] : 0;
+            if (v > 0) k.negSectorCount--; // -sectorOf(v), sectorOf=1 if v>0
+            k.totalPd += v;
+            if (v > 0) k.totalPdPos += v;
+            else k.totalPdNeg += (-v);
+        }
+        for (int ii : ispPos) {
+            int v = (ii < (int)sh.size()) ? sh[ii] : 0;
+            k.totalIsp += v;
+            k.totalIspNeg += v; // for ispset, negIndOf=0 (since v>=0 for GS block)
+        }
+        keys[s] = k;
+    }
+
+    // Build lexicographic comparison of reverse-shift vectors (for tiebreaking)
+    auto revCompare = [&](int a, int b, const std::vector<int>& pos) -> bool {
+        for (int i = (int)pos.size() - 1; i >= 0; --i) {
+            int va = (pos[i] < (int)shifts[a].size()) ? shifts[a][pos[i]] : 0;
+            int vb = (pos[i] < (int)shifts[b].size()) ? shifts[b][pos[i]] : 0;
+            if (va != vb) return va > vb; // -Reverse: descending
+        }
+        return false;
+    };
+
+    std::vector<int> order(n);
+    std::iota(order.begin(), order.end(), 0);
+
+    switch (sortingOrder) {
+    case 0:
+    default:
+        std::sort(order.begin(), order.end(), [&](int a, int b) {
+            auto &ka = keys[a], &kb = keys[b];
+            if (ka.negSectorCount != kb.negSectorCount) return ka.negSectorCount > kb.negSectorCount;
+            if (ka.totalPd != kb.totalPd) return ka.totalPd < kb.totalPd;
+            // -Reverse[pd]
+            for (int i = npd - 1; i >= 0; --i) {
+                int va = (pdPos[i] < (int)shifts[a].size()) ? shifts[a][pdPos[i]] : 0;
+                int vb = (pdPos[i] < (int)shifts[b].size()) ? shifts[b][pdPos[i]] : 0;
+                if (va != vb) return va > vb;
+            }
+            if (ka.totalIsp != kb.totalIsp) return ka.totalIsp < kb.totalIsp;
+            // -Reverse[isp]
+            for (int i = nisp - 1; i >= 0; --i) {
+                int va = (ispPos[i] < (int)shifts[a].size()) ? shifts[a][ispPos[i]] : 0;
+                int vb = (ispPos[i] < (int)shifts[b].size()) ? shifts[b][ispPos[i]] : 0;
+                if (va != vb) return va > vb;
+            }
+            return a < b; // stable tiebreak
+        });
+        break;
+    case 2:
+        std::sort(order.begin(), order.end(), [&](int a, int b) {
+            auto &ka = keys[a], &kb = keys[b];
+            if (ka.negSectorCount != kb.negSectorCount) return ka.negSectorCount > kb.negSectorCount;
+            if (ka.totalPdNeg != kb.totalPdNeg) return ka.totalPdNeg < kb.totalPdNeg;
+            // -Reverse[negIndOf[pd]]
+            for (int i = npd - 1; i >= 0; --i) {
+                int va = (pdPos[i] < (int)shifts[a].size()) ? shifts[a][pdPos[i]] : 0;
+                int vb = (pdPos[i] < (int)shifts[b].size()) ? shifts[b][pdPos[i]] : 0;
+                int na = (va > 0) ? 0 : -va;
+                int nb = (vb > 0) ? 0 : -vb;
+                if (na != nb) return na > nb;
+            }
+            if (ka.totalPdPos != kb.totalPdPos) return ka.totalPdPos < kb.totalPdPos;
+            // -Reverse[posIndOf[pd]]
+            for (int i = npd - 1; i >= 0; --i) {
+                int va = (pdPos[i] < (int)shifts[a].size()) ? shifts[a][pdPos[i]] : 0;
+                int vb = (pdPos[i] < (int)shifts[b].size()) ? shifts[b][pdPos[i]] : 0;
+                int pa = (va > 0) ? va : 0;
+                int pb = (vb > 0) ? vb : 0;
+                if (pa != pb) return pa > pb;
+            }
+            if (ka.totalIsp != kb.totalIsp) return ka.totalIsp < kb.totalIsp;
+            for (int i = nisp - 1; i >= 0; --i) {
+                int va = (ispPos[i] < (int)shifts[a].size()) ? shifts[a][ispPos[i]] : 0;
+                int vb = (ispPos[i] < (int)shifts[b].size()) ? shifts[b][ispPos[i]] : 0;
+                if (va != vb) return va > vb;
+            }
+            return a < b;
+        });
+        break;
+    case 3:
+        std::sort(order.begin(), order.end(), [&](int a, int b) {
+            auto &ka = keys[a], &kb = keys[b];
+            if (ka.totalIspNeg != kb.totalIspNeg) return ka.totalIspNeg < kb.totalIspNeg;
+            // -Reverse[ispNeg] = -Reverse[isp] (since isp>=0)
+            for (int i = nisp - 1; i >= 0; --i) {
+                int va = (ispPos[i] < (int)shifts[a].size()) ? shifts[a][ispPos[i]] : 0;
+                int vb = (ispPos[i] < (int)shifts[b].size()) ? shifts[b][ispPos[i]] : 0;
+                if (va != vb) return va > vb;
+            }
+            if (ka.negSectorCount != kb.negSectorCount) return ka.negSectorCount > kb.negSectorCount;
+            if (ka.totalPdNeg != kb.totalPdNeg) return ka.totalPdNeg < kb.totalPdNeg;
+            for (int i = npd - 1; i >= 0; --i) {
+                int va = (pdPos[i] < (int)shifts[a].size()) ? shifts[a][pdPos[i]] : 0;
+                int vb = (pdPos[i] < (int)shifts[b].size()) ? shifts[b][pdPos[i]] : 0;
+                int na = (va > 0) ? 0 : -va;
+                int nb = (vb > 0) ? 0 : -vb;
+                if (na != nb) return na > nb;
+            }
+            if (ka.totalPdPos != kb.totalPdPos) return ka.totalPdPos < kb.totalPdPos;
+            for (int i = npd - 1; i >= 0; --i) {
+                int va = (pdPos[i] < (int)shifts[a].size()) ? shifts[a][pdPos[i]] : 0;
+                int vb = (pdPos[i] < (int)shifts[b].size()) ? shifts[b][pdPos[i]] : 0;
+                int pa = (va > 0) ? va : 0;
+                int pb = (vb > 0) ? vb : 0;
+                if (pa != pb) return pa > pb;
+            }
+            if (ka.totalIsp != kb.totalIsp) return ka.totalIsp < kb.totalIsp;
+            for (int i = nisp - 1; i >= 0; --i) {
+                int va = (ispPos[i] < (int)shifts[a].size()) ? shifts[a][ispPos[i]] : 0;
+                int vb = (ispPos[i] < (int)shifts[b].size()) ? shifts[b][ispPos[i]] : 0;
+                if (va != vb) return va > vb;
+            }
+            return a < b;
+        });
+        break;
+    }
+
+    return order;
+}
+
 // ═════════════════════════════════════════════════════════════
 // Block 矩阵构建 (高斯消元用简化版)
 // 行 = numRelations × seeds，列 = α-shifts 去重
@@ -415,6 +639,11 @@ struct EliminatedRuleResult {
     int blockStart=0, blockEnd=0, nVarsTotal=0;
     CompletenessFlags flags;
     int elimRank=0;
+    // Lift matrix for B1 GB extension (MMA L315): GB = lift * generators
+    std::vector<int64_t> liftData;
+    int nModuleGens = 0;
+    // Original block matrix coefficients for post-hoc GB extension (B1 lift)
+    const BlockMatrix* bmRef = nullptr;
 };
 
 inline EliminatedRuleResult eliminatedRule(
@@ -432,20 +661,75 @@ inline EliminatedRuleResult eliminatedRule(
     EliminatedRuleResult res;
     res.nVarsTotal = bm.nVars;
 
-    // 1. Sort variables by rank descending (MMA IntgSort order-0)
-    std::vector<int> vorder(bm.nVars);
-    std::iota(vorder.begin(), vorder.end(), 0);
-    std::sort(vorder.begin(), vorder.end(), [&](int a, int b) {
-        if (bm.rankPerVar[a]!=bm.rankPerVar[b]) return bm.rankPerVar[a]>bm.rankPerVar[b];
-        return a<b;
-    });
-    res.vorder = vorder;
+    // 1. Sort variables by IntgSort (MMA L230-244, order-0 default)
+    // GS block (pdset==0, ispset>=0) comes first in sorted order
+    int sortingOrder = 0;
+    if (sectorForModule && !sectorForModule->empty()) {
+        auto order = intgSortOrder(bm.alphaShifts, *sectorForModule, sortingOrder);
+        res.vorder = order;
+    } else {
+        res.vorder.resize(bm.nVars);
+        std::iota(res.vorder.begin(), res.vorder.end(), 0);
+        std::sort(res.vorder.begin(), res.vorder.end(), [&](int a, int b) {
+            if (bm.rankPerVar[a]!=bm.rankPerVar[b]) return bm.rankPerVar[a]>bm.rankPerVar[b];
+            return a<b;
+        });
+    }
+    auto& vorder = res.vorder;
 
-    // 2. Determine block range (MMA L147-155)
+    // 2. Determine GS block range (MMA L147-155)
+    // GS block: variables where pdset==0 && ispset>=0
+    // After IntgSort order-0, GS block variables are at the front
+    int gsblockStart = 0, gsblockEnd = (int)vorder.size();
+    if (sectorForModule && !sectorForModule->empty()) {
+        int ne_s = (int)sectorForModule->size();
+        // Find the last variable in vorder that belongs to the GS block
+        for (int vi = 0; vi < (int)vorder.size(); ++vi) {
+            int origIdx = vorder[vi];
+            auto& sh = bm.alphaShifts[origIdx];
+            bool inGS = true;
+            for (int j = 0; j < ne_s; ++j) {
+                int v = (j < (int)sh.size()) ? sh[j] : 0;
+                if ((*sectorForModule)[j] == 1 && v != 0) { inGS = false; break; } // pdset != 0
+                if ((*sectorForModule)[j] == 0 && v < 0) { inGS = false; break; }  // ispset < 0
+            }
+            if (!inGS) {
+                gsblockEnd = vi; // first non-GS position
+                break;
+            }
+        }
+        // If TopRankOnly, further restrict to highest ISP rank within GS block (MMA L149)
+        if (topRankOnly && gsblockEnd > 0) {
+            // Group GS block variables by ISP rank
+            std::map<int, std::vector<int>> byIspRank;
+            for (int vi = 0; vi < gsblockEnd; ++vi) {
+                int origIdx = vorder[vi];
+                auto& sh = bm.alphaShifts[origIdx];
+                int ispR = 0;
+                for (int j = 0; j < ne_s; ++j)
+                    if ((*sectorForModule)[j] == 0) ispR += (j < (int)sh.size()) ? sh[j] : 0;
+                byIspRank[ispR].push_back(vi);
+            }
+            if (!byIspRank.empty()) {
+                int maxIspRank = byIspRank.rbegin()->first;
+                auto& topRankVars = byIspRank[maxIspRank];
+                // gsblockEnd = first index after top-rank variables
+                // Since IntgSort puts lower ranks first within GS block, top rank vars
+                // are at the end of the GS range
+                gsblockStart = topRankVars.front();
+                gsblockEnd = gsblockStart + (int)topRankVars.size();
+            }
+        }
+        res.blockStart = gsblockStart;
+        res.blockEnd = gsblockEnd;
+    } else {
+        res.blockStart = 0;
+        res.blockEnd = (int)vorder.size();
+    }
+
+    // High-rank subset for TopFlag2 computation
     std::vector<int> highRank;
-    for (int vi : vorder) if (bm.rankPerVar[vi]>=level) highRank.push_back(vi);
-    res.blockStart = topRankOnly ? 0 : 0;
-    res.blockEnd = topRankOnly ? (int)highRank.size() : bm.nVars;
+    for (int vi : vorder) if (bm.rankPerVar[vi] >= level) highRank.push_back(vi);
     int nCols = res.blockEnd;
     int nRows = bm.nRelations;
     auto& mat = bm.coeffs;
@@ -473,13 +757,47 @@ inline EliminatedRuleResult eliminatedRule(
             ++rnk;
         }
         res.elimRank = rnk;
-
-        int hrCnt=highRank.size(), hrElim=0;
-        for (int vi : highRank)
-            if (std::find(pivotCols.begin(),pivotCols.end(),vi)!=pivotCols.end()) ++hrElim;
-        res.flags.TopFlag1 = hrElim>=hrCnt;
-        res.flags.FullFlag1 = rnk>=nCols;
         for (int c=0;c<(int)pivotCols.size();++c) res.reducedVarTable.push_back(pivotCols[c]);
+
+        // Compute TopFlag1/FullFlag1: group reduced variables by ISP rank,
+        // compare per-rank count with binomial coefficient (MMA L190-197)
+        // Binomial[nIsp - 1 + r, r] where nIsp = ne - total_sector
+        {
+            auto ispRank = [&](int vi) -> int {
+                int r = 0;
+                auto& shift = bm.alphaShifts[vi];
+                for (int si = 0; si < ne; ++si)
+                    if (sectorForModule && si < (int)sectorForModule->size()
+                        ? (*sectorForModule)[si] == 0 : false) r += shift[si];
+                return r;
+            };
+
+            int nIsp = 0;
+            if (sectorForModule) {
+                for (int si = 0; si < ne && si < (int)sectorForModule->size(); ++si)
+                    if ((*sectorForModule)[si] == 0) ++nIsp;
+            }
+
+            std::map<int, int> reducedByIspRank;
+            for (int pv : pivotCols)
+                reducedByIspRank[ispRank(pv)]++;
+
+            int maxIspRank = 0;
+            for (auto& p : reducedByIspRank) maxIspRank = std::max(maxIspRank, p.first);
+
+            bool topFlag1 = true, fullFlag1 = true;
+            for (int r = 0; r <= maxIspRank; ++r) {
+                int reduced = reducedByIspRank.count(r) ? reducedByIspRank[r] : 0;
+                // Expected: variables at ISP rank r in generalized sector (pdset=0)
+                // Binomial[nIsp - 1 + r, r]; for nIsp=0, Binom[-1+0,0]=1 (just gs[0,...,0])
+                int expected = (int)comb(std::max(0, nIsp - 1) + r, r);
+                if (nIsp == 0 && r == 0) expected = 1;
+                if (reduced < expected && r == maxIspRank) topFlag1 = false;
+                if (reduced < expected) fullFlag1 = false;
+            }
+            res.flags.TopFlag1 = topFlag1;
+            res.flags.FullFlag1 = fullFlag1;
+        }
 
         // 4. 模块 GB: 用 ν-多项式系数构建 Singular 多分量模块（MMA L160-175）
         // 使用 gen(i) 模块分量（Singular 1-indexed），POT 排序 (lp(nCols), dp(ne))
@@ -562,7 +880,7 @@ inline EliminatedRuleResult eliminatedRule(
                                 }
 
                                 polyByCol[vpos] = nuPoly;
-                            }
+                            } // end for ai
 
                             // 构建 Singular 模块生成器: (coeff)*gen(1) + (coeff)*gen(2) + ...
                             // Singular gen(i) 是 1-indexed 模块分量
@@ -583,7 +901,9 @@ inline EliminatedRuleResult eliminatedRule(
                     std::vector<std::string> nuVars;
                     for (int i = 0; i < ne; ++i) nuVars.push_back("nu" + std::to_string(i));
 
-                    auto gbList = SingularRunner::modulePOTGroebner(moduleGens, nCols, nuVars, modulus);
+                    auto [gbList, liftData] = SingularRunner::modulePOTGroebnerWithLift(moduleGens, nCols, nuVars, modulus);
+                    res.liftData = std::move(liftData);
+                    res.nModuleGens = (int)moduleGens.size();
 
                     // 解析模块 GB: 每个元素为 coeff_i(ν)*gen(pos_i) + coeff_j(ν)*gen(pos_j) + ...
                     // 按 firstNonZero gen(i) 分组提取对角元（MMA L166-167）
@@ -693,11 +1013,21 @@ inline EliminatedRuleResult eliminatedRule(
                         bool anyNu = false, allUnit = true;
                         bool allHighRankCovered = true, allBlockCovered = true;
 
-                        int nHighRank = (int)highRank.size();
-                        for (int vi = 0; vi < nHighRank; ++vi)
-                            if (diagByPos.find(vi) == diagByPos.end()) { allHighRankCovered = false; break; }
-                        for (int vi = 0; vi < res.blockEnd; ++vi)
-                            if (diagByPos.find(vi) == diagByPos.end()) { allBlockCovered = false; break; }
+                        // TopFlag2: all GS block variables with rank >= level must have GB diagonals
+                        for (int vpos = 0; vpos < res.blockEnd; ++vpos) {
+                            int actualIdx = vorder[vpos];
+                            if (bm.rankPerVar[actualIdx] >= level) {
+                                if (diagByPos.find(vpos) == diagByPos.end()) {
+                                    allHighRankCovered = false; break;
+                                }
+                            }
+                        }
+                        // FullFlag2: all GS block variables must have GB diagonals
+                        for (int vpos = 0; vpos < res.blockEnd; ++vpos) {
+                            if (diagByPos.find(vpos) == diagByPos.end()) {
+                                allBlockCovered = false; break;
+                            }
+                        }
 
                         for (auto& [pos_, coeff] : diagByPos) {
                             bool hn = false;
@@ -756,11 +1086,14 @@ inline ConeRule sectorBlockReducible(
     ConeRule cr;
     cr.level = level;
 
-    auto seeds = topRankOnly
-        ? generateDotSeeds(ne, level, true, level)
-        : generateDotSeeds(ne, level+sectorUp, false, 0);
-    auto mSeeds = generateMinusSeeds(ne, sectorUp, sector);
-    for (auto& s : mSeeds) seeds.push_back(s);
+    // SectorLevel seed generation (MMA L257-261): separate pdset (dot) and ispset (rank)
+    // MMA: rnklist = seedsGenPos[level-i, nisp] where i=1..rgen, so max ispset level = level-1
+    // dotlevel=0 for B1/B2, mrnklevel=sectorUp (0 for B1/B2, >0 for B3)
+    // NOTE: TopRankOnly only affects GS block filtering in eliminatedRule, NOT seed generation.
+    // Seeds must cover all ISP rank levels so module GB has generators at all ranks.
+    int ispLevel = (level > 0) ? level - 1 : 0;
+    auto seeds = generateSectorLevelSeeds(ne, sector, ispLevel, 0, sectorUp,
+                                          false, 0);
 
     auto bm = buildBlockMatrix(entries, seeds, sector, ne, modulus);
     auto elim = eliminatedRule(bm, level, modulus, ne, topRankOnly, numericReduce,
@@ -771,6 +1104,7 @@ inline ConeRule sectorBlockReducible(
     cr.singularISP = elim.singularISP;
     cr.alphaShifts = bm.alphaShifts;
     for (int vi : elim.reducedVarTable) cr.reducedVarIdx.push_back(vi);
+
     for (auto& mr : elim.moduleRules) cr.moduleRules.push_back(mr);
 
     // Build singular locus description
@@ -807,20 +1141,29 @@ inline GeneratingConeResult setupGeneratingCone(
     for (auto& e : rd.entries) if (e.ansatzMode=="Pyramid") pent.push_back(e);
     if (pent.empty()) { std::cerr<<"[setupGeneratingCone] No Pyramid entries\n"; return res; }
 
-    // MMA: rgen = Length@rel — number of relation levels
-    // B1 starts at rgen-1 (not topRank-1)
+    // MMA: rgen = Length@relationList — number of relation levels (= max lev)
+    // Each entry corresponds to one (lev, deg) configuration;
+    // levels are numbered 1..rgen, so rgen = max(lev)
     int rgen = 0;
-    for (auto& e : pent) rgen = std::max(rgen, (int)e.alphas.size());
+    for (auto& e : pent) rgen = std::max(rgen, e.lev);
     if (rgen == 0) rgen = topRank;
 
     // ── B1: High-rank cone (MMA L288-300) ──
+    // MMA: level = rgen-1; While[... level=level+1; ...] → effective start = rgen
     {
         bool done=false;
-        for (int lvl = std::max(topRank, rgen-1); lvl < levelBound && !done; ++lvl) {
+        for (int lvl = rgen; lvl < levelBound && !done; ++lvl) {
             auto cr = sectorBlockReducible(pent, sector, lvl, mod, ne, true, 0);
             res.B1.push_back(cr);
             done = cr.flags.TopFlag2;
         }
+    }
+
+    // B1 early return: if TopFlag2 was never reached, return empty (MMA L310)
+    {
+        bool b1Passed = false;
+        for (auto& b1 : res.B1) if (b1.flags.TopFlag2) { b1Passed = true; break; }
+        if (!b1Passed) { res.B1.clear(); return res; }
     }
 
     // ── B2: Mid-rank cone (MMA L312-328) ──
@@ -831,6 +1174,7 @@ inline GeneratingConeResult setupGeneratingCone(
         for (size_t i = 0; i < (size_t)ne; ++i)
             if (i < sector.size() && sector[i] == 0) nr2[i] = 0; // ISP→0
 
+        // MMA: level = B1level - 1; While[... level=level+1; ...] → effective start = B1level
         int b1lvl = res.B1.empty() ? topRank : res.B1.back().level;
 
         // Count ISP-only dimensions for mistab generation
@@ -840,7 +1184,11 @@ inline GeneratingConeResult setupGeneratingCone(
 
         std::vector<std::vector<int>> prevMistabB2;
         bool done = false;
-        for (int lvl = std::max(1, b1lvl - 1); lvl < levelBound && !done; ++lvl) {
+        // MMA: level = B1level - 1; While[... level = level + 1; ... level = GSVarMaxISP ...]
+        int lvl = b1lvl - 1;
+        while (lvl < levelBound && !done) {
+            ++lvl;
+            if (lvl >= levelBound) break;
             auto cr = sectorBlockReducible(pent, sector, lvl, mod, ne, false, 0, &nr2);
             res.B2.push_back(cr);
 
@@ -868,14 +1216,32 @@ inline GeneratingConeResult setupGeneratingCone(
                 curMistab.push_back(nonRed);
             }
 
-            // MMA convergence: Most[B2mistab] === B2mistab0 (L324)
-            // Most drops the last (highest ISP rank) level
-            if (!prevMistabB2.empty() && curMistab.size() > 1 && prevMistabB2.size() > 1) {
-                bool same = true;
-                size_t cmpLen = std::min(curMistab.size() - 1, prevMistabB2.size() - 1);
-                for (size_t i = 0; i < cmpLen; ++i)
-                    if (curMistab[i] != prevMistabB2[i]) { same = false; break; }
-                if (same) done = true;
+            // Dynamic level update: cap level at GSVar max ISP rank (MMA L334)
+            {
+                int gsMaxIspRank = 0;
+                for (auto& shift : cr.alphaShifts) {
+                    int ispR = 0;
+                    for (int i = 0; i < ne && i < (int)sector.size(); ++i)
+                        if (sector[i] == 0) ispR += shift[i];
+                    if (ispR > gsMaxIspRank) gsMaxIspRank = ispR;
+                }
+                if (gsMaxIspRank > 0) lvl = gsMaxIspRank;
+            }
+
+            // MMA convergence: Most[B2mistab] === B2mistab0 (L324, L338)
+            // If ispset is non-empty, drop the last (highest ISP rank) level
+            // If ispset is empty (all-prop sector), compare all levels directly
+            if (ne_isp > 0) {
+                if (!prevMistabB2.empty() && curMistab.size() > 1 && prevMistabB2.size() > 1) {
+                    bool same = true;
+                    size_t cmpLen = std::min(curMistab.size() - 1, prevMistabB2.size() - 1);
+                    for (size_t i = 0; i < cmpLen; ++i)
+                        if (curMistab[i] != prevMistabB2[i]) { same = false; break; }
+                    if (same) done = true;
+                }
+            } else {
+                if (!prevMistabB2.empty())
+                    done = (curMistab == prevMistabB2);
             }
             if (!done) prevMistabB2 = curMistab;
         }
@@ -905,10 +1271,11 @@ inline GeneratingConeResult setupGeneratingCone(
 
         std::vector<std::vector<int>> prevMistab;
         bool done = false;
+        // MMA: level = rgen-1; While[... level=level+1; ...] → effective start = rgen
         int sup = 1, maxSup = 3;
         int maxIter = 12;
 
-        for (int lvl = std::max(topRank, rgen-1), iter = 0; lvl < levelBound && !done && iter < maxIter; ++lvl, ++iter) {
+        for (int lvl = rgen, iter = 0; lvl < levelBound && !done && iter < maxIter; ++lvl, ++iter) {
             auto cr = sectorBlockReducible(pent, sector, lvl, mod, ne, false, sup, &nr3);
             res.B3.push_back(cr);
 
