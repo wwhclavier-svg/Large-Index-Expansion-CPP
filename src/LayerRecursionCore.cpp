@@ -10,7 +10,7 @@ void equationVariable(std::vector<std::array<int,4>>& eqnvar,
                       const std::vector<std::array<int,4>>& indepSet)
 { 
     eqnvar.clear();
-    int ncurr = lastNonZero(seed);
+    int ncurr = lastNonZero(seed) + 1;  // MMA 1-indexed
     for(int j = max(ncurr - 1, 0); j < ne; ++j) {
         for(int i = 0; i < nb; ++i) {
             eqnvar.push_back({order, level+1, getIndexOffSet(level,seed,1,j),i});

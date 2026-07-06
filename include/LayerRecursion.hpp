@@ -16,6 +16,67 @@
 
 
 /**
+ * 验证展开结果：对特解部分 (index=0) 逐 seed 检查 M1*C + TotalInhomog == 0。
+ * @return true 若所有方程残差为零，否则 false
+ */
+template<typename T>
+bool validateExpansion(const std::vector<seriesCoefficient<T>>& branches,
+                       const IBPMatrixE<T>& mat, int order, int incre,
+                       int ne, int nb)
+{
+    if (branches.empty()) return false;
+    const auto& C = branches[0];
+    int nibp = mat.M1.size();
+
+    // 计算 nimax
+    int nimax = 4;
+    for (int k = 0; k <= order; ++k) {
+        int lmax = incre * k;
+        for (int l = 1; l <= lmax; ++l)
+            nimax = std::max(nimax, (int)BINOM[l + ne - 1][ne - 1] * nb);
+    }
+
+    // 只检查 k=1（低阶相容是必要条件，满足则高阶自动相容）
+    for (int k = 1; k <= 1; ++k) {
+        for (int l = incre * k - 1; l >= 0; --l) {
+            long long nseeds = BINOM[l + ne - 1][ne - 1];
+            for (long long cid = 0; cid < nseeds; ++cid) {
+                std::vector<int> seed = readIndex(cid, l, ne);
+                int ncurr = lastNonZero(seed) + 1;  // MMA 1-indexed
+
+                // 重建 inhomog total，nindep=0 只需特解
+                LayerRecursionCore::inhomogTerms<T> terms(k, incre, nibp, nb, nimax, ne);
+                // terms.buildAll 需要非 const 引用，但实际只读 k,l,seed
+                seriesCoefficient<T>& C_ref = const_cast<seriesCoefficient<T>&>(C);
+                terms.buildAll(mat, C_ref, k, l, seed, 0, ncurr, BINOM);
+
+                // 对每个 IBP 方程检查残差
+                int n_active = ne - std::max(ncurr - 1, 0);
+                for (int m = 0; m < nibp; ++m) {
+                    for (int j = 0; j < nb; ++j) {
+                        T residual = terms.get_Total_row(m, j)[0]; // 常数部分
+                        // M1 * C_active (index=0 特解)
+                        for (int j1 = 0; j1 < n_active; ++j1) {
+                            int target = j1 + std::max(ncurr - 1, 0);
+                            T factor = static_cast<T>(seed[target] + 1);
+                            const T* src = getValuePtrOffSet(C, k, l, seed, 1, target);
+                            if (src) {
+                                for (int j2 = 0; j2 < nb; ++j2) {
+                                    residual += mat.M1[m][target][j * nb + j2] * factor * src[j2 * (nimax + 1)];
+                                }
+                            }
+                        }
+                        if (residual != T(0)) return false;
+                    }
+                }
+            }
+        }
+    }
+    return true;
+}
+
+
+/**
  * 对单个 IBP 矩阵执行层递归，计算所有解。
  * @tparam T 数据类型（double 或 firefly::FFInt）
  * @param ibpmat  IBP 矩阵数据
@@ -82,7 +143,7 @@ auto layerRecursion(const struct IBPMatrixE<T> &ibpmat, int ne, int nb, int nibp
                 //std::cout << "#seeds: " << seedlist[l].size() << std::endl;
                 for(auto seed : seedlist[l]) {
                     int nindep = static_cast<int>(indepSet.size());
-                    int ncurr = lastNonZero(seed);
+                    int ncurr = lastNonZero(seed) + 1;  // MMA 1-indexed
                     int idxcurr = getIndexOffSet(l,seed,1,max(ncurr - 1,0));
                     // 构建非齐次项
                     terms.buildAll(ibpmat, C, k, l, seed, nindep, ncurr, BINOM);
@@ -147,21 +208,48 @@ auto layerRecursion(const struct IBPMatrixE<T> &ibpmat, int ne, int nb, int nibp
 template<typename T>
 std::vector<std::vector<seriesCoefficient<T>>> batchProcessRecursion(const std::vector<IBPMatrixE<T>>& allMatrices, int order, int incre_hint=2) 
 {
-    // auto-detect increment from first matrix (if using default)
-    int incre = incre_hint;
-    if (incre == 2 && !allMatrices.empty()) {
-        int detected = detectIncrement(allMatrices[0]);
-        if (detected == 1 || detected == 3) incre = detected;
-    }
-
     std::vector<std::vector<seriesCoefficient<T>>> allResults;
     allResults.reserve(allMatrices.size());
 
     std::cout << "开始批量计算，总计: " << allMatrices.size() << " 组数据..." << std::endl;
     for (size_t i = 0; i < allMatrices.size(); ++i) {
         const auto& mat = allMatrices[i];
-        std::cout << "   ......   Reg. " << i+1 << "/"<< allMatrices.size() << "   nb = " << mat.nb << "    ......  " << std::endl;   
-        auto result = layerRecursion<T>(mat, mat.ne, mat.nb, mat.nibp, order, incre);
+        std::cout << "   ......   Reg. " << i+1 << "/"<< allMatrices.size() << "   nb = " << mat.nb << "    ......  " << std::endl;
+
+        // 对每个 matrix 单独检测 incre
+        int base = incre_hint;
+        bool incompat = false;
+        if (base == 2) {
+            int detected = detectIncrement(mat);
+            base = detected;
+            incompat = (detected == 3);
+        }
+
+        std::vector<seriesCoefficient<T>> result;
+        int trial = (incompat && base < 3) ? 3 : base;
+        int max_attempts = incompat ? 10 : 1;
+        bool succeeded = false;
+
+        for (int attempt = 0; attempt < max_attempts; attempt++, trial++) {
+            result = layerRecursion<T>(mat, mat.ne, mat.nb, mat.nibp, order, trial);
+
+            if (!incompat) {
+                succeeded = true;
+                break;
+            }
+
+            if (validateExpansion<T>(result, mat, order, trial, mat.ne, mat.nb)) {
+                succeeded = true;
+                std::cout << "  incre=" << trial << " validated OK" << std::endl;
+                break;
+            }
+
+            std::cout << "!!! Incompatible at current incre. Restarting with incre = " << trial + 1 << std::endl;
+        }
+
+        if (!succeeded) {
+            std::cerr << "  ERROR: failed to find valid incre for matrix " << i+1 << std::endl;
+        }
         allResults.push_back(std::move(result));
     }
     return allResults;

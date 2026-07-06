@@ -90,6 +90,10 @@ public:
         return &data[offsets[k][l] + (size_t)cid * nb * (nimax + 1)];
     }
 
+    inline const T* operator()(int k, int l, int cid) const {
+        return &data[offsets[k][l] + (size_t)cid * nb * (nimax + 1)];
+    }
+
     // 获取底层一维数组的引用，方便整体操作
     std::vector<T>& raw_data() { return data; }
     const std::vector<T>& raw_data() const { return data; }
