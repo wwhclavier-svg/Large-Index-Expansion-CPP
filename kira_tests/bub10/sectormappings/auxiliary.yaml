@@ -1,0 +1,3 @@
+auxiliary:
+ - name: "bub10"
+   permutation: [0,1]

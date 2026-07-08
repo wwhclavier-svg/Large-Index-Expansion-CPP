@@ -496,7 +496,60 @@ SymbolicRuleAlgorithm  → 模 Gröbner 三锥规则 → 完备约化规则
 | SymbolicRule 管线 | generating_cone 已实现，SR212 对比未完成 | 骨架完成 |
 | NP322 / NP322m / TB123m / DB313 | JSON 已就绪，region solve 未执行 | 待计算 |
 
-## 附录 B：commit 记录 (2026-05-05 — 2026-05-15)
+## 9. Benchmark 管线设计 (2026-07-07)
+
+### 9.1 新增文件
+
+| 文件 | 行数 | 功能 |
+|------|------|------|
+| `bench/bench_lie.cpp` | ~220 | C++ benchmark entry (JSON 输出 wrapper around test_relationFF) |
+| `bench/run_lie_bench.sh` | ~50 | 批量 LIE benchmark runner |
+| `docs/plans/2026-07-07-benchmark-pipeline-design.md` | ~300 | Benchmark 管线设计文档（v2，已更新） |
+
+**MMA 端** (~/Large-Index-Expansion-MMA/):
+| 文件 | 行数 | 功能 |
+|------|------|------|
+| `Benchmark-LIE-vs-Kira.wl` | ~150 | MMA 端 LIE vs Kira 对比编排器 |
+
+### 9.2 架构
+
+```
+bench/bench_lie.cpp  → JSON output → results/lie/{family}.json
+                                         ↓
+Benchmark-LIE-vs-Kira.wl  ←── kiraRelationImport
+  (加载 LIE JSON + kira 结果, 随机种子点验证)
+    ↓
+results/comparison/{family}.json + summary.tex
+```
+
+### 9.3 设计要点
+
+- **bench_lie.cpp** 是 `test_relationFF.cpp` 的薄包装，复用其完整的管线调用（load IBP → expand → relation solve），输出 JSON 代替 cout
+- 使用 `include/json.hpp`（nlohmann/json，已内置）构造 JSON
+- 保留 `--output`、`--topsector`、`--mode`、`--sector` 等现有 CLI 接口
+- **MMA 端统一编排**：复用已有的 `kiraRelationImport`/`kiraRelationTest`，避免在 Python 中重实现符号对比逻辑
+- 数据就绪情况（2026-07-07 审计确认）：
+  - BUB/TRI/Box/SR212/SR212-3m/SR212-5m/TB123/NP222：✅ 全套数据（IBPMat + RingData + AllRelations + Compare-CPP）
+  - DB313：✅ IBPMat + RingData 已就绪，❌ AllRelations 和 C++ 对比未完成（最高优先级缺口）
+
+### 9.4 benchmark 使用
+
+```bash
+cd ~/Large-Index-Expansion-CPP
+
+# 构建
+cd build && cmake .. && cmake --build . --target bench_lie && cd ..
+
+# 单 family 运行
+./bench_lie bub00 4 1 2 2 --output results/lie/
+
+# 批量运行全部
+./bench/run_lie_bench.sh 4 2 2
+```
+
+---
+
+## 附录 B：commit 记录 (2026-05-05 — 2026-07-07)
 
 ```
 # 2026-05-05 — 2026-05-07

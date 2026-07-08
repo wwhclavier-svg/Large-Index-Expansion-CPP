@@ -1,0 +1,18 @@
+{
+	"family":"Penta1L",
+	"ne":5,
+	"r":1,
+	"s":1,
+	"n_targets":6,
+	"n_sectors":0,
+	"n_regions":1,
+	"timing_s":{
+		"define":0.090172,
+		"MMA_expand":6.374591,
+		"MMA_reconstruct":1.477872,
+		"setupGeneratingCone":0.148917,
+		"concreteFamilyReduce":0.056930,
+		"total":8.14848
+	},
+	"output_file":"\/home\/ykm\/Large-Index-Expansion-CPP\/results\/lie_e2e\/Penta1L.m"
+}

@@ -167,3 +167,7 @@ target_link_libraries(generating_cone pthread)
 
 add_executable(test_generating_cone tests/test_generating_cone.cpp)
 target_link_libraries(test_generating_cone pthread)
+
+# --- Benchmark pipeline ---
+add_executable(bench_lie bench/bench_lie.cpp ${COMMON_SOURCES})
+target_link_libraries(bench_lie ${FIREFLY_LIBRARY} ${GMP_LIBRARY} ${GMPXX_LIBRARY} Eigen3::Eigen pthread)

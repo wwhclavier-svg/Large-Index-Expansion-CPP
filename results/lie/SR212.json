@@ -1,0 +1,131 @@
+{
+  "completeness": {
+    "status": "not_checked"
+  },
+  "config": {
+    "ansatz_mode": 0,
+    "deg_max": 2,
+    "deg_min": 0,
+    "incre": 2,
+    "lev_max": 2,
+    "lev_min": 1,
+    "nb": 1,
+    "ne": 5,
+    "order": 4,
+    "prime": 179424673,
+    "top_sector_only": false
+  },
+  "family": "SR212",
+  "machine": "ykm-B365M-DS3H",
+  "phases": {
+    "expand": {
+      "cache_hit": true,
+      "k_max": 4
+    },
+    "load_IBP": {
+      "num_regimes": 6,
+      "time_s": 0.012810135
+    },
+    "relation_solve": {
+      "levels": [
+        {
+          "active_variables": 6,
+          "converged": true,
+          "deg": 0,
+          "lev": 1,
+          "num_variables": 6,
+          "sampling_points_used": 0,
+          "solution_dimension": 0,
+          "stable_order": 1,
+          "system_cols": 6,
+          "system_rows": 0,
+          "time_s": 0.0
+        },
+        {
+          "active_variables": 36,
+          "converged": true,
+          "deg": 1,
+          "lev": 1,
+          "num_variables": 36,
+          "sampling_points_used": 0,
+          "solution_dimension": 3,
+          "stable_order": 2,
+          "system_cols": 36,
+          "system_rows": 0,
+          "time_s": 0.0
+        },
+        {
+          "active_variables": 109,
+          "converged": true,
+          "deg": 2,
+          "lev": 1,
+          "num_variables": 126,
+          "sampling_points_used": 0,
+          "solution_dimension": 1,
+          "stable_order": 3,
+          "system_cols": 109,
+          "system_rows": 0,
+          "time_s": 0.0
+        },
+        {
+          "active_variables": 21,
+          "converged": true,
+          "deg": 0,
+          "lev": 2,
+          "num_variables": 21,
+          "sampling_points_used": 0,
+          "solution_dimension": 0,
+          "stable_order": 2,
+          "system_cols": 21,
+          "system_rows": 0,
+          "time_s": 0.0
+        },
+        {
+          "active_variables": 109,
+          "converged": true,
+          "deg": 1,
+          "lev": 2,
+          "num_variables": 126,
+          "sampling_points_used": 0,
+          "solution_dimension": 7,
+          "stable_order": 3,
+          "system_cols": 109,
+          "system_rows": 0,
+          "time_s": 0.0
+        },
+        {
+          "active_variables": 314,
+          "converged": false,
+          "deg": 2,
+          "lev": 2,
+          "num_variables": 441,
+          "sampling_points_used": 0,
+          "solution_dimension": 11,
+          "stable_order": -2,
+          "system_cols": 314,
+          "system_rows": 0,
+          "time_s": 0.0
+        }
+      ],
+      "total_time_s": 5.313904821
+    }
+  },
+  "relation_counts": {
+    "counts": {
+      "lev1": {
+        "deg0": 0,
+        "deg1": 3,
+        "deg2": 1
+      },
+      "lev2": {
+        "deg0": 0,
+        "deg1": 7,
+        "deg2": 11
+      }
+    },
+    "family": "SR212",
+    "ne": 5
+  },
+  "timestamp": "2026-07-07T23:17:42",
+  "total_time_s": 5.67287364
+}

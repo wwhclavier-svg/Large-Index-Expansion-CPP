@@ -1,0 +1,18 @@
+jobs:
+  -
+    reduce_sectors:
+      reduce:
+        -
+          sectors: [31]
+          r: 6
+          s: 2
+      select_integrals:
+        select_mandatory_list:
+          - ["SR212", "integrals"]
+      run_initiate: true
+      run_triangular: true
+      run_back_substitution: true
+  -
+    kira2math:
+      target:
+        - ["SR212", "integrals"]

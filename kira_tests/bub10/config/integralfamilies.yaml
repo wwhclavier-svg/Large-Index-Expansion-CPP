@@ -1,0 +1,8 @@
+integralfamilies:
+  -
+    name: "bub10"
+    loop_momenta: ["k1"]
+    top_level_sectors: [3]
+    propagators:
+      - ["-k1^2", "msq"]
+      - ["-(k1-p1)^2", 0]

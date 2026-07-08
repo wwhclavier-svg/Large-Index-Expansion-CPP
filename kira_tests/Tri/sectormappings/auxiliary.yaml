@@ -1,0 +1,3 @@
+auxiliary:
+ - name: "Tri"
+   permutation: [0,1,2]

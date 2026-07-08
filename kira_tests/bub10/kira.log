@@ -1,0 +1,162 @@
+4 Fermat/Blackbox instances will be run in parallel.
+The user defined environment variable FERMATPATH for Fermat is set:
+/usr/local/bin/Ferl7/fer64
+The directories for the temporary files, result files and the sector mapping files are: 
+./tmp
+./results
+./sectormappings
+One variable is set to 1: {s==1}
+Kira prepares topology: bub10 and top level sector: 
+3 
+
+*****Integral ordering*************************************
+VERSION table created successfully
+Kira database version number: 2.1
+WEIGHTBITS table created successfully
+INTEGRALORDERING table created successfully
+Kira will use the integral ordering: 1.
+With topology: bub10 use intermediate permutation
+0 1 
+Following reductions will be performed for the topology: bub10
+Sector: 3 rmax: 6 smax: 2 
+
+***********************************************************
+Find IBP LI and symmetry relations for the topology: bub10
+***********************************************************
+
+*****Generate IBP identities*******************************
+There are 2 IBP identities
+( 0.000466 s )
+
+*****Generate LI identities********************************
+There are 0 LI identities
+( 2.3e-05 s )
+
+*****Search trivial sectors********************************
+
+Non trivial sectors in total: 2
+Trivial sectors in total: 2
+( 0.0 s )
+
+Search symmetry relations: 
+
+( 0.0 s )
+***********************************************************
+Prepare Symmetries for the topology: bub10
+***********************************************************
+Build symmetries for bub10 x bub10 
+
+Sector relations: 0
+Sector symmetries: 0
+( 0.0 s )
+
+***********************************************************
+Kira starts the reduction of the topology: bub10
+***********************************************************
+
+***** Select equations recursively ************************
+length of mandatory list: 28
+Algebraic reconstruction is switched off.
+Equation table created successfully
+46 independent coefficients
+directory to the masters: bub10
+Number of master integrals: 9
+bub10[1,0] # 1
+bub10[1,1] # 3
+bub10[1,7] # 3
+bub10[2,6] # 3
+bub10[3,5] # 3
+bub10[4,4] # 3
+bub10[5,3] # 3
+bub10[6,2] # 3
+bub10[7,1] # 3
+
+Number of selected equations to reduce: 0 equations
+Regenerate:
+
+Number of selected equations to reduce: 21 equations
+( 0.1 s )
+Algebraic reconstruction is switched off.
+
+***** Select equations recursively ************************
+length of mandatory list: 28
+
+***** Bring system in triangular form *********************
+
+Iterate the system until it is in triangular form: 
+iteration: 0; items left: 5; time: ( 0.0 s )
+redundant: 0; insertions 5
+All coefficients will be normalized
+
+Equations out of bounds rmax and smax: 0
+Equations in the bounds rmax and smax: 21
+( 0.0 s )
+
+Write the triangular system to ./tmp/ on hard disk
+(--> ./tmp/bub10/VERconfig, ./tmp/bub10/VER###) 
+
+Triangular form completed after ( 0.0 s )
+FIREFLY table created successfully
+Algebraic reconstruction is switched off.
+
+***** Run the back substitution ***********************
+
+Load all files from ./tmp/
+Take 21 equations to reduce 21 missing equations
+
+Back substitution: 
+
+
+Equations reduced: 0 / 21
+Kira committed results ( 0.1 s )
+
+
+Equations reduced: 21 / 21
+Kira committed results ( 0.1 s )
+
+21 equations were reduced
+
+*****Master integrals***********************************
+bub10[1,0] # 1
+bub10[1,1] # 3
+bub10[1,7] # 3
+bub10[2,6] # 3
+bub10[3,5] # 3
+bub10[4,4] # 3
+bub10[5,3] # 3
+bub10[6,2] # 3
+bub10[7,1] # 3
+
+*****Master integrals which do not appear on the right**
+*****hand side of the selected integrals****************
+bub10[1,7] # 3
+bub10[2,6] # 3
+bub10[3,5] # 3
+bub10[4,4] # 3
+bub10[5,3] # 3
+bub10[6,2] # 3
+bub10[7,1] # 3
+
+Total number of master integrals: 9
+( 0.1 s )
+One variable is set to 1: {s==1}
+One variable is set to 1: {s==1}
+The input directory is set to:
+./results
+################################################
+kira2math: Reconstruct results for bub10
+################################################
+
+Algebraic reconstruction is switched off.
+This requested integral is a master integral: bub10[1,7] # 3
+This requested integral is a master integral: bub10[2,6] # 3
+This requested integral is a master integral: bub10[3,5] # 3
+This requested integral is a master integral: bub10[4,4] # 3
+This requested integral is a master integral: bub10[5,3] # 3
+This requested integral is a master integral: bub10[6,2] # 3
+This requested integral is a master integral: bub10[7,1] # 3
+This requested integral is a master integral: bub10[1,1] # 3
+unreduced integrals: 0.
+
+Total time:
+( 6.4 s )

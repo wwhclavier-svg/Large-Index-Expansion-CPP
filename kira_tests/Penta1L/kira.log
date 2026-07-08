@@ -1,0 +1,2002 @@
+4 Fermat/Blackbox instances will be run in parallel.
+The user defined environment variable FERMATPATH for Fermat is set:
+/usr/local/bin/Ferl7/fer64
+The directories for the temporary files, result files and the sector mapping files are: 
+./tmp
+./results
+./sectormappings
+One variable is set to 1: {s12==1}
+Kira prepares topology: Penta1L and top level sector: 
+31 
+
+*****Integral ordering*************************************
+VERSION table created successfully
+Kira database version number: 2.1
+WEIGHTBITS table created successfully
+INTEGRALORDERING table created successfully
+Kira will use the integral ordering: 1.
+With topology: Penta1L use intermediate permutation
+0 1 2 3 4 
+Following reductions will be performed for the topology: Penta1L
+Sector: 31 rmax: 6 smax: 2 
+
+***********************************************************
+Find IBP LI and symmetry relations for the topology: Penta1L
+***********************************************************
+
+*****Generate IBP identities*******************************
+There are 5 IBP identities
+( 0.004361 s )
+
+*****Generate LI identities********************************
+There are 6 LI identities
+( 0.036698 s )
+
+*****Search trivial sectors********************************
+
+Non trivial sectors in total: 21
+Trivial sectors in total: 11
+( 0.0 s )
+
+Search symmetry relations: 
+
+( 0.0 s )
+***********************************************************
+Prepare Symmetries for the topology: Penta1L
+***********************************************************
+Build symmetries for Penta1L x Penta1L 
+
+Sector relations: 0
+Sector symmetries: 10
+( 0.0 s )
+
+***********************************************************
+Kira starts the reduction of the topology: Penta1L
+***********************************************************
+
+***** Select equations recursively ************************
+length of mandatory list: 462
+Algebraic reconstruction is switched off.
+Equation table created successfully
+1251 independent coefficients
+directory to the masters: Penta1L
+Number of master integrals: 452
+Penta1L[1,0,1,0,0] #  5
+Penta1L[1,0,0,1,0] #  9
+Penta1L[0,1,0,1,0] # 10
+Penta1L[1,1,1,1,0] # 15
+Penta1L[0,1,0,0,1] # 18
+Penta1L[0,0,1,0,1] # 20
+Penta1L[1,1,1,0,1] # 23
+Penta1L[1,1,0,1,1] # 27
+Penta1L[1,0,1,1,1] # 29
+Penta1L[0,1,1,1,1] # 30
+Penta1L[1,1,1,1,1] # 31
+Penta1L[1,1,1,1,4] # 31
+Penta1L[1,1,1,2,3] # 31
+Penta1L[1,1,1,3,2] # 31
+Penta1L[1,1,1,4,1] # 31
+Penta1L[1,1,2,1,3] # 31
+Penta1L[1,1,2,2,2] # 31
+Penta1L[1,1,2,3,1] # 31
+Penta1L[1,1,3,1,2] # 31
+Penta1L[1,1,3,2,1] # 31
+Penta1L[1,1,4,1,1] # 31
+Penta1L[1,2,1,1,3] # 31
+Penta1L[1,2,1,2,2] # 31
+Penta1L[1,2,1,3,1] # 31
+Penta1L[1,2,2,1,2] # 31
+Penta1L[1,2,2,2,1] # 31
+Penta1L[1,2,3,1,1] # 31
+Penta1L[1,3,1,1,2] # 31
+Penta1L[1,3,1,2,1] # 31
+Penta1L[1,3,2,1,1] # 31
+Penta1L[1,4,1,1,1] # 31
+Penta1L[2,1,1,1,3] # 31
+Penta1L[2,1,1,2,2] # 31
+Penta1L[2,1,1,3,1] # 31
+Penta1L[2,1,2,1,2] # 31
+Penta1L[2,1,2,2,1] # 31
+Penta1L[2,1,3,1,1] # 31
+Penta1L[2,2,1,1,2] # 31
+Penta1L[2,2,1,2,1] # 31
+Penta1L[2,2,2,1,1] # 31
+Penta1L[2,3,1,1,1] # 31
+Penta1L[3,1,1,1,2] # 31
+Penta1L[3,1,1,2,1] # 31
+Penta1L[3,1,2,1,1] # 31
+Penta1L[3,2,1,1,1] # 31
+Penta1L[4,1,1,1,1] # 31
+Penta1L[1,1,1,1,5] # 31
+Penta1L[1,1,1,2,4] # 31
+Penta1L[1,1,1,3,3] # 31
+Penta1L[1,1,1,4,2] # 31
+Penta1L[1,1,1,5,1] # 31
+Penta1L[1,1,2,1,4] # 31
+Penta1L[1,1,2,2,3] # 31
+Penta1L[1,1,2,3,2] # 31
+Penta1L[1,1,2,4,1] # 31
+Penta1L[1,1,3,1,3] # 31
+Penta1L[1,1,3,2,2] # 31
+Penta1L[1,1,3,3,1] # 31
+Penta1L[1,1,4,1,2] # 31
+Penta1L[1,1,4,2,1] # 31
+Penta1L[1,1,5,1,1] # 31
+Penta1L[1,2,1,1,4] # 31
+Penta1L[1,2,1,2,3] # 31
+Penta1L[1,2,1,3,2] # 31
+Penta1L[1,2,1,4,1] # 31
+Penta1L[1,2,2,1,3] # 31
+Penta1L[1,2,2,2,2] # 31
+Penta1L[1,2,2,3,1] # 31
+Penta1L[1,2,3,1,2] # 31
+Penta1L[1,2,3,2,1] # 31
+Penta1L[1,2,4,1,1] # 31
+Penta1L[1,3,1,1,3] # 31
+Penta1L[1,3,1,2,2] # 31
+Penta1L[1,3,1,3,1] # 31
+Penta1L[1,3,2,1,2] # 31
+Penta1L[1,3,2,2,1] # 31
+Penta1L[1,3,3,1,1] # 31
+Penta1L[1,4,1,1,2] # 31
+Penta1L[1,4,1,2,1] # 31
+Penta1L[1,4,2,1,1] # 31
+Penta1L[1,5,1,1,1] # 31
+Penta1L[2,1,1,1,4] # 31
+Penta1L[2,1,1,2,3] # 31
+Penta1L[2,1,1,3,2] # 31
+Penta1L[2,1,1,4,1] # 31
+Penta1L[2,1,2,1,3] # 31
+Penta1L[2,1,2,2,2] # 31
+Penta1L[2,1,2,3,1] # 31
+Penta1L[2,1,3,1,2] # 31
+Penta1L[2,1,3,2,1] # 31
+Penta1L[2,1,4,1,1] # 31
+Penta1L[2,2,1,1,3] # 31
+Penta1L[2,2,1,2,2] # 31
+Penta1L[2,2,1,3,1] # 31
+Penta1L[2,2,2,1,2] # 31
+Penta1L[2,2,2,2,1] # 31
+Penta1L[2,2,3,1,1] # 31
+Penta1L[2,3,1,1,2] # 31
+Penta1L[2,3,1,2,1] # 31
+Penta1L[2,3,2,1,1] # 31
+Penta1L[2,4,1,1,1] # 31
+Penta1L[3,1,1,1,3] # 31
+Penta1L[3,1,1,2,2] # 31
+Penta1L[3,1,1,3,1] # 31
+Penta1L[3,1,2,1,2] # 31
+Penta1L[3,1,2,2,1] # 31
+Penta1L[3,1,3,1,1] # 31
+Penta1L[3,2,1,1,2] # 31
+Penta1L[3,2,1,2,1] # 31
+Penta1L[3,2,2,1,1] # 31
+Penta1L[3,3,1,1,1] # 31
+Penta1L[4,1,1,1,2] # 31
+Penta1L[4,1,1,2,1] # 31
+Penta1L[4,1,2,1,1] # 31
+Penta1L[4,2,1,1,1] # 31
+Penta1L[5,1,1,1,1] # 31
+Penta1L[1,1,1,1,6] # 31
+Penta1L[1,1,1,2,5] # 31
+Penta1L[1,1,1,3,4] # 31
+Penta1L[1,1,1,4,3] # 31
+Penta1L[1,1,1,5,2] # 31
+Penta1L[1,1,1,6,1] # 31
+Penta1L[1,1,2,1,5] # 31
+Penta1L[1,1,2,2,4] # 31
+Penta1L[1,1,2,3,3] # 31
+Penta1L[1,1,2,4,2] # 31
+Penta1L[1,1,2,5,1] # 31
+Penta1L[1,1,3,1,4] # 31
+Penta1L[1,1,3,2,3] # 31
+Penta1L[1,1,3,3,2] # 31
+Penta1L[1,1,3,4,1] # 31
+Penta1L[1,1,4,1,3] # 31
+Penta1L[1,1,4,2,2] # 31
+Penta1L[1,1,4,3,1] # 31
+Penta1L[1,1,5,1,2] # 31
+Penta1L[1,1,5,2,1] # 31
+Penta1L[1,1,6,1,1] # 31
+Penta1L[1,2,1,1,5] # 31
+Penta1L[1,2,1,2,4] # 31
+Penta1L[1,2,1,3,3] # 31
+Penta1L[1,2,1,4,2] # 31
+Penta1L[1,2,1,5,1] # 31
+Penta1L[1,2,2,1,4] # 31
+Penta1L[1,2,2,2,3] # 31
+Penta1L[1,2,2,3,2] # 31
+Penta1L[1,2,2,4,1] # 31
+Penta1L[1,2,3,1,3] # 31
+Penta1L[1,2,3,2,2] # 31
+Penta1L[1,2,3,3,1] # 31
+Penta1L[1,2,4,1,2] # 31
+Penta1L[1,2,4,2,1] # 31
+Penta1L[1,2,5,1,1] # 31
+Penta1L[1,3,1,1,4] # 31
+Penta1L[1,3,1,2,3] # 31
+Penta1L[1,3,1,3,2] # 31
+Penta1L[1,3,1,4,1] # 31
+Penta1L[1,3,2,1,3] # 31
+Penta1L[1,3,2,2,2] # 31
+Penta1L[1,3,2,3,1] # 31
+Penta1L[1,3,3,1,2] # 31
+Penta1L[1,3,3,2,1] # 31
+Penta1L[1,3,4,1,1] # 31
+Penta1L[1,4,1,1,3] # 31
+Penta1L[1,4,1,2,2] # 31
+Penta1L[1,4,1,3,1] # 31
+Penta1L[1,4,2,1,2] # 31
+Penta1L[1,4,2,2,1] # 31
+Penta1L[1,4,3,1,1] # 31
+Penta1L[1,5,1,1,2] # 31
+Penta1L[1,5,1,2,1] # 31
+Penta1L[1,5,2,1,1] # 31
+Penta1L[1,6,1,1,1] # 31
+Penta1L[2,1,1,1,5] # 31
+Penta1L[2,1,1,2,4] # 31
+Penta1L[2,1,1,3,3] # 31
+Penta1L[2,1,1,4,2] # 31
+Penta1L[2,1,1,5,1] # 31
+Penta1L[2,1,2,1,4] # 31
+Penta1L[2,1,2,2,3] # 31
+Penta1L[2,1,2,3,2] # 31
+Penta1L[2,1,2,4,1] # 31
+Penta1L[2,1,3,1,3] # 31
+Penta1L[2,1,3,2,2] # 31
+Penta1L[2,1,3,3,1] # 31
+Penta1L[2,1,4,1,2] # 31
+Penta1L[2,1,4,2,1] # 31
+Penta1L[2,1,5,1,1] # 31
+Penta1L[2,2,1,1,4] # 31
+Penta1L[2,2,1,2,3] # 31
+Penta1L[2,2,1,3,2] # 31
+Penta1L[2,2,1,4,1] # 31
+Penta1L[2,2,2,1,3] # 31
+Penta1L[2,2,2,2,2] # 31
+Penta1L[2,2,2,3,1] # 31
+Penta1L[2,2,3,1,2] # 31
+Penta1L[2,2,3,2,1] # 31
+Penta1L[2,2,4,1,1] # 31
+Penta1L[2,3,1,1,3] # 31
+Penta1L[2,3,1,2,2] # 31
+Penta1L[2,3,1,3,1] # 31
+Penta1L[2,3,2,1,2] # 31
+Penta1L[2,3,2,2,1] # 31
+Penta1L[2,3,3,1,1] # 31
+Penta1L[2,4,1,1,2] # 31
+Penta1L[2,4,1,2,1] # 31
+Penta1L[2,4,2,1,1] # 31
+Penta1L[2,5,1,1,1] # 31
+Penta1L[3,1,1,1,4] # 31
+Penta1L[3,1,1,2,3] # 31
+Penta1L[3,1,1,3,2] # 31
+Penta1L[3,1,1,4,1] # 31
+Penta1L[3,1,2,1,3] # 31
+Penta1L[3,1,2,2,2] # 31
+Penta1L[3,1,2,3,1] # 31
+Penta1L[3,1,3,1,2] # 31
+Penta1L[3,1,3,2,1] # 31
+Penta1L[3,1,4,1,1] # 31
+Penta1L[3,2,1,1,3] # 31
+Penta1L[3,2,1,2,2] # 31
+Penta1L[3,2,1,3,1] # 31
+Penta1L[3,2,2,1,2] # 31
+Penta1L[3,2,2,2,1] # 31
+Penta1L[3,2,3,1,1] # 31
+Penta1L[3,3,1,1,2] # 31
+Penta1L[3,3,1,2,1] # 31
+Penta1L[3,3,2,1,1] # 31
+Penta1L[3,4,1,1,1] # 31
+Penta1L[4,1,1,1,3] # 31
+Penta1L[4,1,1,2,2] # 31
+Penta1L[4,1,1,3,1] # 31
+Penta1L[4,1,2,1,2] # 31
+Penta1L[4,1,2,2,1] # 31
+Penta1L[4,1,3,1,1] # 31
+Penta1L[4,2,1,1,2] # 31
+Penta1L[4,2,1,2,1] # 31
+Penta1L[4,2,2,1,1] # 31
+Penta1L[4,3,1,1,1] # 31
+Penta1L[5,1,1,1,2] # 31
+Penta1L[5,1,1,2,1] # 31
+Penta1L[5,1,2,1,1] # 31
+Penta1L[5,2,1,1,1] # 31
+Penta1L[6,1,1,1,1] # 31
+Penta1L[1,1,1,1,7] # 31
+Penta1L[1,1,1,2,6] # 31
+Penta1L[1,1,1,3,5] # 31
+Penta1L[1,1,1,4,4] # 31
+Penta1L[1,1,1,5,3] # 31
+Penta1L[1,1,1,6,2] # 31
+Penta1L[1,1,1,7,1] # 31
+Penta1L[1,1,2,1,6] # 31
+Penta1L[1,1,2,2,5] # 31
+Penta1L[1,1,2,3,4] # 31
+Penta1L[1,1,2,4,3] # 31
+Penta1L[1,1,2,5,2] # 31
+Penta1L[1,1,2,6,1] # 31
+Penta1L[1,1,3,1,5] # 31
+Penta1L[1,1,3,2,4] # 31
+Penta1L[1,1,3,3,3] # 31
+Penta1L[1,1,3,4,2] # 31
+Penta1L[1,1,3,5,1] # 31
+Penta1L[1,1,4,1,4] # 31
+Penta1L[1,1,4,2,3] # 31
+Penta1L[1,1,4,3,2] # 31
+Penta1L[1,1,4,4,1] # 31
+Penta1L[1,1,5,1,3] # 31
+Penta1L[1,1,5,2,2] # 31
+Penta1L[1,1,5,3,1] # 31
+Penta1L[1,1,6,1,2] # 31
+Penta1L[1,1,6,2,1] # 31
+Penta1L[1,1,7,1,1] # 31
+Penta1L[1,2,1,1,6] # 31
+Penta1L[1,2,1,2,5] # 31
+Penta1L[1,2,1,3,4] # 31
+Penta1L[1,2,1,4,3] # 31
+Penta1L[1,2,1,5,2] # 31
+Penta1L[1,2,1,6,1] # 31
+Penta1L[1,2,2,1,5] # 31
+Penta1L[1,2,2,2,4] # 31
+Penta1L[1,2,2,3,3] # 31
+Penta1L[1,2,2,4,2] # 31
+Penta1L[1,2,2,5,1] # 31
+Penta1L[1,2,3,1,4] # 31
+Penta1L[1,2,3,2,3] # 31
+Penta1L[1,2,3,3,2] # 31
+Penta1L[1,2,3,4,1] # 31
+Penta1L[1,2,4,1,3] # 31
+Penta1L[1,2,4,2,2] # 31
+Penta1L[1,2,4,3,1] # 31
+Penta1L[1,2,5,1,2] # 31
+Penta1L[1,2,5,2,1] # 31
+Penta1L[1,2,6,1,1] # 31
+Penta1L[1,3,1,1,5] # 31
+Penta1L[1,3,1,2,4] # 31
+Penta1L[1,3,1,3,3] # 31
+Penta1L[1,3,1,4,2] # 31
+Penta1L[1,3,1,5,1] # 31
+Penta1L[1,3,2,1,4] # 31
+Penta1L[1,3,2,2,3] # 31
+Penta1L[1,3,2,3,2] # 31
+Penta1L[1,3,2,4,1] # 31
+Penta1L[1,3,3,1,3] # 31
+Penta1L[1,3,3,2,2] # 31
+Penta1L[1,3,3,3,1] # 31
+Penta1L[1,3,4,1,2] # 31
+Penta1L[1,3,4,2,1] # 31
+Penta1L[1,3,5,1,1] # 31
+Penta1L[1,4,1,1,4] # 31
+Penta1L[1,4,1,2,3] # 31
+Penta1L[1,4,1,3,2] # 31
+Penta1L[1,4,1,4,1] # 31
+Penta1L[1,4,2,1,3] # 31
+Penta1L[1,4,2,2,2] # 31
+Penta1L[1,4,2,3,1] # 31
+Penta1L[1,4,3,1,2] # 31
+Penta1L[1,4,3,2,1] # 31
+Penta1L[1,4,4,1,1] # 31
+Penta1L[1,5,1,1,3] # 31
+Penta1L[1,5,1,2,2] # 31
+Penta1L[1,5,1,3,1] # 31
+Penta1L[1,5,2,1,2] # 31
+Penta1L[1,5,2,2,1] # 31
+Penta1L[1,5,3,1,1] # 31
+Penta1L[1,6,1,1,2] # 31
+Penta1L[1,6,1,2,1] # 31
+Penta1L[1,6,2,1,1] # 31
+Penta1L[1,7,1,1,1] # 31
+Penta1L[2,1,1,1,6] # 31
+Penta1L[2,1,1,2,5] # 31
+Penta1L[2,1,1,3,4] # 31
+Penta1L[2,1,1,4,3] # 31
+Penta1L[2,1,1,5,2] # 31
+Penta1L[2,1,1,6,1] # 31
+Penta1L[2,1,2,1,5] # 31
+Penta1L[2,1,2,2,4] # 31
+Penta1L[2,1,2,3,3] # 31
+Penta1L[2,1,2,4,2] # 31
+Penta1L[2,1,2,5,1] # 31
+Penta1L[2,1,3,1,4] # 31
+Penta1L[2,1,3,2,3] # 31
+Penta1L[2,1,3,3,2] # 31
+Penta1L[2,1,3,4,1] # 31
+Penta1L[2,1,4,1,3] # 31
+Penta1L[2,1,4,2,2] # 31
+Penta1L[2,1,4,3,1] # 31
+Penta1L[2,1,5,1,2] # 31
+Penta1L[2,1,5,2,1] # 31
+Penta1L[2,1,6,1,1] # 31
+Penta1L[2,2,1,1,5] # 31
+Penta1L[2,2,1,2,4] # 31
+Penta1L[2,2,1,3,3] # 31
+Penta1L[2,2,1,4,2] # 31
+Penta1L[2,2,1,5,1] # 31
+Penta1L[2,2,2,1,4] # 31
+Penta1L[2,2,2,2,3] # 31
+Penta1L[2,2,2,3,2] # 31
+Penta1L[2,2,2,4,1] # 31
+Penta1L[2,2,3,1,3] # 31
+Penta1L[2,2,3,2,2] # 31
+Penta1L[2,2,3,3,1] # 31
+Penta1L[2,2,4,1,2] # 31
+Penta1L[2,2,4,2,1] # 31
+Penta1L[2,2,5,1,1] # 31
+Penta1L[2,3,1,1,4] # 31
+Penta1L[2,3,1,2,3] # 31
+Penta1L[2,3,1,3,2] # 31
+Penta1L[2,3,1,4,1] # 31
+Penta1L[2,3,2,1,3] # 31
+Penta1L[2,3,2,2,2] # 31
+Penta1L[2,3,2,3,1] # 31
+Penta1L[2,3,3,1,2] # 31
+Penta1L[2,3,3,2,1] # 31
+Penta1L[2,3,4,1,1] # 31
+Penta1L[2,4,1,1,3] # 31
+Penta1L[2,4,1,2,2] # 31
+Penta1L[2,4,1,3,1] # 31
+Penta1L[2,4,2,1,2] # 31
+Penta1L[2,4,2,2,1] # 31
+Penta1L[2,4,3,1,1] # 31
+Penta1L[2,5,1,1,2] # 31
+Penta1L[2,5,1,2,1] # 31
+Penta1L[2,5,2,1,1] # 31
+Penta1L[2,6,1,1,1] # 31
+Penta1L[3,1,1,1,5] # 31
+Penta1L[3,1,1,2,4] # 31
+Penta1L[3,1,1,3,3] # 31
+Penta1L[3,1,1,4,2] # 31
+Penta1L[3,1,1,5,1] # 31
+Penta1L[3,1,2,1,4] # 31
+Penta1L[3,1,2,2,3] # 31
+Penta1L[3,1,2,3,2] # 31
+Penta1L[3,1,2,4,1] # 31
+Penta1L[3,1,3,1,3] # 31
+Penta1L[3,1,3,2,2] # 31
+Penta1L[3,1,3,3,1] # 31
+Penta1L[3,1,4,1,2] # 31
+Penta1L[3,1,4,2,1] # 31
+Penta1L[3,1,5,1,1] # 31
+Penta1L[3,2,1,1,4] # 31
+Penta1L[3,2,1,2,3] # 31
+Penta1L[3,2,1,3,2] # 31
+Penta1L[3,2,1,4,1] # 31
+Penta1L[3,2,2,1,3] # 31
+Penta1L[3,2,2,2,2] # 31
+Penta1L[3,2,2,3,1] # 31
+Penta1L[3,2,3,1,2] # 31
+Penta1L[3,2,3,2,1] # 31
+Penta1L[3,2,4,1,1] # 31
+Penta1L[3,3,1,1,3] # 31
+Penta1L[3,3,1,2,2] # 31
+Penta1L[3,3,1,3,1] # 31
+Penta1L[3,3,2,1,2] # 31
+Penta1L[3,3,2,2,1] # 31
+Penta1L[3,3,3,1,1] # 31
+Penta1L[3,4,1,1,2] # 31
+Penta1L[3,4,1,2,1] # 31
+Penta1L[3,4,2,1,1] # 31
+Penta1L[3,5,1,1,1] # 31
+Penta1L[4,1,1,1,4] # 31
+Penta1L[4,1,1,2,3] # 31
+Penta1L[4,1,1,3,2] # 31
+Penta1L[4,1,1,4,1] # 31
+Penta1L[4,1,2,1,3] # 31
+Penta1L[4,1,2,2,2] # 31
+Penta1L[4,1,2,3,1] # 31
+Penta1L[4,1,3,1,2] # 31
+Penta1L[4,1,3,2,1] # 31
+Penta1L[4,1,4,1,1] # 31
+Penta1L[4,2,1,1,3] # 31
+Penta1L[4,2,1,2,2] # 31
+Penta1L[4,2,1,3,1] # 31
+Penta1L[4,2,2,1,2] # 31
+Penta1L[4,2,2,2,1] # 31
+Penta1L[4,2,3,1,1] # 31
+Penta1L[4,3,1,1,2] # 31
+Penta1L[4,3,1,2,1] # 31
+Penta1L[4,3,2,1,1] # 31
+Penta1L[4,4,1,1,1] # 31
+Penta1L[5,1,1,1,3] # 31
+Penta1L[5,1,1,2,2] # 31
+Penta1L[5,1,1,3,1] # 31
+Penta1L[5,1,2,1,2] # 31
+Penta1L[5,1,2,2,1] # 31
+Penta1L[5,1,3,1,1] # 31
+Penta1L[5,2,1,1,2] # 31
+Penta1L[5,2,1,2,1] # 31
+Penta1L[5,2,2,1,1] # 31
+Penta1L[5,3,1,1,1] # 31
+Penta1L[6,1,1,1,2] # 31
+Penta1L[6,1,1,2,1] # 31
+Penta1L[6,1,2,1,1] # 31
+Penta1L[6,2,1,1,1] # 31
+Penta1L[7,1,1,1,1] # 31
+
+Number of selected equations to reduce: 0 equations
+Regenerate:
+
+Number of selected equations to reduce: 402 equations
+( 0.4 s )
+Algebraic reconstruction is switched off.
+
+***** Select equations recursively ************************
+length of mandatory list: 462
+
+***** Bring system in triangular form *********************
+
+Iterate the system until it is in triangular form: 
+iteration: 0; items left: 108; time: ( 0.0 s )
+iteration: 1; items left: 50; time: ( 0.0 s )
+iteration: 2; items left: 35; time: ( 0.0 s )
+iteration: 3; items left: 23; time: ( 0.0 s )
+iteration: 4; items left: 19; time: ( 0.0 s )
+iteration: 5; items left: 12; time: ( 0.0 s )
+iteration: 6; items left: 5; time: ( 0.0 s )
+iteration: 7; items left: 4; time: ( 0.0 s )
+iteration: 8; items left: 3; time: ( 0.0 s )
+iteration: 9; items left: 1; time: ( 0.0 s )
+iteration: 10; items left: 1; time: ( 0.0 s )
+redundant: 0; insertions 313
+All coefficients will be normalized
+
+Equations out of bounds rmax and smax: 95
+Equations in the bounds rmax and smax: 307
+( 0.1 s )
+
+Write the triangular system to ./tmp/ on hard disk
+(--> ./tmp/Penta1L/VERconfig, ./tmp/Penta1L/VER###) 
+
+Triangular form completed after ( 0.1 s )
+FIREFLY table created successfully
+Algebraic reconstruction is switched off.
+
+***** Run the back substitution ***********************
+
+Load all files from ./tmp/
+Take 307 equations to reduce 307 missing equations
+
+Back substitution: 
+
+
+Equations reduced: 0 / 307
+Kira committed results ( 0.1 s )
+
+
+Equations reduced: 2 / 307
+Kira committed results ( 0.1 s )
+
+
+Equations reduced: 8 / 307
+Kira committed results ( 0.2 s )
+
+
+Equations reduced: 9 / 307
+Kira committed results ( 0.3 s )
+
+
+Equations reduced: 18 / 307
+Kira committed results ( 0.3 s )
+
+
+Equations reduced: 31 / 307
+Kira committed results ( 0.4 s )
+
+
+Equations reduced: 32 / 307
+Kira committed results ( 0.5 s )
+
+
+Equations reduced: 36 / 307
+Kira committed results ( 0.5 s )
+
+
+Equations reduced: 47 / 307
+Kira committed results ( 0.6 s )
+
+
+Equations reduced: 47 / 307
+Kira committed results ( 0.7 s )
+
+
+Equations reduced: 52 / 307
+Kira committed results ( 0.7 s )
+
+
+Equations reduced: 63 / 307
+Kira committed results ( 0.8 s )
+
+
+Equations reduced: 169 / 307
+Kira committed results ( 0.9 s )
+
+
+Equations reduced: 169 / 307
+Kira committed results ( 1.0 s )
+
+
+Equations reduced: 185 / 307
+Kira committed results ( 1.0 s )
+
+
+Equations reduced: 219 / 307
+Kira committed results ( 1.1 s )
+
+
+Equations reduced: 243 / 307
+Kira committed results ( 1.2 s )
+
+
+Equations reduced: 249 / 307
+Kira committed results ( 1.3 s )
+
+
+Equations reduced: 307 / 307
+Kira committed results ( 1.4 s )
+
+307 equations were reduced
+
+*****Master integrals***********************************
+Penta1L[1,0,1,0,0] #  5
+Penta1L[1,0,0,1,0] #  9
+Penta1L[0,1,0,1,0] # 10
+Penta1L[1,1,1,1,0] # 15
+Penta1L[0,1,0,0,1] # 18
+Penta1L[0,0,1,0,1] # 20
+Penta1L[1,1,1,0,1] # 23
+Penta1L[1,1,0,1,1] # 27
+Penta1L[1,0,1,1,1] # 29
+Penta1L[0,1,1,1,1] # 30
+Penta1L[1,1,1,1,1] # 31
+Penta1L[1,1,1,1,4] # 31
+Penta1L[1,1,1,2,3] # 31
+Penta1L[1,1,1,3,2] # 31
+Penta1L[1,1,1,4,1] # 31
+Penta1L[1,1,2,1,3] # 31
+Penta1L[1,1,2,2,2] # 31
+Penta1L[1,1,2,3,1] # 31
+Penta1L[1,1,3,1,2] # 31
+Penta1L[1,1,3,2,1] # 31
+Penta1L[1,1,4,1,1] # 31
+Penta1L[1,2,1,1,3] # 31
+Penta1L[1,2,1,2,2] # 31
+Penta1L[1,2,1,3,1] # 31
+Penta1L[1,2,2,1,2] # 31
+Penta1L[1,2,2,2,1] # 31
+Penta1L[1,2,3,1,1] # 31
+Penta1L[1,3,1,1,2] # 31
+Penta1L[1,3,1,2,1] # 31
+Penta1L[1,3,2,1,1] # 31
+Penta1L[1,4,1,1,1] # 31
+Penta1L[2,1,1,1,3] # 31
+Penta1L[2,1,1,2,2] # 31
+Penta1L[2,1,1,3,1] # 31
+Penta1L[2,1,2,1,2] # 31
+Penta1L[2,1,2,2,1] # 31
+Penta1L[2,1,3,1,1] # 31
+Penta1L[2,2,1,1,2] # 31
+Penta1L[2,2,1,2,1] # 31
+Penta1L[2,2,2,1,1] # 31
+Penta1L[2,3,1,1,1] # 31
+Penta1L[3,1,1,1,2] # 31
+Penta1L[3,1,1,2,1] # 31
+Penta1L[3,1,2,1,1] # 31
+Penta1L[3,2,1,1,1] # 31
+Penta1L[4,1,1,1,1] # 31
+Penta1L[1,1,1,1,5] # 31
+Penta1L[1,1,1,2,4] # 31
+Penta1L[1,1,1,3,3] # 31
+Penta1L[1,1,1,4,2] # 31
+Penta1L[1,1,1,5,1] # 31
+Penta1L[1,1,2,1,4] # 31
+Penta1L[1,1,2,2,3] # 31
+Penta1L[1,1,2,3,2] # 31
+Penta1L[1,1,2,4,1] # 31
+Penta1L[1,1,3,1,3] # 31
+Penta1L[1,1,3,2,2] # 31
+Penta1L[1,1,3,3,1] # 31
+Penta1L[1,1,4,1,2] # 31
+Penta1L[1,1,4,2,1] # 31
+Penta1L[1,1,5,1,1] # 31
+Penta1L[1,2,1,1,4] # 31
+Penta1L[1,2,1,2,3] # 31
+Penta1L[1,2,1,3,2] # 31
+Penta1L[1,2,1,4,1] # 31
+Penta1L[1,2,2,1,3] # 31
+Penta1L[1,2,2,2,2] # 31
+Penta1L[1,2,2,3,1] # 31
+Penta1L[1,2,3,1,2] # 31
+Penta1L[1,2,3,2,1] # 31
+Penta1L[1,2,4,1,1] # 31
+Penta1L[1,3,1,1,3] # 31
+Penta1L[1,3,1,2,2] # 31
+Penta1L[1,3,1,3,1] # 31
+Penta1L[1,3,2,1,2] # 31
+Penta1L[1,3,2,2,1] # 31
+Penta1L[1,3,3,1,1] # 31
+Penta1L[1,4,1,1,2] # 31
+Penta1L[1,4,1,2,1] # 31
+Penta1L[1,4,2,1,1] # 31
+Penta1L[1,5,1,1,1] # 31
+Penta1L[2,1,1,1,4] # 31
+Penta1L[2,1,1,2,3] # 31
+Penta1L[2,1,1,3,2] # 31
+Penta1L[2,1,1,4,1] # 31
+Penta1L[2,1,2,1,3] # 31
+Penta1L[2,1,2,2,2] # 31
+Penta1L[2,1,2,3,1] # 31
+Penta1L[2,1,3,1,2] # 31
+Penta1L[2,1,3,2,1] # 31
+Penta1L[2,1,4,1,1] # 31
+Penta1L[2,2,1,1,3] # 31
+Penta1L[2,2,1,2,2] # 31
+Penta1L[2,2,1,3,1] # 31
+Penta1L[2,2,2,1,2] # 31
+Penta1L[2,2,2,2,1] # 31
+Penta1L[2,2,3,1,1] # 31
+Penta1L[2,3,1,1,2] # 31
+Penta1L[2,3,1,2,1] # 31
+Penta1L[2,3,2,1,1] # 31
+Penta1L[2,4,1,1,1] # 31
+Penta1L[3,1,1,1,3] # 31
+Penta1L[3,1,1,2,2] # 31
+Penta1L[3,1,1,3,1] # 31
+Penta1L[3,1,2,1,2] # 31
+Penta1L[3,1,2,2,1] # 31
+Penta1L[3,1,3,1,1] # 31
+Penta1L[3,2,1,1,2] # 31
+Penta1L[3,2,1,2,1] # 31
+Penta1L[3,2,2,1,1] # 31
+Penta1L[3,3,1,1,1] # 31
+Penta1L[4,1,1,1,2] # 31
+Penta1L[4,1,1,2,1] # 31
+Penta1L[4,1,2,1,1] # 31
+Penta1L[4,2,1,1,1] # 31
+Penta1L[5,1,1,1,1] # 31
+Penta1L[1,1,1,1,6] # 31
+Penta1L[1,1,1,2,5] # 31
+Penta1L[1,1,1,3,4] # 31
+Penta1L[1,1,1,4,3] # 31
+Penta1L[1,1,1,5,2] # 31
+Penta1L[1,1,1,6,1] # 31
+Penta1L[1,1,2,1,5] # 31
+Penta1L[1,1,2,2,4] # 31
+Penta1L[1,1,2,3,3] # 31
+Penta1L[1,1,2,4,2] # 31
+Penta1L[1,1,2,5,1] # 31
+Penta1L[1,1,3,1,4] # 31
+Penta1L[1,1,3,2,3] # 31
+Penta1L[1,1,3,3,2] # 31
+Penta1L[1,1,3,4,1] # 31
+Penta1L[1,1,4,1,3] # 31
+Penta1L[1,1,4,2,2] # 31
+Penta1L[1,1,4,3,1] # 31
+Penta1L[1,1,5,1,2] # 31
+Penta1L[1,1,5,2,1] # 31
+Penta1L[1,1,6,1,1] # 31
+Penta1L[1,2,1,1,5] # 31
+Penta1L[1,2,1,2,4] # 31
+Penta1L[1,2,1,3,3] # 31
+Penta1L[1,2,1,4,2] # 31
+Penta1L[1,2,1,5,1] # 31
+Penta1L[1,2,2,1,4] # 31
+Penta1L[1,2,2,2,3] # 31
+Penta1L[1,2,2,3,2] # 31
+Penta1L[1,2,2,4,1] # 31
+Penta1L[1,2,3,1,3] # 31
+Penta1L[1,2,3,2,2] # 31
+Penta1L[1,2,3,3,1] # 31
+Penta1L[1,2,4,1,2] # 31
+Penta1L[1,2,4,2,1] # 31
+Penta1L[1,2,5,1,1] # 31
+Penta1L[1,3,1,1,4] # 31
+Penta1L[1,3,1,2,3] # 31
+Penta1L[1,3,1,3,2] # 31
+Penta1L[1,3,1,4,1] # 31
+Penta1L[1,3,2,1,3] # 31
+Penta1L[1,3,2,2,2] # 31
+Penta1L[1,3,2,3,1] # 31
+Penta1L[1,3,3,1,2] # 31
+Penta1L[1,3,3,2,1] # 31
+Penta1L[1,3,4,1,1] # 31
+Penta1L[1,4,1,1,3] # 31
+Penta1L[1,4,1,2,2] # 31
+Penta1L[1,4,1,3,1] # 31
+Penta1L[1,4,2,1,2] # 31
+Penta1L[1,4,2,2,1] # 31
+Penta1L[1,4,3,1,1] # 31
+Penta1L[1,5,1,1,2] # 31
+Penta1L[1,5,1,2,1] # 31
+Penta1L[1,5,2,1,1] # 31
+Penta1L[1,6,1,1,1] # 31
+Penta1L[2,1,1,1,5] # 31
+Penta1L[2,1,1,2,4] # 31
+Penta1L[2,1,1,3,3] # 31
+Penta1L[2,1,1,4,2] # 31
+Penta1L[2,1,1,5,1] # 31
+Penta1L[2,1,2,1,4] # 31
+Penta1L[2,1,2,2,3] # 31
+Penta1L[2,1,2,3,2] # 31
+Penta1L[2,1,2,4,1] # 31
+Penta1L[2,1,3,1,3] # 31
+Penta1L[2,1,3,2,2] # 31
+Penta1L[2,1,3,3,1] # 31
+Penta1L[2,1,4,1,2] # 31
+Penta1L[2,1,4,2,1] # 31
+Penta1L[2,1,5,1,1] # 31
+Penta1L[2,2,1,1,4] # 31
+Penta1L[2,2,1,2,3] # 31
+Penta1L[2,2,1,3,2] # 31
+Penta1L[2,2,1,4,1] # 31
+Penta1L[2,2,2,1,3] # 31
+Penta1L[2,2,2,2,2] # 31
+Penta1L[2,2,2,3,1] # 31
+Penta1L[2,2,3,1,2] # 31
+Penta1L[2,2,3,2,1] # 31
+Penta1L[2,2,4,1,1] # 31
+Penta1L[2,3,1,1,3] # 31
+Penta1L[2,3,1,2,2] # 31
+Penta1L[2,3,1,3,1] # 31
+Penta1L[2,3,2,1,2] # 31
+Penta1L[2,3,2,2,1] # 31
+Penta1L[2,3,3,1,1] # 31
+Penta1L[2,4,1,1,2] # 31
+Penta1L[2,4,1,2,1] # 31
+Penta1L[2,4,2,1,1] # 31
+Penta1L[2,5,1,1,1] # 31
+Penta1L[3,1,1,1,4] # 31
+Penta1L[3,1,1,2,3] # 31
+Penta1L[3,1,1,3,2] # 31
+Penta1L[3,1,1,4,1] # 31
+Penta1L[3,1,2,1,3] # 31
+Penta1L[3,1,2,2,2] # 31
+Penta1L[3,1,2,3,1] # 31
+Penta1L[3,1,3,1,2] # 31
+Penta1L[3,1,3,2,1] # 31
+Penta1L[3,1,4,1,1] # 31
+Penta1L[3,2,1,1,3] # 31
+Penta1L[3,2,1,2,2] # 31
+Penta1L[3,2,1,3,1] # 31
+Penta1L[3,2,2,1,2] # 31
+Penta1L[3,2,2,2,1] # 31
+Penta1L[3,2,3,1,1] # 31
+Penta1L[3,3,1,1,2] # 31
+Penta1L[3,3,1,2,1] # 31
+Penta1L[3,3,2,1,1] # 31
+Penta1L[3,4,1,1,1] # 31
+Penta1L[4,1,1,1,3] # 31
+Penta1L[4,1,1,2,2] # 31
+Penta1L[4,1,1,3,1] # 31
+Penta1L[4,1,2,1,2] # 31
+Penta1L[4,1,2,2,1] # 31
+Penta1L[4,1,3,1,1] # 31
+Penta1L[4,2,1,1,2] # 31
+Penta1L[4,2,1,2,1] # 31
+Penta1L[4,2,2,1,1] # 31
+Penta1L[4,3,1,1,1] # 31
+Penta1L[5,1,1,1,2] # 31
+Penta1L[5,1,1,2,1] # 31
+Penta1L[5,1,2,1,1] # 31
+Penta1L[5,2,1,1,1] # 31
+Penta1L[6,1,1,1,1] # 31
+Penta1L[1,1,1,1,7] # 31
+Penta1L[1,1,1,2,6] # 31
+Penta1L[1,1,1,3,5] # 31
+Penta1L[1,1,1,4,4] # 31
+Penta1L[1,1,1,5,3] # 31
+Penta1L[1,1,1,6,2] # 31
+Penta1L[1,1,1,7,1] # 31
+Penta1L[1,1,2,1,6] # 31
+Penta1L[1,1,2,2,5] # 31
+Penta1L[1,1,2,3,4] # 31
+Penta1L[1,1,2,4,3] # 31
+Penta1L[1,1,2,5,2] # 31
+Penta1L[1,1,2,6,1] # 31
+Penta1L[1,1,3,1,5] # 31
+Penta1L[1,1,3,2,4] # 31
+Penta1L[1,1,3,3,3] # 31
+Penta1L[1,1,3,4,2] # 31
+Penta1L[1,1,3,5,1] # 31
+Penta1L[1,1,4,1,4] # 31
+Penta1L[1,1,4,2,3] # 31
+Penta1L[1,1,4,3,2] # 31
+Penta1L[1,1,4,4,1] # 31
+Penta1L[1,1,5,1,3] # 31
+Penta1L[1,1,5,2,2] # 31
+Penta1L[1,1,5,3,1] # 31
+Penta1L[1,1,6,1,2] # 31
+Penta1L[1,1,6,2,1] # 31
+Penta1L[1,1,7,1,1] # 31
+Penta1L[1,2,1,1,6] # 31
+Penta1L[1,2,1,2,5] # 31
+Penta1L[1,2,1,3,4] # 31
+Penta1L[1,2,1,4,3] # 31
+Penta1L[1,2,1,5,2] # 31
+Penta1L[1,2,1,6,1] # 31
+Penta1L[1,2,2,1,5] # 31
+Penta1L[1,2,2,2,4] # 31
+Penta1L[1,2,2,3,3] # 31
+Penta1L[1,2,2,4,2] # 31
+Penta1L[1,2,2,5,1] # 31
+Penta1L[1,2,3,1,4] # 31
+Penta1L[1,2,3,2,3] # 31
+Penta1L[1,2,3,3,2] # 31
+Penta1L[1,2,3,4,1] # 31
+Penta1L[1,2,4,1,3] # 31
+Penta1L[1,2,4,2,2] # 31
+Penta1L[1,2,4,3,1] # 31
+Penta1L[1,2,5,1,2] # 31
+Penta1L[1,2,5,2,1] # 31
+Penta1L[1,2,6,1,1] # 31
+Penta1L[1,3,1,1,5] # 31
+Penta1L[1,3,1,2,4] # 31
+Penta1L[1,3,1,3,3] # 31
+Penta1L[1,3,1,4,2] # 31
+Penta1L[1,3,1,5,1] # 31
+Penta1L[1,3,2,1,4] # 31
+Penta1L[1,3,2,2,3] # 31
+Penta1L[1,3,2,3,2] # 31
+Penta1L[1,3,2,4,1] # 31
+Penta1L[1,3,3,1,3] # 31
+Penta1L[1,3,3,2,2] # 31
+Penta1L[1,3,3,3,1] # 31
+Penta1L[1,3,4,1,2] # 31
+Penta1L[1,3,4,2,1] # 31
+Penta1L[1,3,5,1,1] # 31
+Penta1L[1,4,1,1,4] # 31
+Penta1L[1,4,1,2,3] # 31
+Penta1L[1,4,1,3,2] # 31
+Penta1L[1,4,1,4,1] # 31
+Penta1L[1,4,2,1,3] # 31
+Penta1L[1,4,2,2,2] # 31
+Penta1L[1,4,2,3,1] # 31
+Penta1L[1,4,3,1,2] # 31
+Penta1L[1,4,3,2,1] # 31
+Penta1L[1,4,4,1,1] # 31
+Penta1L[1,5,1,1,3] # 31
+Penta1L[1,5,1,2,2] # 31
+Penta1L[1,5,1,3,1] # 31
+Penta1L[1,5,2,1,2] # 31
+Penta1L[1,5,2,2,1] # 31
+Penta1L[1,5,3,1,1] # 31
+Penta1L[1,6,1,1,2] # 31
+Penta1L[1,6,1,2,1] # 31
+Penta1L[1,6,2,1,1] # 31
+Penta1L[1,7,1,1,1] # 31
+Penta1L[2,1,1,1,6] # 31
+Penta1L[2,1,1,2,5] # 31
+Penta1L[2,1,1,3,4] # 31
+Penta1L[2,1,1,4,3] # 31
+Penta1L[2,1,1,5,2] # 31
+Penta1L[2,1,1,6,1] # 31
+Penta1L[2,1,2,1,5] # 31
+Penta1L[2,1,2,2,4] # 31
+Penta1L[2,1,2,3,3] # 31
+Penta1L[2,1,2,4,2] # 31
+Penta1L[2,1,2,5,1] # 31
+Penta1L[2,1,3,1,4] # 31
+Penta1L[2,1,3,2,3] # 31
+Penta1L[2,1,3,3,2] # 31
+Penta1L[2,1,3,4,1] # 31
+Penta1L[2,1,4,1,3] # 31
+Penta1L[2,1,4,2,2] # 31
+Penta1L[2,1,4,3,1] # 31
+Penta1L[2,1,5,1,2] # 31
+Penta1L[2,1,5,2,1] # 31
+Penta1L[2,1,6,1,1] # 31
+Penta1L[2,2,1,1,5] # 31
+Penta1L[2,2,1,2,4] # 31
+Penta1L[2,2,1,3,3] # 31
+Penta1L[2,2,1,4,2] # 31
+Penta1L[2,2,1,5,1] # 31
+Penta1L[2,2,2,1,4] # 31
+Penta1L[2,2,2,2,3] # 31
+Penta1L[2,2,2,3,2] # 31
+Penta1L[2,2,2,4,1] # 31
+Penta1L[2,2,3,1,3] # 31
+Penta1L[2,2,3,2,2] # 31
+Penta1L[2,2,3,3,1] # 31
+Penta1L[2,2,4,1,2] # 31
+Penta1L[2,2,4,2,1] # 31
+Penta1L[2,2,5,1,1] # 31
+Penta1L[2,3,1,1,4] # 31
+Penta1L[2,3,1,2,3] # 31
+Penta1L[2,3,1,3,2] # 31
+Penta1L[2,3,1,4,1] # 31
+Penta1L[2,3,2,1,3] # 31
+Penta1L[2,3,2,2,2] # 31
+Penta1L[2,3,2,3,1] # 31
+Penta1L[2,3,3,1,2] # 31
+Penta1L[2,3,3,2,1] # 31
+Penta1L[2,3,4,1,1] # 31
+Penta1L[2,4,1,1,3] # 31
+Penta1L[2,4,1,2,2] # 31
+Penta1L[2,4,1,3,1] # 31
+Penta1L[2,4,2,1,2] # 31
+Penta1L[2,4,2,2,1] # 31
+Penta1L[2,4,3,1,1] # 31
+Penta1L[2,5,1,1,2] # 31
+Penta1L[2,5,1,2,1] # 31
+Penta1L[2,5,2,1,1] # 31
+Penta1L[2,6,1,1,1] # 31
+Penta1L[3,1,1,1,5] # 31
+Penta1L[3,1,1,2,4] # 31
+Penta1L[3,1,1,3,3] # 31
+Penta1L[3,1,1,4,2] # 31
+Penta1L[3,1,1,5,1] # 31
+Penta1L[3,1,2,1,4] # 31
+Penta1L[3,1,2,2,3] # 31
+Penta1L[3,1,2,3,2] # 31
+Penta1L[3,1,2,4,1] # 31
+Penta1L[3,1,3,1,3] # 31
+Penta1L[3,1,3,2,2] # 31
+Penta1L[3,1,3,3,1] # 31
+Penta1L[3,1,4,1,2] # 31
+Penta1L[3,1,4,2,1] # 31
+Penta1L[3,1,5,1,1] # 31
+Penta1L[3,2,1,1,4] # 31
+Penta1L[3,2,1,2,3] # 31
+Penta1L[3,2,1,3,2] # 31
+Penta1L[3,2,1,4,1] # 31
+Penta1L[3,2,2,1,3] # 31
+Penta1L[3,2,2,2,2] # 31
+Penta1L[3,2,2,3,1] # 31
+Penta1L[3,2,3,1,2] # 31
+Penta1L[3,2,3,2,1] # 31
+Penta1L[3,2,4,1,1] # 31
+Penta1L[3,3,1,1,3] # 31
+Penta1L[3,3,1,2,2] # 31
+Penta1L[3,3,1,3,1] # 31
+Penta1L[3,3,2,1,2] # 31
+Penta1L[3,3,2,2,1] # 31
+Penta1L[3,3,3,1,1] # 31
+Penta1L[3,4,1,1,2] # 31
+Penta1L[3,4,1,2,1] # 31
+Penta1L[3,4,2,1,1] # 31
+Penta1L[3,5,1,1,1] # 31
+Penta1L[4,1,1,1,4] # 31
+Penta1L[4,1,1,2,3] # 31
+Penta1L[4,1,1,3,2] # 31
+Penta1L[4,1,1,4,1] # 31
+Penta1L[4,1,2,1,3] # 31
+Penta1L[4,1,2,2,2] # 31
+Penta1L[4,1,2,3,1] # 31
+Penta1L[4,1,3,1,2] # 31
+Penta1L[4,1,3,2,1] # 31
+Penta1L[4,1,4,1,1] # 31
+Penta1L[4,2,1,1,3] # 31
+Penta1L[4,2,1,2,2] # 31
+Penta1L[4,2,1,3,1] # 31
+Penta1L[4,2,2,1,2] # 31
+Penta1L[4,2,2,2,1] # 31
+Penta1L[4,2,3,1,1] # 31
+Penta1L[4,3,1,1,2] # 31
+Penta1L[4,3,1,2,1] # 31
+Penta1L[4,3,2,1,1] # 31
+Penta1L[4,4,1,1,1] # 31
+Penta1L[5,1,1,1,3] # 31
+Penta1L[5,1,1,2,2] # 31
+Penta1L[5,1,1,3,1] # 31
+Penta1L[5,1,2,1,2] # 31
+Penta1L[5,1,2,2,1] # 31
+Penta1L[5,1,3,1,1] # 31
+Penta1L[5,2,1,1,2] # 31
+Penta1L[5,2,1,2,1] # 31
+Penta1L[5,2,2,1,1] # 31
+Penta1L[5,3,1,1,1] # 31
+Penta1L[6,1,1,1,2] # 31
+Penta1L[6,1,1,2,1] # 31
+Penta1L[6,1,2,1,1] # 31
+Penta1L[6,2,1,1,1] # 31
+Penta1L[7,1,1,1,1] # 31
+
+*****Master integrals which do not appear on the right**
+*****hand side of the selected integrals****************
+Penta1L[1,1,1,1,4] # 31
+Penta1L[1,1,1,2,3] # 31
+Penta1L[1,1,1,3,2] # 31
+Penta1L[1,1,1,4,1] # 31
+Penta1L[1,1,2,1,3] # 31
+Penta1L[1,1,2,2,2] # 31
+Penta1L[1,1,2,3,1] # 31
+Penta1L[1,1,3,1,2] # 31
+Penta1L[1,1,3,2,1] # 31
+Penta1L[1,1,4,1,1] # 31
+Penta1L[1,2,1,1,3] # 31
+Penta1L[1,2,1,2,2] # 31
+Penta1L[1,2,1,3,1] # 31
+Penta1L[1,2,2,1,2] # 31
+Penta1L[1,2,2,2,1] # 31
+Penta1L[1,2,3,1,1] # 31
+Penta1L[1,3,1,1,2] # 31
+Penta1L[1,3,1,2,1] # 31
+Penta1L[1,3,2,1,1] # 31
+Penta1L[1,4,1,1,1] # 31
+Penta1L[2,1,1,1,3] # 31
+Penta1L[2,1,1,2,2] # 31
+Penta1L[2,1,1,3,1] # 31
+Penta1L[2,1,2,1,2] # 31
+Penta1L[2,1,2,2,1] # 31
+Penta1L[2,1,3,1,1] # 31
+Penta1L[2,2,1,1,2] # 31
+Penta1L[2,2,1,2,1] # 31
+Penta1L[2,2,2,1,1] # 31
+Penta1L[2,3,1,1,1] # 31
+Penta1L[3,1,1,1,2] # 31
+Penta1L[3,1,1,2,1] # 31
+Penta1L[3,1,2,1,1] # 31
+Penta1L[3,2,1,1,1] # 31
+Penta1L[4,1,1,1,1] # 31
+Penta1L[1,1,1,1,5] # 31
+Penta1L[1,1,1,2,4] # 31
+Penta1L[1,1,1,3,3] # 31
+Penta1L[1,1,1,4,2] # 31
+Penta1L[1,1,1,5,1] # 31
+Penta1L[1,1,2,1,4] # 31
+Penta1L[1,1,2,2,3] # 31
+Penta1L[1,1,2,3,2] # 31
+Penta1L[1,1,2,4,1] # 31
+Penta1L[1,1,3,1,3] # 31
+Penta1L[1,1,3,2,2] # 31
+Penta1L[1,1,3,3,1] # 31
+Penta1L[1,1,4,1,2] # 31
+Penta1L[1,1,4,2,1] # 31
+Penta1L[1,1,5,1,1] # 31
+Penta1L[1,2,1,1,4] # 31
+Penta1L[1,2,1,2,3] # 31
+Penta1L[1,2,1,3,2] # 31
+Penta1L[1,2,1,4,1] # 31
+Penta1L[1,2,2,1,3] # 31
+Penta1L[1,2,2,2,2] # 31
+Penta1L[1,2,2,3,1] # 31
+Penta1L[1,2,3,1,2] # 31
+Penta1L[1,2,3,2,1] # 31
+Penta1L[1,2,4,1,1] # 31
+Penta1L[1,3,1,1,3] # 31
+Penta1L[1,3,1,2,2] # 31
+Penta1L[1,3,1,3,1] # 31
+Penta1L[1,3,2,1,2] # 31
+Penta1L[1,3,2,2,1] # 31
+Penta1L[1,3,3,1,1] # 31
+Penta1L[1,4,1,1,2] # 31
+Penta1L[1,4,1,2,1] # 31
+Penta1L[1,4,2,1,1] # 31
+Penta1L[1,5,1,1,1] # 31
+Penta1L[2,1,1,1,4] # 31
+Penta1L[2,1,1,2,3] # 31
+Penta1L[2,1,1,3,2] # 31
+Penta1L[2,1,1,4,1] # 31
+Penta1L[2,1,2,1,3] # 31
+Penta1L[2,1,2,2,2] # 31
+Penta1L[2,1,2,3,1] # 31
+Penta1L[2,1,3,1,2] # 31
+Penta1L[2,1,3,2,1] # 31
+Penta1L[2,1,4,1,1] # 31
+Penta1L[2,2,1,1,3] # 31
+Penta1L[2,2,1,2,2] # 31
+Penta1L[2,2,1,3,1] # 31
+Penta1L[2,2,2,1,2] # 31
+Penta1L[2,2,2,2,1] # 31
+Penta1L[2,2,3,1,1] # 31
+Penta1L[2,3,1,1,2] # 31
+Penta1L[2,3,1,2,1] # 31
+Penta1L[2,3,2,1,1] # 31
+Penta1L[2,4,1,1,1] # 31
+Penta1L[3,1,1,1,3] # 31
+Penta1L[3,1,1,2,2] # 31
+Penta1L[3,1,1,3,1] # 31
+Penta1L[3,1,2,1,2] # 31
+Penta1L[3,1,2,2,1] # 31
+Penta1L[3,1,3,1,1] # 31
+Penta1L[3,2,1,1,2] # 31
+Penta1L[3,2,1,2,1] # 31
+Penta1L[3,2,2,1,1] # 31
+Penta1L[3,3,1,1,1] # 31
+Penta1L[4,1,1,1,2] # 31
+Penta1L[4,1,1,2,1] # 31
+Penta1L[4,1,2,1,1] # 31
+Penta1L[4,2,1,1,1] # 31
+Penta1L[5,1,1,1,1] # 31
+Penta1L[1,1,1,1,6] # 31
+Penta1L[1,1,1,2,5] # 31
+Penta1L[1,1,1,3,4] # 31
+Penta1L[1,1,1,4,3] # 31
+Penta1L[1,1,1,5,2] # 31
+Penta1L[1,1,1,6,1] # 31
+Penta1L[1,1,2,1,5] # 31
+Penta1L[1,1,2,2,4] # 31
+Penta1L[1,1,2,3,3] # 31
+Penta1L[1,1,2,4,2] # 31
+Penta1L[1,1,2,5,1] # 31
+Penta1L[1,1,3,1,4] # 31
+Penta1L[1,1,3,2,3] # 31
+Penta1L[1,1,3,3,2] # 31
+Penta1L[1,1,3,4,1] # 31
+Penta1L[1,1,4,1,3] # 31
+Penta1L[1,1,4,2,2] # 31
+Penta1L[1,1,4,3,1] # 31
+Penta1L[1,1,5,1,2] # 31
+Penta1L[1,1,5,2,1] # 31
+Penta1L[1,1,6,1,1] # 31
+Penta1L[1,2,1,1,5] # 31
+Penta1L[1,2,1,2,4] # 31
+Penta1L[1,2,1,3,3] # 31
+Penta1L[1,2,1,4,2] # 31
+Penta1L[1,2,1,5,1] # 31
+Penta1L[1,2,2,1,4] # 31
+Penta1L[1,2,2,2,3] # 31
+Penta1L[1,2,2,3,2] # 31
+Penta1L[1,2,2,4,1] # 31
+Penta1L[1,2,3,1,3] # 31
+Penta1L[1,2,3,2,2] # 31
+Penta1L[1,2,3,3,1] # 31
+Penta1L[1,2,4,1,2] # 31
+Penta1L[1,2,4,2,1] # 31
+Penta1L[1,2,5,1,1] # 31
+Penta1L[1,3,1,1,4] # 31
+Penta1L[1,3,1,2,3] # 31
+Penta1L[1,3,1,3,2] # 31
+Penta1L[1,3,1,4,1] # 31
+Penta1L[1,3,2,1,3] # 31
+Penta1L[1,3,2,2,2] # 31
+Penta1L[1,3,2,3,1] # 31
+Penta1L[1,3,3,1,2] # 31
+Penta1L[1,3,3,2,1] # 31
+Penta1L[1,3,4,1,1] # 31
+Penta1L[1,4,1,1,3] # 31
+Penta1L[1,4,1,2,2] # 31
+Penta1L[1,4,1,3,1] # 31
+Penta1L[1,4,2,1,2] # 31
+Penta1L[1,4,2,2,1] # 31
+Penta1L[1,4,3,1,1] # 31
+Penta1L[1,5,1,1,2] # 31
+Penta1L[1,5,1,2,1] # 31
+Penta1L[1,5,2,1,1] # 31
+Penta1L[1,6,1,1,1] # 31
+Penta1L[2,1,1,1,5] # 31
+Penta1L[2,1,1,2,4] # 31
+Penta1L[2,1,1,3,3] # 31
+Penta1L[2,1,1,4,2] # 31
+Penta1L[2,1,1,5,1] # 31
+Penta1L[2,1,2,1,4] # 31
+Penta1L[2,1,2,2,3] # 31
+Penta1L[2,1,2,3,2] # 31
+Penta1L[2,1,2,4,1] # 31
+Penta1L[2,1,3,1,3] # 31
+Penta1L[2,1,3,2,2] # 31
+Penta1L[2,1,3,3,1] # 31
+Penta1L[2,1,4,1,2] # 31
+Penta1L[2,1,4,2,1] # 31
+Penta1L[2,1,5,1,1] # 31
+Penta1L[2,2,1,1,4] # 31
+Penta1L[2,2,1,2,3] # 31
+Penta1L[2,2,1,3,2] # 31
+Penta1L[2,2,1,4,1] # 31
+Penta1L[2,2,2,1,3] # 31
+Penta1L[2,2,2,2,2] # 31
+Penta1L[2,2,2,3,1] # 31
+Penta1L[2,2,3,1,2] # 31
+Penta1L[2,2,3,2,1] # 31
+Penta1L[2,2,4,1,1] # 31
+Penta1L[2,3,1,1,3] # 31
+Penta1L[2,3,1,2,2] # 31
+Penta1L[2,3,1,3,1] # 31
+Penta1L[2,3,2,1,2] # 31
+Penta1L[2,3,2,2,1] # 31
+Penta1L[2,3,3,1,1] # 31
+Penta1L[2,4,1,1,2] # 31
+Penta1L[2,4,1,2,1] # 31
+Penta1L[2,4,2,1,1] # 31
+Penta1L[2,5,1,1,1] # 31
+Penta1L[3,1,1,1,4] # 31
+Penta1L[3,1,1,2,3] # 31
+Penta1L[3,1,1,3,2] # 31
+Penta1L[3,1,1,4,1] # 31
+Penta1L[3,1,2,1,3] # 31
+Penta1L[3,1,2,2,2] # 31
+Penta1L[3,1,2,3,1] # 31
+Penta1L[3,1,3,1,2] # 31
+Penta1L[3,1,3,2,1] # 31
+Penta1L[3,1,4,1,1] # 31
+Penta1L[3,2,1,1,3] # 31
+Penta1L[3,2,1,2,2] # 31
+Penta1L[3,2,1,3,1] # 31
+Penta1L[3,2,2,1,2] # 31
+Penta1L[3,2,2,2,1] # 31
+Penta1L[3,2,3,1,1] # 31
+Penta1L[3,3,1,1,2] # 31
+Penta1L[3,3,1,2,1] # 31
+Penta1L[3,3,2,1,1] # 31
+Penta1L[3,4,1,1,1] # 31
+Penta1L[4,1,1,1,3] # 31
+Penta1L[4,1,1,2,2] # 31
+Penta1L[4,1,1,3,1] # 31
+Penta1L[4,1,2,1,2] # 31
+Penta1L[4,1,2,2,1] # 31
+Penta1L[4,1,3,1,1] # 31
+Penta1L[4,2,1,1,2] # 31
+Penta1L[4,2,1,2,1] # 31
+Penta1L[4,2,2,1,1] # 31
+Penta1L[4,3,1,1,1] # 31
+Penta1L[5,1,1,1,2] # 31
+Penta1L[5,1,1,2,1] # 31
+Penta1L[5,1,2,1,1] # 31
+Penta1L[5,2,1,1,1] # 31
+Penta1L[6,1,1,1,1] # 31
+Penta1L[1,1,1,1,7] # 31
+Penta1L[1,1,1,2,6] # 31
+Penta1L[1,1,1,3,5] # 31
+Penta1L[1,1,1,4,4] # 31
+Penta1L[1,1,1,5,3] # 31
+Penta1L[1,1,1,6,2] # 31
+Penta1L[1,1,1,7,1] # 31
+Penta1L[1,1,2,1,6] # 31
+Penta1L[1,1,2,2,5] # 31
+Penta1L[1,1,2,3,4] # 31
+Penta1L[1,1,2,4,3] # 31
+Penta1L[1,1,2,5,2] # 31
+Penta1L[1,1,2,6,1] # 31
+Penta1L[1,1,3,1,5] # 31
+Penta1L[1,1,3,2,4] # 31
+Penta1L[1,1,3,3,3] # 31
+Penta1L[1,1,3,4,2] # 31
+Penta1L[1,1,3,5,1] # 31
+Penta1L[1,1,4,1,4] # 31
+Penta1L[1,1,4,2,3] # 31
+Penta1L[1,1,4,3,2] # 31
+Penta1L[1,1,4,4,1] # 31
+Penta1L[1,1,5,1,3] # 31
+Penta1L[1,1,5,2,2] # 31
+Penta1L[1,1,5,3,1] # 31
+Penta1L[1,1,6,1,2] # 31
+Penta1L[1,1,6,2,1] # 31
+Penta1L[1,1,7,1,1] # 31
+Penta1L[1,2,1,1,6] # 31
+Penta1L[1,2,1,2,5] # 31
+Penta1L[1,2,1,3,4] # 31
+Penta1L[1,2,1,4,3] # 31
+Penta1L[1,2,1,5,2] # 31
+Penta1L[1,2,1,6,1] # 31
+Penta1L[1,2,2,1,5] # 31
+Penta1L[1,2,2,2,4] # 31
+Penta1L[1,2,2,3,3] # 31
+Penta1L[1,2,2,4,2] # 31
+Penta1L[1,2,2,5,1] # 31
+Penta1L[1,2,3,1,4] # 31
+Penta1L[1,2,3,2,3] # 31
+Penta1L[1,2,3,3,2] # 31
+Penta1L[1,2,3,4,1] # 31
+Penta1L[1,2,4,1,3] # 31
+Penta1L[1,2,4,2,2] # 31
+Penta1L[1,2,4,3,1] # 31
+Penta1L[1,2,5,1,2] # 31
+Penta1L[1,2,5,2,1] # 31
+Penta1L[1,2,6,1,1] # 31
+Penta1L[1,3,1,1,5] # 31
+Penta1L[1,3,1,2,4] # 31
+Penta1L[1,3,1,3,3] # 31
+Penta1L[1,3,1,4,2] # 31
+Penta1L[1,3,1,5,1] # 31
+Penta1L[1,3,2,1,4] # 31
+Penta1L[1,3,2,2,3] # 31
+Penta1L[1,3,2,3,2] # 31
+Penta1L[1,3,2,4,1] # 31
+Penta1L[1,3,3,1,3] # 31
+Penta1L[1,3,3,2,2] # 31
+Penta1L[1,3,3,3,1] # 31
+Penta1L[1,3,4,1,2] # 31
+Penta1L[1,3,4,2,1] # 31
+Penta1L[1,3,5,1,1] # 31
+Penta1L[1,4,1,1,4] # 31
+Penta1L[1,4,1,2,3] # 31
+Penta1L[1,4,1,3,2] # 31
+Penta1L[1,4,1,4,1] # 31
+Penta1L[1,4,2,1,3] # 31
+Penta1L[1,4,2,2,2] # 31
+Penta1L[1,4,2,3,1] # 31
+Penta1L[1,4,3,1,2] # 31
+Penta1L[1,4,3,2,1] # 31
+Penta1L[1,4,4,1,1] # 31
+Penta1L[1,5,1,1,3] # 31
+Penta1L[1,5,1,2,2] # 31
+Penta1L[1,5,1,3,1] # 31
+Penta1L[1,5,2,1,2] # 31
+Penta1L[1,5,2,2,1] # 31
+Penta1L[1,5,3,1,1] # 31
+Penta1L[1,6,1,1,2] # 31
+Penta1L[1,6,1,2,1] # 31
+Penta1L[1,6,2,1,1] # 31
+Penta1L[1,7,1,1,1] # 31
+Penta1L[2,1,1,1,6] # 31
+Penta1L[2,1,1,2,5] # 31
+Penta1L[2,1,1,3,4] # 31
+Penta1L[2,1,1,4,3] # 31
+Penta1L[2,1,1,5,2] # 31
+Penta1L[2,1,1,6,1] # 31
+Penta1L[2,1,2,1,5] # 31
+Penta1L[2,1,2,2,4] # 31
+Penta1L[2,1,2,3,3] # 31
+Penta1L[2,1,2,4,2] # 31
+Penta1L[2,1,2,5,1] # 31
+Penta1L[2,1,3,1,4] # 31
+Penta1L[2,1,3,2,3] # 31
+Penta1L[2,1,3,3,2] # 31
+Penta1L[2,1,3,4,1] # 31
+Penta1L[2,1,4,1,3] # 31
+Penta1L[2,1,4,2,2] # 31
+Penta1L[2,1,4,3,1] # 31
+Penta1L[2,1,5,1,2] # 31
+Penta1L[2,1,5,2,1] # 31
+Penta1L[2,1,6,1,1] # 31
+Penta1L[2,2,1,1,5] # 31
+Penta1L[2,2,1,2,4] # 31
+Penta1L[2,2,1,3,3] # 31
+Penta1L[2,2,1,4,2] # 31
+Penta1L[2,2,1,5,1] # 31
+Penta1L[2,2,2,1,4] # 31
+Penta1L[2,2,2,2,3] # 31
+Penta1L[2,2,2,3,2] # 31
+Penta1L[2,2,2,4,1] # 31
+Penta1L[2,2,3,1,3] # 31
+Penta1L[2,2,3,2,2] # 31
+Penta1L[2,2,3,3,1] # 31
+Penta1L[2,2,4,1,2] # 31
+Penta1L[2,2,4,2,1] # 31
+Penta1L[2,2,5,1,1] # 31
+Penta1L[2,3,1,1,4] # 31
+Penta1L[2,3,1,2,3] # 31
+Penta1L[2,3,1,3,2] # 31
+Penta1L[2,3,1,4,1] # 31
+Penta1L[2,3,2,1,3] # 31
+Penta1L[2,3,2,2,2] # 31
+Penta1L[2,3,2,3,1] # 31
+Penta1L[2,3,3,1,2] # 31
+Penta1L[2,3,3,2,1] # 31
+Penta1L[2,3,4,1,1] # 31
+Penta1L[2,4,1,1,3] # 31
+Penta1L[2,4,1,2,2] # 31
+Penta1L[2,4,1,3,1] # 31
+Penta1L[2,4,2,1,2] # 31
+Penta1L[2,4,2,2,1] # 31
+Penta1L[2,4,3,1,1] # 31
+Penta1L[2,5,1,1,2] # 31
+Penta1L[2,5,1,2,1] # 31
+Penta1L[2,5,2,1,1] # 31
+Penta1L[2,6,1,1,1] # 31
+Penta1L[3,1,1,1,5] # 31
+Penta1L[3,1,1,2,4] # 31
+Penta1L[3,1,1,3,3] # 31
+Penta1L[3,1,1,4,2] # 31
+Penta1L[3,1,1,5,1] # 31
+Penta1L[3,1,2,1,4] # 31
+Penta1L[3,1,2,2,3] # 31
+Penta1L[3,1,2,3,2] # 31
+Penta1L[3,1,2,4,1] # 31
+Penta1L[3,1,3,1,3] # 31
+Penta1L[3,1,3,2,2] # 31
+Penta1L[3,1,3,3,1] # 31
+Penta1L[3,1,4,1,2] # 31
+Penta1L[3,1,4,2,1] # 31
+Penta1L[3,1,5,1,1] # 31
+Penta1L[3,2,1,1,4] # 31
+Penta1L[3,2,1,2,3] # 31
+Penta1L[3,2,1,3,2] # 31
+Penta1L[3,2,1,4,1] # 31
+Penta1L[3,2,2,1,3] # 31
+Penta1L[3,2,2,2,2] # 31
+Penta1L[3,2,2,3,1] # 31
+Penta1L[3,2,3,1,2] # 31
+Penta1L[3,2,3,2,1] # 31
+Penta1L[3,2,4,1,1] # 31
+Penta1L[3,3,1,1,3] # 31
+Penta1L[3,3,1,2,2] # 31
+Penta1L[3,3,1,3,1] # 31
+Penta1L[3,3,2,1,2] # 31
+Penta1L[3,3,2,2,1] # 31
+Penta1L[3,3,3,1,1] # 31
+Penta1L[3,4,1,1,2] # 31
+Penta1L[3,4,1,2,1] # 31
+Penta1L[3,4,2,1,1] # 31
+Penta1L[3,5,1,1,1] # 31
+Penta1L[4,1,1,1,4] # 31
+Penta1L[4,1,1,2,3] # 31
+Penta1L[4,1,1,3,2] # 31
+Penta1L[4,1,1,4,1] # 31
+Penta1L[4,1,2,1,3] # 31
+Penta1L[4,1,2,2,2] # 31
+Penta1L[4,1,2,3,1] # 31
+Penta1L[4,1,3,1,2] # 31
+Penta1L[4,1,3,2,1] # 31
+Penta1L[4,1,4,1,1] # 31
+Penta1L[4,2,1,1,3] # 31
+Penta1L[4,2,1,2,2] # 31
+Penta1L[4,2,1,3,1] # 31
+Penta1L[4,2,2,1,2] # 31
+Penta1L[4,2,2,2,1] # 31
+Penta1L[4,2,3,1,1] # 31
+Penta1L[4,3,1,1,2] # 31
+Penta1L[4,3,1,2,1] # 31
+Penta1L[4,3,2,1,1] # 31
+Penta1L[4,4,1,1,1] # 31
+Penta1L[5,1,1,1,3] # 31
+Penta1L[5,1,1,2,2] # 31
+Penta1L[5,1,1,3,1] # 31
+Penta1L[5,1,2,1,2] # 31
+Penta1L[5,1,2,2,1] # 31
+Penta1L[5,1,3,1,1] # 31
+Penta1L[5,2,1,1,2] # 31
+Penta1L[5,2,1,2,1] # 31
+Penta1L[5,2,2,1,1] # 31
+Penta1L[5,3,1,1,1] # 31
+Penta1L[6,1,1,1,2] # 31
+Penta1L[6,1,1,2,1] # 31
+Penta1L[6,1,2,1,1] # 31
+Penta1L[6,2,1,1,1] # 31
+Penta1L[7,1,1,1,1] # 31
+
+Total number of master integrals: 452
+
+*****Not selected integrals******
+Penta1L[-1,0,1,0,3] # 20
+Penta1L[-1,0,1,0,4] # 20
+Penta1L[0,0,1,-1,4] # 20
+Penta1L[0,1,-1,1,2] # 26
+
+Number of not selected integrals: 18446744073709551179
+( 1.4 s )
+One variable is set to 1: {s12==1}
+One variable is set to 1: {s12==1}
+The input directory is set to:
+./results
+################################################
+kira2math: Reconstruct results for Penta1L
+################################################
+
+Algebraic reconstruction is switched off.
+This requested integral is a master integral: Penta1L[1,1,1,1,7] # 31
+This requested integral is a master integral: Penta1L[1,1,1,2,6] # 31
+This requested integral is a master integral: Penta1L[1,1,1,3,5] # 31
+This requested integral is a master integral: Penta1L[1,1,1,4,4] # 31
+This requested integral is a master integral: Penta1L[1,1,1,5,3] # 31
+This requested integral is a master integral: Penta1L[1,1,1,6,2] # 31
+This requested integral is a master integral: Penta1L[1,1,1,7,1] # 31
+This requested integral is a master integral: Penta1L[1,1,2,1,6] # 31
+This requested integral is a master integral: Penta1L[1,1,2,2,5] # 31
+This requested integral is a master integral: Penta1L[1,1,2,3,4] # 31
+This requested integral is a master integral: Penta1L[1,1,2,4,3] # 31
+This requested integral is a master integral: Penta1L[1,1,2,5,2] # 31
+This requested integral is a master integral: Penta1L[1,1,2,6,1] # 31
+This requested integral is a master integral: Penta1L[1,1,3,1,5] # 31
+This requested integral is a master integral: Penta1L[1,1,3,2,4] # 31
+This requested integral is a master integral: Penta1L[1,1,3,3,3] # 31
+This requested integral is a master integral: Penta1L[1,1,3,4,2] # 31
+This requested integral is a master integral: Penta1L[1,1,3,5,1] # 31
+This requested integral is a master integral: Penta1L[1,1,4,1,4] # 31
+This requested integral is a master integral: Penta1L[1,1,4,2,3] # 31
+This requested integral is a master integral: Penta1L[1,1,4,3,2] # 31
+This requested integral is a master integral: Penta1L[1,1,4,4,1] # 31
+This requested integral is a master integral: Penta1L[1,1,5,1,3] # 31
+This requested integral is a master integral: Penta1L[1,1,5,2,2] # 31
+This requested integral is a master integral: Penta1L[1,1,5,3,1] # 31
+This requested integral is a master integral: Penta1L[1,1,6,1,2] # 31
+This requested integral is a master integral: Penta1L[1,1,6,2,1] # 31
+This requested integral is a master integral: Penta1L[1,1,7,1,1] # 31
+This requested integral is a master integral: Penta1L[1,2,1,1,6] # 31
+This requested integral is a master integral: Penta1L[1,2,1,2,5] # 31
+This requested integral is a master integral: Penta1L[1,2,1,3,4] # 31
+This requested integral is a master integral: Penta1L[1,2,1,4,3] # 31
+This requested integral is a master integral: Penta1L[1,2,1,5,2] # 31
+This requested integral is a master integral: Penta1L[1,2,1,6,1] # 31
+This requested integral is a master integral: Penta1L[1,2,2,1,5] # 31
+This requested integral is a master integral: Penta1L[1,2,2,2,4] # 31
+This requested integral is a master integral: Penta1L[1,2,2,3,3] # 31
+This requested integral is a master integral: Penta1L[1,2,2,4,2] # 31
+This requested integral is a master integral: Penta1L[1,2,2,5,1] # 31
+This requested integral is a master integral: Penta1L[1,2,3,1,4] # 31
+This requested integral is a master integral: Penta1L[1,2,3,2,3] # 31
+This requested integral is a master integral: Penta1L[1,2,3,3,2] # 31
+This requested integral is a master integral: Penta1L[1,2,3,4,1] # 31
+This requested integral is a master integral: Penta1L[1,2,4,1,3] # 31
+This requested integral is a master integral: Penta1L[1,2,4,2,2] # 31
+This requested integral is a master integral: Penta1L[1,2,4,3,1] # 31
+This requested integral is a master integral: Penta1L[1,2,5,1,2] # 31
+This requested integral is a master integral: Penta1L[1,2,5,2,1] # 31
+This requested integral is a master integral: Penta1L[1,2,6,1,1] # 31
+This requested integral is a master integral: Penta1L[1,3,1,1,5] # 31
+This requested integral is a master integral: Penta1L[1,3,1,2,4] # 31
+This requested integral is a master integral: Penta1L[1,3,1,3,3] # 31
+This requested integral is a master integral: Penta1L[1,3,1,4,2] # 31
+This requested integral is a master integral: Penta1L[1,3,1,5,1] # 31
+This requested integral is a master integral: Penta1L[1,3,2,1,4] # 31
+This requested integral is a master integral: Penta1L[1,3,2,2,3] # 31
+This requested integral is a master integral: Penta1L[1,3,2,3,2] # 31
+This requested integral is a master integral: Penta1L[1,3,2,4,1] # 31
+This requested integral is a master integral: Penta1L[1,3,3,1,3] # 31
+This requested integral is a master integral: Penta1L[1,3,3,2,2] # 31
+This requested integral is a master integral: Penta1L[1,3,3,3,1] # 31
+This requested integral is a master integral: Penta1L[1,3,4,1,2] # 31
+This requested integral is a master integral: Penta1L[1,3,4,2,1] # 31
+This requested integral is a master integral: Penta1L[1,3,5,1,1] # 31
+This requested integral is a master integral: Penta1L[1,4,1,1,4] # 31
+This requested integral is a master integral: Penta1L[1,4,1,2,3] # 31
+This requested integral is a master integral: Penta1L[1,4,1,3,2] # 31
+This requested integral is a master integral: Penta1L[1,4,1,4,1] # 31
+This requested integral is a master integral: Penta1L[1,4,2,1,3] # 31
+This requested integral is a master integral: Penta1L[1,4,2,2,2] # 31
+This requested integral is a master integral: Penta1L[1,4,2,3,1] # 31
+This requested integral is a master integral: Penta1L[1,4,3,1,2] # 31
+This requested integral is a master integral: Penta1L[1,4,3,2,1] # 31
+This requested integral is a master integral: Penta1L[1,4,4,1,1] # 31
+This requested integral is a master integral: Penta1L[1,5,1,1,3] # 31
+This requested integral is a master integral: Penta1L[1,5,1,2,2] # 31
+This requested integral is a master integral: Penta1L[1,5,1,3,1] # 31
+This requested integral is a master integral: Penta1L[1,5,2,1,2] # 31
+This requested integral is a master integral: Penta1L[1,5,2,2,1] # 31
+This requested integral is a master integral: Penta1L[1,5,3,1,1] # 31
+This requested integral is a master integral: Penta1L[1,6,1,1,2] # 31
+This requested integral is a master integral: Penta1L[1,6,1,2,1] # 31
+This requested integral is a master integral: Penta1L[1,6,2,1,1] # 31
+This requested integral is a master integral: Penta1L[1,7,1,1,1] # 31
+This requested integral is a master integral: Penta1L[2,1,1,1,6] # 31
+This requested integral is a master integral: Penta1L[2,1,1,2,5] # 31
+This requested integral is a master integral: Penta1L[2,1,1,3,4] # 31
+This requested integral is a master integral: Penta1L[2,1,1,4,3] # 31
+This requested integral is a master integral: Penta1L[2,1,1,5,2] # 31
+This requested integral is a master integral: Penta1L[2,1,1,6,1] # 31
+This requested integral is a master integral: Penta1L[2,1,2,1,5] # 31
+This requested integral is a master integral: Penta1L[2,1,2,2,4] # 31
+This requested integral is a master integral: Penta1L[2,1,2,3,3] # 31
+This requested integral is a master integral: Penta1L[2,1,2,4,2] # 31
+This requested integral is a master integral: Penta1L[2,1,2,5,1] # 31
+This requested integral is a master integral: Penta1L[2,1,3,1,4] # 31
+This requested integral is a master integral: Penta1L[2,1,3,2,3] # 31
+This requested integral is a master integral: Penta1L[2,1,3,3,2] # 31
+This requested integral is a master integral: Penta1L[2,1,3,4,1] # 31
+This requested integral is a master integral: Penta1L[2,1,4,1,3] # 31
+This requested integral is a master integral: Penta1L[2,1,4,2,2] # 31
+This requested integral is a master integral: Penta1L[2,1,4,3,1] # 31
+This requested integral is a master integral: Penta1L[2,1,5,1,2] # 31
+This requested integral is a master integral: Penta1L[2,1,5,2,1] # 31
+This requested integral is a master integral: Penta1L[2,1,6,1,1] # 31
+This requested integral is a master integral: Penta1L[2,2,1,1,5] # 31
+This requested integral is a master integral: Penta1L[2,2,1,2,4] # 31
+This requested integral is a master integral: Penta1L[2,2,1,3,3] # 31
+This requested integral is a master integral: Penta1L[2,2,1,4,2] # 31
+This requested integral is a master integral: Penta1L[2,2,1,5,1] # 31
+This requested integral is a master integral: Penta1L[2,2,2,1,4] # 31
+This requested integral is a master integral: Penta1L[2,2,2,2,3] # 31
+This requested integral is a master integral: Penta1L[2,2,2,3,2] # 31
+This requested integral is a master integral: Penta1L[2,2,2,4,1] # 31
+This requested integral is a master integral: Penta1L[2,2,3,1,3] # 31
+This requested integral is a master integral: Penta1L[2,2,3,2,2] # 31
+This requested integral is a master integral: Penta1L[2,2,3,3,1] # 31
+This requested integral is a master integral: Penta1L[2,2,4,1,2] # 31
+This requested integral is a master integral: Penta1L[2,2,4,2,1] # 31
+This requested integral is a master integral: Penta1L[2,2,5,1,1] # 31
+This requested integral is a master integral: Penta1L[2,3,1,1,4] # 31
+This requested integral is a master integral: Penta1L[2,3,1,2,3] # 31
+This requested integral is a master integral: Penta1L[2,3,1,3,2] # 31
+This requested integral is a master integral: Penta1L[2,3,1,4,1] # 31
+This requested integral is a master integral: Penta1L[2,3,2,1,3] # 31
+This requested integral is a master integral: Penta1L[2,3,2,2,2] # 31
+This requested integral is a master integral: Penta1L[2,3,2,3,1] # 31
+This requested integral is a master integral: Penta1L[2,3,3,1,2] # 31
+This requested integral is a master integral: Penta1L[2,3,3,2,1] # 31
+This requested integral is a master integral: Penta1L[2,3,4,1,1] # 31
+This requested integral is a master integral: Penta1L[2,4,1,1,3] # 31
+This requested integral is a master integral: Penta1L[2,4,1,2,2] # 31
+This requested integral is a master integral: Penta1L[2,4,1,3,1] # 31
+This requested integral is a master integral: Penta1L[2,4,2,1,2] # 31
+This requested integral is a master integral: Penta1L[2,4,2,2,1] # 31
+This requested integral is a master integral: Penta1L[2,4,3,1,1] # 31
+This requested integral is a master integral: Penta1L[2,5,1,1,2] # 31
+This requested integral is a master integral: Penta1L[2,5,1,2,1] # 31
+This requested integral is a master integral: Penta1L[2,5,2,1,1] # 31
+This requested integral is a master integral: Penta1L[2,6,1,1,1] # 31
+This requested integral is a master integral: Penta1L[3,1,1,1,5] # 31
+This requested integral is a master integral: Penta1L[3,1,1,2,4] # 31
+This requested integral is a master integral: Penta1L[3,1,1,3,3] # 31
+This requested integral is a master integral: Penta1L[3,1,1,4,2] # 31
+This requested integral is a master integral: Penta1L[3,1,1,5,1] # 31
+This requested integral is a master integral: Penta1L[3,1,2,1,4] # 31
+This requested integral is a master integral: Penta1L[3,1,2,2,3] # 31
+This requested integral is a master integral: Penta1L[3,1,2,3,2] # 31
+This requested integral is a master integral: Penta1L[3,1,2,4,1] # 31
+This requested integral is a master integral: Penta1L[3,1,3,1,3] # 31
+This requested integral is a master integral: Penta1L[3,1,3,2,2] # 31
+This requested integral is a master integral: Penta1L[3,1,3,3,1] # 31
+This requested integral is a master integral: Penta1L[3,1,4,1,2] # 31
+This requested integral is a master integral: Penta1L[3,1,4,2,1] # 31
+This requested integral is a master integral: Penta1L[3,1,5,1,1] # 31
+This requested integral is a master integral: Penta1L[3,2,1,1,4] # 31
+This requested integral is a master integral: Penta1L[3,2,1,2,3] # 31
+This requested integral is a master integral: Penta1L[3,2,1,3,2] # 31
+This requested integral is a master integral: Penta1L[3,2,1,4,1] # 31
+This requested integral is a master integral: Penta1L[3,2,2,1,3] # 31
+This requested integral is a master integral: Penta1L[3,2,2,2,2] # 31
+This requested integral is a master integral: Penta1L[3,2,2,3,1] # 31
+This requested integral is a master integral: Penta1L[3,2,3,1,2] # 31
+This requested integral is a master integral: Penta1L[3,2,3,2,1] # 31
+This requested integral is a master integral: Penta1L[3,2,4,1,1] # 31
+This requested integral is a master integral: Penta1L[3,3,1,1,3] # 31
+This requested integral is a master integral: Penta1L[3,3,1,2,2] # 31
+This requested integral is a master integral: Penta1L[3,3,1,3,1] # 31
+This requested integral is a master integral: Penta1L[3,3,2,1,2] # 31
+This requested integral is a master integral: Penta1L[3,3,2,2,1] # 31
+This requested integral is a master integral: Penta1L[3,3,3,1,1] # 31
+This requested integral is a master integral: Penta1L[3,4,1,1,2] # 31
+This requested integral is a master integral: Penta1L[3,4,1,2,1] # 31
+This requested integral is a master integral: Penta1L[3,4,2,1,1] # 31
+This requested integral is a master integral: Penta1L[3,5,1,1,1] # 31
+This requested integral is a master integral: Penta1L[4,1,1,1,4] # 31
+This requested integral is a master integral: Penta1L[4,1,1,2,3] # 31
+This requested integral is a master integral: Penta1L[4,1,1,3,2] # 31
+This requested integral is a master integral: Penta1L[4,1,1,4,1] # 31
+This requested integral is a master integral: Penta1L[4,1,2,1,3] # 31
+This requested integral is a master integral: Penta1L[4,1,2,2,2] # 31
+This requested integral is a master integral: Penta1L[4,1,2,3,1] # 31
+This requested integral is a master integral: Penta1L[4,1,3,1,2] # 31
+This requested integral is a master integral: Penta1L[4,1,3,2,1] # 31
+This requested integral is a master integral: Penta1L[4,1,4,1,1] # 31
+This requested integral is a master integral: Penta1L[4,2,1,1,3] # 31
+This requested integral is a master integral: Penta1L[4,2,1,2,2] # 31
+This requested integral is a master integral: Penta1L[4,2,1,3,1] # 31
+This requested integral is a master integral: Penta1L[4,2,2,1,2] # 31
+This requested integral is a master integral: Penta1L[4,2,2,2,1] # 31
+This requested integral is a master integral: Penta1L[4,2,3,1,1] # 31
+This requested integral is a master integral: Penta1L[4,3,1,1,2] # 31
+This requested integral is a master integral: Penta1L[4,3,1,2,1] # 31
+This requested integral is a master integral: Penta1L[4,3,2,1,1] # 31
+This requested integral is a master integral: Penta1L[4,4,1,1,1] # 31
+This requested integral is a master integral: Penta1L[5,1,1,1,3] # 31
+This requested integral is a master integral: Penta1L[5,1,1,2,2] # 31
+This requested integral is a master integral: Penta1L[5,1,1,3,1] # 31
+This requested integral is a master integral: Penta1L[5,1,2,1,2] # 31
+This requested integral is a master integral: Penta1L[5,1,2,2,1] # 31
+This requested integral is a master integral: Penta1L[5,1,3,1,1] # 31
+This requested integral is a master integral: Penta1L[5,2,1,1,2] # 31
+This requested integral is a master integral: Penta1L[5,2,1,2,1] # 31
+This requested integral is a master integral: Penta1L[5,2,2,1,1] # 31
+This requested integral is a master integral: Penta1L[5,3,1,1,1] # 31
+This requested integral is a master integral: Penta1L[6,1,1,1,2] # 31
+This requested integral is a master integral: Penta1L[6,1,1,2,1] # 31
+This requested integral is a master integral: Penta1L[6,1,2,1,1] # 31
+This requested integral is a master integral: Penta1L[6,2,1,1,1] # 31
+This requested integral is a master integral: Penta1L[7,1,1,1,1] # 31
+This requested integral is a master integral: Penta1L[1,1,1,1,6] # 31
+This requested integral is a master integral: Penta1L[1,1,1,2,5] # 31
+This requested integral is a master integral: Penta1L[1,1,1,3,4] # 31
+This requested integral is a master integral: Penta1L[1,1,1,4,3] # 31
+This requested integral is a master integral: Penta1L[1,1,1,5,2] # 31
+This requested integral is a master integral: Penta1L[1,1,1,6,1] # 31
+This requested integral is a master integral: Penta1L[1,1,2,1,5] # 31
+This requested integral is a master integral: Penta1L[1,1,2,2,4] # 31
+This requested integral is a master integral: Penta1L[1,1,2,3,3] # 31
+This requested integral is a master integral: Penta1L[1,1,2,4,2] # 31
+This requested integral is a master integral: Penta1L[1,1,2,5,1] # 31
+This requested integral is a master integral: Penta1L[1,1,3,1,4] # 31
+This requested integral is a master integral: Penta1L[1,1,3,2,3] # 31
+This requested integral is a master integral: Penta1L[1,1,3,3,2] # 31
+This requested integral is a master integral: Penta1L[1,1,3,4,1] # 31
+This requested integral is a master integral: Penta1L[1,1,4,1,3] # 31
+This requested integral is a master integral: Penta1L[1,1,4,2,2] # 31
+This requested integral is a master integral: Penta1L[1,1,4,3,1] # 31
+This requested integral is a master integral: Penta1L[1,1,5,1,2] # 31
+This requested integral is a master integral: Penta1L[1,1,5,2,1] # 31
+This requested integral is a master integral: Penta1L[1,1,6,1,1] # 31
+This requested integral is a master integral: Penta1L[1,2,1,1,5] # 31
+This requested integral is a master integral: Penta1L[1,2,1,2,4] # 31
+This requested integral is a master integral: Penta1L[1,2,1,3,3] # 31
+This requested integral is a master integral: Penta1L[1,2,1,4,2] # 31
+This requested integral is a master integral: Penta1L[1,2,1,5,1] # 31
+This requested integral is a master integral: Penta1L[1,2,2,1,4] # 31
+This requested integral is a master integral: Penta1L[1,2,2,2,3] # 31
+This requested integral is a master integral: Penta1L[1,2,2,3,2] # 31
+This requested integral is a master integral: Penta1L[1,2,2,4,1] # 31
+This requested integral is a master integral: Penta1L[1,2,3,1,3] # 31
+This requested integral is a master integral: Penta1L[1,2,3,2,2] # 31
+This requested integral is a master integral: Penta1L[1,2,3,3,1] # 31
+This requested integral is a master integral: Penta1L[1,2,4,1,2] # 31
+This requested integral is a master integral: Penta1L[1,2,4,2,1] # 31
+This requested integral is a master integral: Penta1L[1,2,5,1,1] # 31
+This requested integral is a master integral: Penta1L[1,3,1,1,4] # 31
+This requested integral is a master integral: Penta1L[1,3,1,2,3] # 31
+This requested integral is a master integral: Penta1L[1,3,1,3,2] # 31
+This requested integral is a master integral: Penta1L[1,3,1,4,1] # 31
+This requested integral is a master integral: Penta1L[1,3,2,1,3] # 31
+This requested integral is a master integral: Penta1L[1,3,2,2,2] # 31
+This requested integral is a master integral: Penta1L[1,3,2,3,1] # 31
+This requested integral is a master integral: Penta1L[1,3,3,1,2] # 31
+This requested integral is a master integral: Penta1L[1,3,3,2,1] # 31
+This requested integral is a master integral: Penta1L[1,3,4,1,1] # 31
+This requested integral is a master integral: Penta1L[1,4,1,1,3] # 31
+This requested integral is a master integral: Penta1L[1,4,1,2,2] # 31
+This requested integral is a master integral: Penta1L[1,4,1,3,1] # 31
+This requested integral is a master integral: Penta1L[1,4,2,1,2] # 31
+This requested integral is a master integral: Penta1L[1,4,2,2,1] # 31
+This requested integral is a master integral: Penta1L[1,4,3,1,1] # 31
+This requested integral is a master integral: Penta1L[1,5,1,1,2] # 31
+This requested integral is a master integral: Penta1L[1,5,1,2,1] # 31
+This requested integral is a master integral: Penta1L[1,5,2,1,1] # 31
+This requested integral is a master integral: Penta1L[1,6,1,1,1] # 31
+This requested integral is a master integral: Penta1L[2,1,1,1,5] # 31
+This requested integral is a master integral: Penta1L[2,1,1,2,4] # 31
+This requested integral is a master integral: Penta1L[2,1,1,3,3] # 31
+This requested integral is a master integral: Penta1L[2,1,1,4,2] # 31
+This requested integral is a master integral: Penta1L[2,1,1,5,1] # 31
+This requested integral is a master integral: Penta1L[2,1,2,1,4] # 31
+This requested integral is a master integral: Penta1L[2,1,2,2,3] # 31
+This requested integral is a master integral: Penta1L[2,1,2,3,2] # 31
+This requested integral is a master integral: Penta1L[2,1,2,4,1] # 31
+This requested integral is a master integral: Penta1L[2,1,3,1,3] # 31
+This requested integral is a master integral: Penta1L[2,1,3,2,2] # 31
+This requested integral is a master integral: Penta1L[2,1,3,3,1] # 31
+This requested integral is a master integral: Penta1L[2,1,4,1,2] # 31
+This requested integral is a master integral: Penta1L[2,1,4,2,1] # 31
+This requested integral is a master integral: Penta1L[2,1,5,1,1] # 31
+This requested integral is a master integral: Penta1L[2,2,1,1,4] # 31
+This requested integral is a master integral: Penta1L[2,2,1,2,3] # 31
+This requested integral is a master integral: Penta1L[2,2,1,3,2] # 31
+This requested integral is a master integral: Penta1L[2,2,1,4,1] # 31
+This requested integral is a master integral: Penta1L[2,2,2,1,3] # 31
+This requested integral is a master integral: Penta1L[2,2,2,2,2] # 31
+This requested integral is a master integral: Penta1L[2,2,2,3,1] # 31
+This requested integral is a master integral: Penta1L[2,2,3,1,2] # 31
+This requested integral is a master integral: Penta1L[2,2,3,2,1] # 31
+This requested integral is a master integral: Penta1L[2,2,4,1,1] # 31
+This requested integral is a master integral: Penta1L[2,3,1,1,3] # 31
+This requested integral is a master integral: Penta1L[2,3,1,2,2] # 31
+This requested integral is a master integral: Penta1L[2,3,1,3,1] # 31
+This requested integral is a master integral: Penta1L[2,3,2,1,2] # 31
+This requested integral is a master integral: Penta1L[2,3,2,2,1] # 31
+This requested integral is a master integral: Penta1L[2,3,3,1,1] # 31
+This requested integral is a master integral: Penta1L[2,4,1,1,2] # 31
+This requested integral is a master integral: Penta1L[2,4,1,2,1] # 31
+This requested integral is a master integral: Penta1L[2,4,2,1,1] # 31
+This requested integral is a master integral: Penta1L[2,5,1,1,1] # 31
+This requested integral is a master integral: Penta1L[3,1,1,1,4] # 31
+This requested integral is a master integral: Penta1L[3,1,1,2,3] # 31
+This requested integral is a master integral: Penta1L[3,1,1,3,2] # 31
+This requested integral is a master integral: Penta1L[3,1,1,4,1] # 31
+This requested integral is a master integral: Penta1L[3,1,2,1,3] # 31
+This requested integral is a master integral: Penta1L[3,1,2,2,2] # 31
+This requested integral is a master integral: Penta1L[3,1,2,3,1] # 31
+This requested integral is a master integral: Penta1L[3,1,3,1,2] # 31
+This requested integral is a master integral: Penta1L[3,1,3,2,1] # 31
+This requested integral is a master integral: Penta1L[3,1,4,1,1] # 31
+This requested integral is a master integral: Penta1L[3,2,1,1,3] # 31
+This requested integral is a master integral: Penta1L[3,2,1,2,2] # 31
+This requested integral is a master integral: Penta1L[3,2,1,3,1] # 31
+This requested integral is a master integral: Penta1L[3,2,2,1,2] # 31
+This requested integral is a master integral: Penta1L[3,2,2,2,1] # 31
+This requested integral is a master integral: Penta1L[3,2,3,1,1] # 31
+This requested integral is a master integral: Penta1L[3,3,1,1,2] # 31
+This requested integral is a master integral: Penta1L[3,3,1,2,1] # 31
+This requested integral is a master integral: Penta1L[3,3,2,1,1] # 31
+This requested integral is a master integral: Penta1L[3,4,1,1,1] # 31
+This requested integral is a master integral: Penta1L[4,1,1,1,3] # 31
+This requested integral is a master integral: Penta1L[4,1,1,2,2] # 31
+This requested integral is a master integral: Penta1L[4,1,1,3,1] # 31
+This requested integral is a master integral: Penta1L[4,1,2,1,2] # 31
+This requested integral is a master integral: Penta1L[4,1,2,2,1] # 31
+This requested integral is a master integral: Penta1L[4,1,3,1,1] # 31
+This requested integral is a master integral: Penta1L[4,2,1,1,2] # 31
+This requested integral is a master integral: Penta1L[4,2,1,2,1] # 31
+This requested integral is a master integral: Penta1L[4,2,2,1,1] # 31
+This requested integral is a master integral: Penta1L[4,3,1,1,1] # 31
+This requested integral is a master integral: Penta1L[5,1,1,1,2] # 31
+This requested integral is a master integral: Penta1L[5,1,1,2,1] # 31
+This requested integral is a master integral: Penta1L[5,1,2,1,1] # 31
+This requested integral is a master integral: Penta1L[5,2,1,1,1] # 31
+This requested integral is a master integral: Penta1L[6,1,1,1,1] # 31
+This requested integral is a master integral: Penta1L[1,1,1,1,5] # 31
+This requested integral is a master integral: Penta1L[1,1,1,2,4] # 31
+This requested integral is a master integral: Penta1L[1,1,1,3,3] # 31
+This requested integral is a master integral: Penta1L[1,1,1,4,2] # 31
+This requested integral is a master integral: Penta1L[1,1,1,5,1] # 31
+This requested integral is a master integral: Penta1L[1,1,2,1,4] # 31
+This requested integral is a master integral: Penta1L[1,1,2,2,3] # 31
+This requested integral is a master integral: Penta1L[1,1,2,3,2] # 31
+This requested integral is a master integral: Penta1L[1,1,2,4,1] # 31
+This requested integral is a master integral: Penta1L[1,1,3,1,3] # 31
+This requested integral is a master integral: Penta1L[1,1,3,2,2] # 31
+This requested integral is a master integral: Penta1L[1,1,3,3,1] # 31
+This requested integral is a master integral: Penta1L[1,1,4,1,2] # 31
+This requested integral is a master integral: Penta1L[1,1,4,2,1] # 31
+This requested integral is a master integral: Penta1L[1,1,5,1,1] # 31
+This requested integral is a master integral: Penta1L[1,2,1,1,4] # 31
+This requested integral is a master integral: Penta1L[1,2,1,2,3] # 31
+This requested integral is a master integral: Penta1L[1,2,1,3,2] # 31
+This requested integral is a master integral: Penta1L[1,2,1,4,1] # 31
+This requested integral is a master integral: Penta1L[1,2,2,1,3] # 31
+This requested integral is a master integral: Penta1L[1,2,2,2,2] # 31
+This requested integral is a master integral: Penta1L[1,2,2,3,1] # 31
+This requested integral is a master integral: Penta1L[1,2,3,1,2] # 31
+This requested integral is a master integral: Penta1L[1,2,3,2,1] # 31
+This requested integral is a master integral: Penta1L[1,2,4,1,1] # 31
+This requested integral is a master integral: Penta1L[1,3,1,1,3] # 31
+This requested integral is a master integral: Penta1L[1,3,1,2,2] # 31
+This requested integral is a master integral: Penta1L[1,3,1,3,1] # 31
+This requested integral is a master integral: Penta1L[1,3,2,1,2] # 31
+This requested integral is a master integral: Penta1L[1,3,2,2,1] # 31
+This requested integral is a master integral: Penta1L[1,3,3,1,1] # 31
+This requested integral is a master integral: Penta1L[1,4,1,1,2] # 31
+This requested integral is a master integral: Penta1L[1,4,1,2,1] # 31
+This requested integral is a master integral: Penta1L[1,4,2,1,1] # 31
+This requested integral is a master integral: Penta1L[1,5,1,1,1] # 31
+This requested integral is a master integral: Penta1L[2,1,1,1,4] # 31
+This requested integral is a master integral: Penta1L[2,1,1,2,3] # 31
+This requested integral is a master integral: Penta1L[2,1,1,3,2] # 31
+This requested integral is a master integral: Penta1L[2,1,1,4,1] # 31
+This requested integral is a master integral: Penta1L[2,1,2,1,3] # 31
+This requested integral is a master integral: Penta1L[2,1,2,2,2] # 31
+This requested integral is a master integral: Penta1L[2,1,2,3,1] # 31
+This requested integral is a master integral: Penta1L[2,1,3,1,2] # 31
+This requested integral is a master integral: Penta1L[2,1,3,2,1] # 31
+This requested integral is a master integral: Penta1L[2,1,4,1,1] # 31
+This requested integral is a master integral: Penta1L[2,2,1,1,3] # 31
+This requested integral is a master integral: Penta1L[2,2,1,2,2] # 31
+This requested integral is a master integral: Penta1L[2,2,1,3,1] # 31
+This requested integral is a master integral: Penta1L[2,2,2,1,2] # 31
+This requested integral is a master integral: Penta1L[2,2,2,2,1] # 31
+This requested integral is a master integral: Penta1L[2,2,3,1,1] # 31
+This requested integral is a master integral: Penta1L[2,3,1,1,2] # 31
+This requested integral is a master integral: Penta1L[2,3,1,2,1] # 31
+This requested integral is a master integral: Penta1L[2,3,2,1,1] # 31
+This requested integral is a master integral: Penta1L[2,4,1,1,1] # 31
+This requested integral is a master integral: Penta1L[3,1,1,1,3] # 31
+This requested integral is a master integral: Penta1L[3,1,1,2,2] # 31
+This requested integral is a master integral: Penta1L[3,1,1,3,1] # 31
+This requested integral is a master integral: Penta1L[3,1,2,1,2] # 31
+This requested integral is a master integral: Penta1L[3,1,2,2,1] # 31
+This requested integral is a master integral: Penta1L[3,1,3,1,1] # 31
+This requested integral is a master integral: Penta1L[3,2,1,1,2] # 31
+This requested integral is a master integral: Penta1L[3,2,1,2,1] # 31
+This requested integral is a master integral: Penta1L[3,2,2,1,1] # 31
+This requested integral is a master integral: Penta1L[3,3,1,1,1] # 31
+This requested integral is a master integral: Penta1L[4,1,1,1,2] # 31
+This requested integral is a master integral: Penta1L[4,1,1,2,1] # 31
+This requested integral is a master integral: Penta1L[4,1,2,1,1] # 31
+This requested integral is a master integral: Penta1L[4,2,1,1,1] # 31
+This requested integral is a master integral: Penta1L[5,1,1,1,1] # 31
+This requested integral is a master integral: Penta1L[1,1,1,1,4] # 31
+This requested integral is a master integral: Penta1L[1,1,1,2,3] # 31
+This requested integral is a master integral: Penta1L[1,1,1,3,2] # 31
+This requested integral is a master integral: Penta1L[1,1,1,4,1] # 31
+This requested integral is a master integral: Penta1L[1,1,2,1,3] # 31
+This requested integral is a master integral: Penta1L[1,1,2,2,2] # 31
+This requested integral is a master integral: Penta1L[1,1,2,3,1] # 31
+This requested integral is a master integral: Penta1L[1,1,3,1,2] # 31
+This requested integral is a master integral: Penta1L[1,1,3,2,1] # 31
+This requested integral is a master integral: Penta1L[1,1,4,1,1] # 31
+This requested integral is a master integral: Penta1L[1,2,1,1,3] # 31
+This requested integral is a master integral: Penta1L[1,2,1,2,2] # 31
+This requested integral is a master integral: Penta1L[1,2,1,3,1] # 31
+This requested integral is a master integral: Penta1L[1,2,2,1,2] # 31
+This requested integral is a master integral: Penta1L[1,2,2,2,1] # 31
+This requested integral is a master integral: Penta1L[1,2,3,1,1] # 31
+This requested integral is a master integral: Penta1L[1,3,1,1,2] # 31
+This requested integral is a master integral: Penta1L[1,3,1,2,1] # 31
+This requested integral is a master integral: Penta1L[1,3,2,1,1] # 31
+This requested integral is a master integral: Penta1L[1,4,1,1,1] # 31
+This requested integral is a master integral: Penta1L[2,1,1,1,3] # 31
+This requested integral is a master integral: Penta1L[2,1,1,2,2] # 31
+This requested integral is a master integral: Penta1L[2,1,1,3,1] # 31
+This requested integral is a master integral: Penta1L[2,1,2,1,2] # 31
+This requested integral is a master integral: Penta1L[2,1,2,2,1] # 31
+This requested integral is a master integral: Penta1L[2,1,3,1,1] # 31
+This requested integral is a master integral: Penta1L[2,2,1,1,2] # 31
+This requested integral is a master integral: Penta1L[2,2,1,2,1] # 31
+This requested integral is a master integral: Penta1L[2,2,2,1,1] # 31
+This requested integral is a master integral: Penta1L[2,3,1,1,1] # 31
+This requested integral is a master integral: Penta1L[3,1,1,1,2] # 31
+This requested integral is a master integral: Penta1L[3,1,1,2,1] # 31
+This requested integral is a master integral: Penta1L[3,1,2,1,1] # 31
+This requested integral is a master integral: Penta1L[3,2,1,1,1] # 31
+This requested integral is a master integral: Penta1L[4,1,1,1,1] # 31
+This requested integral is a master integral: Penta1L[1,1,1,1,1] # 31
+unreduced integrals: 0.
+
+Total time:
+( 8.1 s )

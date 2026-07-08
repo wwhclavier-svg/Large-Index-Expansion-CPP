@@ -57,6 +57,7 @@ cd .. && ./build/test_expandFF
 - FireFly is pre-built at `/home/ykm/firefly` — not installed via package manager
 - Tests are **standalone executables**, not managed by `ctest` or `add_test()`
 - Binary data files (`IBPMat_*.bin`, `RingData_*.bin`) must exist in the working directory for tests
+- `cppPath` in the MMA bridge uses `Environment["HOME"]` for portability across users
 
 ### Alternate Build Config
 
@@ -267,6 +268,49 @@ FFInt x = -FFInt(1);
 Any `static_cast<FFInt>(negative_int)` is a bug — C++ silently converts the negative int to a huge uint64_t before the FFInt constructor sees it. No compiler warning is generated.
 
 This affected `sgn()` in `Utilities.hpp` and any code that constructs FFInt from negative literals. If adding a signed constructor, use `int64_t` to avoid ambiguity with the existing `uint64_t` overload for `long long` arguments.
+
+### `lastNonZero` Indexing: 1-indexed vs 0-indexed
+
+`lastNonZero(seed)` returns a **0-indexed** index of the last non-zero element in `seed`. However, MMA uses **1-indexed** conventions. When using `lastNonZero` to compute `ncurr`, always add 1:
+
+```cpp
+int ncurr = lastNonZero(seed) + 1;  // MMA 1-indexed convention
+```
+
+This affects:
+- `n_active_vars = ne - max(ncurr - 1, 0)` — number of active variables in the seed equation
+- `add_M1_contribution`: loop `for (int i = 0; i < ncurr - 1; ++i)` — knowns (already solved variables)
+- `equationVariable`: `for (int j = max(ncurr - 1, 0); j < ne; ++j)` — variable mapping
+
+Using 0-indexed `ncurr` directly (the old bug) caused `ncurr`-related equations to miss knowns contributions, producing many spurious solution branches (e.g., 288 instead of 4 at incre=3 for BUB-m4-1-1).
+
+Files affected: `LayerRecursion.hpp`, `LayerRecursionCore.cpp`
+
+### Incre Retry Loop for Incompatible Systems
+
+When `IncrementDetector` returns `incompatFlag=Y` (detected 3), `batchProcessRecursion` uses a retry loop:
+
+```cpp
+for (int trial = 3; ; trial++) {
+    auto result = layerRecursion<T>(mat, ne, nb, nibp, order, trial);
+    if (validateExpansion<T>(result, mat, order, trial, ne, nb)) break;
+    // retry with trial++ (incre = 4, 5, ...)
+}
+```
+
+The `validateExpansion` function checks **only k=1 equations** (necessary condition). If the first-order equations are incompatible, higher-order ones will be too. Passing k=1 implies higher orders are compatible.
+
+Without this loop, `incompatFlag=Y` systems would use `incre=3` and produce 288+ spurious branches instead of the correct 3-4 solutions at `incre=4`.
+
+### `const T* operator()(k,l,cid)` for Const Access
+
+`SeriesCoefficient.hpp` now has a const-correct 3-arg accessor:
+
+```cpp
+inline const T* operator()(int k, int l, int cid) const;
+```
+
+This is needed for `validateExpansion` and other read-only coefficient access patterns. Previously, only a non-const version existed, requiring `const_cast`.
 
 ### l-Loop Bound: Always `incre * k`, Never Just `k`
 

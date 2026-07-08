@@ -1,0 +1,5 @@
+4 Fermat/Blackbox instances will be run in parallel.
+The user defined environment variable FERMATPATH for Fermat is set:
+/usr/local/bin/Ferl7/fer64
+Kira::ExceptionConfigFiles: job file: 'select_integrals': 'select_mandatory_list': File 'integrals' not found
+Kira run aborted

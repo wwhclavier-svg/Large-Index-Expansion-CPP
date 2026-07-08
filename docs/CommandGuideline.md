@@ -58,7 +58,7 @@
 
 | Method | (a) Read from | (b) Command | (c) Output to |
 |--------|-------------|------------|--------------|
-| All-in-one | `AllRelations_*.m`, `RelationMeta_*.m` | `wolframscript -file VerifyRelation.wl <fam>` | stdout pass/fail per config |
+| All-in-one | `AllRelations_*.m`, `RelationMeta_*.m` | `wolframscript -file VerifyRelation.wl <fam>` | stdout pass/fail per config[^verify_deprecated] |
 | BladeVerify | `AllRelations_*.m` + Blade.wl | `wolframscript -file workspace/shared/VerifyUtility/Verify-Blade.wl <fam>` | stdout |
 | SeriesVerify | `AllRelations_*.m` + `RelationMeta_*.m` + `ExpansionMMA_*.m` | `wolframscript -file workspace/shared/VerifyUtility/Verify-Series.wl <fam>` | stdout |
 | KiraVerify | `AllRelations_*.m` + `verify/<fam>/kira_integrals.m` | `wolframscript -file workspace/shared/VerifyUtility/Verify-Kira.wl <fam>` | stdout |
@@ -115,6 +115,8 @@ wolframscript -file VerifyRelation.wl bub00
 | [`workspace/shared/verify-docs/Test-Relation.md`](../workspace/shared/verify-docs/Test-Relation.md) | Relation verification (4 methods) |
 | [`workspace/shared/verify-docs/Test-Expand.md`](../workspace/shared/verify-docs/Test-Expand.md) | Expansion consistency verification |
 
+[^verify_deprecated]: ⚠️ **`VerifyRelation.wl` 已不存在**。改用 `workspace/shared/VerifyUtility/` 下的 `Verify-Blade.wl`、`Verify-Series.wl`、`Verify-Kira.wl`。详见上方**Verification** 节。
+
 ### Data flow summary
 
 ```
@@ -124,5 +126,5 @@ families/<fam>.json
   → [relation-test] test_relationFF
      ├── (internal) batchProcessRecursion → ExpansionCache + ExpansionMMA_*.m + Compare-CPPResult-*.m
      └── (internal) reconstructAllRelations → AllRelations_<fam>_k<N>.m + RelationMeta_<fam>.m
-  → [verify] VerifyRelation.wl  →  pass/fail per (lev,deg) config
+  → [verify] VerifyRelation.wl  →  pass/fail per (lev,deg) config[^verify_deprecated]
 ```

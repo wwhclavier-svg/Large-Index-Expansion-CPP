@@ -1,0 +1,9 @@
+integralfamilies:
+  -
+    name: "Tri"
+    loop_momenta: ["k1"]
+    top_level_sectors: [7]
+    propagators:
+      - ["-k1^2", 0]
+      - ["-(k1-p1)^2", 0]
+      - ["-(k1+p2)^2", 0]

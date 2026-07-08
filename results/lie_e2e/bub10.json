@@ -1,0 +1,18 @@
+{
+	"family":"bub10",
+	"ne":2,
+	"r":1,
+	"s":1,
+	"n_targets":3,
+	"n_sectors":0,
+	"n_regions":1,
+	"timing_s":{
+		"define":0.003181,
+		"MMA_expand":0.897821,
+		"MMA_reconstruct":0.237415,
+		"setupGeneratingCone":0.152645,
+		"concreteFamilyReduce":0.058219,
+		"total":1.34928
+	},
+	"output_file":"\/home\/ykm\/Large-Index-Expansion-CPP\/results\/lie_e2e\/bub10.m"
+}

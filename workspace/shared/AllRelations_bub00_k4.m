@@ -1,1 +1,0 @@
-/home/ykm/Large-Index-Expansion-CPP/relations/AllRelations_bub00_k4.m

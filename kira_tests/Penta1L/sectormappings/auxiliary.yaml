@@ -1,0 +1,3 @@
+auxiliary:
+ - name: "Penta1L"
+   permutation: [0,1,2,3,4]

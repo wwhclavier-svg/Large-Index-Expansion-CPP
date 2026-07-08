@@ -1,7 +1,7 @@
 (* C++ Verify Metadata Export *)
 $CPPMeta = <|
   "Family" -> "bub10",
-  "TotalTime" -> 0.006550,
+  "TotalTime" -> 0.006416,
   "Modulus" -> 179424673,
   "Regions" -> {
     <| "RegionIndex" -> 1, "NE" -> 2, "NB" -> 1, "NIBP" -> 2, "Incre" -> 2, "Nimax" -> 13 |>,
@@ -12,7 +12,7 @@ $CPPMeta = <|
 1
     },
     { (* k=1 *)
-149520561*v1 + 9968037*v2 + 59808224*v2^2
+29904112*v1 + 109648411*v2 + 59808224*v2^2
     }
   }
 |>
