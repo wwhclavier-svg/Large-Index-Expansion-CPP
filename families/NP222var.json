@@ -1,6 +1,6 @@
 {
 	"name":"NP222var",
-	"description":"NP 2L2P triangle, arXiv:2305.13951, k=0(fam b)",
+	"description":"NP 2L3P triangle, arXiv:2305.13951, k=0(fam b)",
 	"propagators":[
 		"(l1 - p1)^2",
 		"-msq + (l2 - p1)^2",

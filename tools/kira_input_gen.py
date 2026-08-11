@@ -69,7 +69,9 @@ def scalar_to_kira_rule(key, val):
 
 
 def sector_to_int(sector_vec):
-    return int("".join(str(b) for b in sector_vec), 2)
+    # Kira 约定: bit i (2^i) 对应第 i+1 个传播子, 即列表首位是最低位
+    # (此前未反转, 回文 sector 如 SR212 的 31 恰好正确, 非回文则错位)
+    return int("".join(str(b) for b in reversed(sector_vec)), 2)
 
 
 # ---------------------------------------------------------------------------

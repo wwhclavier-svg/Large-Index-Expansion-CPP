@@ -186,11 +186,11 @@ $FamilyDatabase = <|
     |>,
 
     (* -------------------------------------------------------- *)
-    (* NP222 \[LongDash] Non-Planar 2-loop 2-point (2L2P, 7 propagators)  *)
+    (* NP222 \[LongDash] Non-Planar 2-loop 3-point (2L3P, E=2, 7 propagators)  *)
     (* \:6765\:6e90: LIETest_2L2P_SR212.nb "Non Planar 2-loop" \:8282      *)
     (* -------------------------------------------------------- *)
     "NP222" -> <|
-        "Description" -> "Non-Planar 2L2P, s=1,s2=0,m=0",
+        "Description" -> "Non-Planar 2L3P, s=1,s2=0,m=0",
         "Propagators" -> {
             (l2 + p1)^2 + msq,
             (l1 - l2 - p1 - p2)^2,
@@ -213,14 +213,14 @@ $FamilyDatabase = <|
     |>,
 
     (* -------------------------------------------------------- *)
-    (* NP222var \[LongDash] arXiv:2305.13951 non-planar triangle (2L2P)    *)
+    (* NP222var \[LongDash] arXiv:2305.13951 non-planar triangle (2L3P)    *)
     (* D1=(l1-p1)^2, D2=(l2-p1)^2-m^2, D3=(l1+p2)^2,            *)
     (* D4=(l1-l2+p2)^2-m^2, D5=(l1-l2)^2-\[Kappa]m^2, D6=l2^2-\[Kappa]m^2,    *)
     (* D7=l1^2 (ISP). \[Kappa]=1\[RightArrow]fam(a) 11MIs, \[Kappa]=0\[RightArrow]fam(b) 18MIs.       *)
     (* \:6765\:6e90: arXiv:2305.13951 Eq.(2), Jiang/Wang/Yang/Zhao 2023  *)
     (* -------------------------------------------------------- *)
     "NP222var" -> <|
-        "Description" -> "NP 2L2P triangle, arXiv:2305.13951, k=0(fam b)",
+        "Description" -> "NP 2L3P triangle, arXiv:2305.13951, k=0(fam b)",
         "Propagators" -> {
             (l1 - p1)^2,
             (l2 - p1)^2 - msq,

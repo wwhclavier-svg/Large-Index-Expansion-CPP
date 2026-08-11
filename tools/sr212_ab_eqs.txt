@@ -1,0 +1,13 @@
+[IBPEqGenerator] Family SR212: ne=5 nl=2 nE=1 nIBP=6 subsectors=26
+[IBPEqGenerator] Step 1: Running SP2PD...
+[IBPEqGenerator] SP2PD OK: 5 scalar products → z-basis
+[IBPEqGenerator] Step 2: Computing derivatives...
+[IBPEqGenerator] Derivatives OK: 30 polynomials computed
+[IBPEqGenerator] Step 3: Assembling IBP equations (mon2F)...
+[IBPEqGenerator] Generated 6 IBP equations with 56 total g-operator terms.
+179424669+A2+B4*A5+179424672*B1*A5+179424672*B1*A2,
+179424672*A1+179424672*B5*A2+179424672*B5*A1+B4*A1+179424672*B3*A5+B3*A2+B2*A5+B2*A1,
+179424672*A2+A1+179424672*B4*A5+B3*A5+179424672*B2*A5+179424672*B2*A1+B1*A5+B1*A2,
+179424672*A3+179424672*B5*A4+179424672*B5*A3+B4*A5+B4*A3+B2*A3+179424672*B1*A5+B1*A4,
+179424669+A4+179424672*B3*A5+179424672*B3*A4+B2*A5,
+179424672*A4+A3+179424672*B4*A5+179424672*B4*A3+B3*A5+B3*A4+179424672*B2*A5+B1*A5

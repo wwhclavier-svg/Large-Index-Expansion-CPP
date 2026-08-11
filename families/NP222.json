@@ -1,6 +1,6 @@
 {
 	"name":"NP222",
-	"description":"Non-Planar 2L2P, s=1,s2=0,m=0",
+	"description":"Non-Planar 2L3P, s=1,s2=0,m=0",
 	"propagators":[
 		"msq + (l2 + p1)^2",
 		"(l1 - l2 - p1 - p2)^2",

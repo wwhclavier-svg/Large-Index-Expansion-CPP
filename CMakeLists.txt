@@ -138,6 +138,14 @@ target_link_libraries(verify_ring_builder pthread)
 add_executable(test_region_solver_full tests/test_region_solver_full.cpp)
 target_link_libraries(test_region_solver_full pthread)
 
+# NP222 扇区 1111100 的 AB 特征系统导出
+add_executable(test_np222_ab tests/test_np222_ab.cpp)
+target_link_libraries(test_np222_ab pthread)
+
+# NP222 全部五传播子子扇区的 AB 特征系统导出
+add_executable(test_np222_allsub tests/test_np222_allsub.cpp)
+target_link_libraries(test_np222_allsub pthread)
+
 add_executable(debug_region_solver tests/debug_region_solver.cpp)
 target_link_libraries(debug_region_solver pthread)
 
@@ -171,3 +179,23 @@ target_link_libraries(test_generating_cone pthread)
 # --- Benchmark pipeline ---
 add_executable(bench_lie bench/bench_lie.cpp ${COMMON_SOURCES})
 target_link_libraries(bench_lie ${FIREFLY_LIBRARY} ${GMP_LIBRARY} ${GMPXX_LIBRARY} Eigen3::Eigen pthread)
+
+# NP222 bin 元数据 dump
+add_executable(test_np222_bindump tests/test_np222_bindump.cpp)
+target_link_libraries(test_np222_bindump ${FIREFLY_LIBRARY} ${GMP_LIBRARY} ${GMPXX_LIBRARY} pthread)
+
+# SR212 top sector AB 特征系统导出
+add_executable(test_sr212_ab tests/test_sr212_ab.cpp)
+target_link_libraries(test_sr212_ab pthread)
+
+# NP222 bin 真实族的枚举搜索
+add_executable(test_np222_hunt tests/test_np222_hunt.cpp)
+target_link_libraries(test_np222_hunt pthread)
+
+# NP222 真实族 F1 的 AB 特征系统导出
+add_executable(test_np222_true_ab tests/test_np222_true_ab.cpp)
+target_link_libraries(test_np222_true_ab pthread)
+
+# dump 全部候选族 AB 系统
+add_executable(test_np222_dumpall tests/test_np222_dumpall.cpp)
+target_link_libraries(test_np222_dumpall pthread)

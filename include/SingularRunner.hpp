@@ -498,8 +498,9 @@ if (d != 0) {
 } else {
   ring r_lp = <char>, (<vars>), (lp);
   option(redSB);
-  ideal I_lp = imap(r_dp, I);
-  ideal gb_lp = std(I_lp);
+  // fglm: 0 维理想从 dp GB 直接转换到 lp GB, 远比原生 lp std 快
+  // (原生 lp std 对多个 2L 族 sector 需数小时, fglm 为秒级)
+  def gb_lp = fglm(r_dp, gb_dp);
   list minass = minAssGTZ(gb_lp);
   int n = size(minass);
   string plistOut, npolyOut, rdimOut, gblistOut;
@@ -549,8 +550,8 @@ if (d != 0) {
 } else {
   ring r_lp = <char>, (<vars>), (lp);
   option(redSB);
-  ideal I_lp = imap(r_dp, I);
-  ideal gb_lp = std(I_lp);
+  // fglm: 0 维理想从 dp GB 直接转换到 lp GB (见 minAssGTZ 分支注释)
+  def gb_lp = fglm(r_dp, gb_dp);
   list primdec = primdecGTZ(gb_lp);
   int n = size(primdec);
   string plistOut, npolyOut, rdimOut, gblistOut;

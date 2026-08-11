@@ -105,3 +105,15 @@ tests/archive/
 workspace/playground/
 # Task workspace directories (runtime data, not source)
 workspace/C*/
+
+# Runtime working dirs & logs (regenerable)
+kira_tests/
+logs/
+tmp/
+*.log
+hunt_matches.txt
+np222_ab_eqs.txt
+__pycache__/
+tools/hunt/
+tools/hunt_all/
+tools/ab_sub/

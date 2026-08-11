@@ -170,6 +170,12 @@ inline std::vector<std::string> buildABEquations(
             if (term.nIdx == 0)
                 continue;
             // Skip inactive n_i (sector element is 0)
+            //
+            // 约定依据 (与 MMA 参考管线逐方程核对, TB123 top 8/8 ×1 一致):
+            // MMA regionsBySectors 在 sectorLimitIBP 之前先执行 ibpeqslim /. n -> 0,
+            // 消去 LargeIndexIBP limitRule (n_k -> n+v_k) 引入的显式 n;
+            // 因此 n 首项系数 = c*s_k: 活跃指标 c, 不活跃指标 0 (跳过).
+            // 若不执行 n->0 (错误路径), 系数会变成 c*(1+s_k), 解出不同的 regime.
             if (term.nIdx > 0 && sector[term.nIdx - 1] == 0)
                 continue;
             int64_t coeff = term.coeff % modulus;

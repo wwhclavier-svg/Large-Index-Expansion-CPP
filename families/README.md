@@ -43,8 +43,8 @@ PrintAllFamilies[];
 | `SR212` | Sunrise 2L1P, massless | 1 | 5 |
 | `SR212-3m` | Sunrise 2L1P, 3-massive | 1 | 5 |
 | `SR212-5m` | Sunrise 2L1P, all-massive | 1 | 5 |
-| `NP222` | Non-Planar 2L2P | 2 | 7 |
-| `NP222var` | Non-Planar 2L2P variant | 2 | 7 |
+| `NP222` | Non-Planar 2L3P | 2 | 7 |
+| `NP222var` | Non-Planar 2L3P variant | 2 | 7 |
 | `TB123` | Tri-Box 2L3P, massless | 2 | 7 |
 | `TB123m` | Tri-Box 2L3P, massive | 2 | 7 |
 | `DB313` | Double Box 2L4P | 3 | 9 |
