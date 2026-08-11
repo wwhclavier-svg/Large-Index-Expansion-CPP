@@ -73,7 +73,7 @@ $FamilyDatabase = <|
     (* Kinematics: p1^2=s1, p2^2=s2, (p1+p2)^2=s3               *)
     (* -------------------------------------------------------- *)
     "Tri" -> <|
-        "Description" -> "1-loop triangle, 3 props, s1=3,s2=8,s3=0",
+        "Description" -> "1-loop triangle, 3 props, s1=3,s2=8,s3=5",
         "Propagators" -> {k1^2 - msq, (k1 - p1)^2 - msq, (k1 + p2)^2 - msq},
         "LoopMomenta" -> {k1},
         "ExternalMomenta" -> {p1, p2},
@@ -83,7 +83,7 @@ $FamilyDatabase = <|
             p1*p2 -> (s3 - s1 - s2)/2
         },
         "TopSector" -> {1, 1, 1},
-        "Numeric" -> {s1 -> 3, s2 -> 8, s3 -> 0, msq -> 0, "d" -> 1/3},
+        "Numeric" -> {s1 -> 3, s2 -> 8, s3 -> 5, msq -> 0, "d" -> 1/3},
         "Modulus" -> Prime[10000000],
         "Graph"->{{1,2},{3,1},{2,3}}
     |>,

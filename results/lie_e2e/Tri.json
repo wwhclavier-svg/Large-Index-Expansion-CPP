@@ -2,15 +2,15 @@
 	"family":"Tri",
 	"ne":3,
 	"order":6,
-	"r":1,
+	"r":2,
 	"s":1,
-	"n_targets":4,
+	"n_targets":10,
 	"n_sectors":1,
 	"timing_s":{
-		"importRelations":0.002672,
-		"setupGeneratingCone":0.934407,
-		"concreteFamilyReduce":0.001116,
-		"total":1.87414
+		"importRelations":0.003191,
+		"setupGeneratingCone":1.579105,
+		"concreteFamilyReduce":0.002998,
+		"total":3.16788
 	},
-	"output_file":"\/home\/ykm\/Large-Index-Expansion-CPP\/results\/lie_e2e\/Tri.m"
+	"output_file":"\/home\/ykm\/work-knowledge\/Projects\/Large-Index-Expansion-CPP\/results\/lie_e2e\/Tri.m"
 }

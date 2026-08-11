@@ -1,6 +1,6 @@
 {
 	"name":"Tri",
-	"description":"1-loop triangle, 3 props, s1=3,s2=8,s3=0",
+	"description":"1-loop triangle, 3 props, s1=3,s2=8,s3=5",
 	"propagators":[
 		"k1^2 - msq",
 		"-msq + (k1 - p1)^2",
@@ -27,7 +27,7 @@
 	"numeric":{
 		"s1":3,
 		"s2":8,
-		"s3":0,
+		"s3":5,
 		"msq":0,
 		"d":"1\/3"
 	},
