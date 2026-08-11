@@ -29,12 +29,29 @@ ALL_1L2P = ONELOOP + TWOLOOP_2POINT
 def parse_propagator(prop_str, mass_symbol=None):
     s = prop_str.replace(" ", "")
     mass = 0
-    # Strip any mass term from the expression; use as Kira mass if non-zero
-    if "msq" in s:
-        if mass_symbol:
-            mass = mass_symbol
-        s = s.replace("-msq", "").replace("+msq", "").replace("msq", "")
-        s = s.strip("+-")
+    # 有质量传播子: Kira 约定 D = 表达式 - m^2。族定义给出 "P ± msq" (P=动量部分),
+    # 为维持与无质量族一致的 (-1)^Σ 约定, 需整体取负: -(P ± msq) = -P ∓ msq,
+    # 即 kira_expr = -P + (∓msq)。
+    # 实测: ["-k1^2+msq", 0] 正确 (bub10 IBP 核验通过); 原实现 ["-k1^2","msq"]
+    # 使 Kira 算成 D = -k1^2 - msq (质量符号错, 得到错误的族)。
+    if "msq" in s and mass_symbol:
+        if "-msq" in s:
+            mass_sign = -1
+            M = s.replace("-msq", "")
+        else:
+            mass_sign = 1
+            M = s.replace("+msq", "").replace("msq", "")
+        M = M.strip("+-")
+        if M.startswith("-"):
+            negM = M[1:]
+        else:
+            negM = "-" + M
+        if mass_sign == -1:
+            kira_expr = negM + "+" + mass_symbol
+        else:
+            kira_expr = negM + "-" + mass_symbol
+        return [kira_expr, 0]
+    # 无质量: 保留原逻辑 (整体取负, 维持 (-1)^Σ 约定)
     if s.startswith("-"):
         kira_expr = s[1:]
     else:
