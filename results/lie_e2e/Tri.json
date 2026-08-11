@@ -1,18 +1,16 @@
 {
 	"family":"Tri",
 	"ne":3,
+	"order":6,
 	"r":1,
 	"s":1,
 	"n_targets":4,
-	"n_sectors":0,
-	"n_regions":1,
+	"n_sectors":1,
 	"timing_s":{
-		"define":0.009987,
-		"MMA_expand":1.112370,
-		"MMA_reconstruct":0.314024,
-		"setupGeneratingCone":0.139096,
-		"concreteFamilyReduce":0.052997,
-		"total":1.62847
+		"importRelations":0.002672,
+		"setupGeneratingCone":0.934407,
+		"concreteFamilyReduce":0.001116,
+		"total":1.87414
 	},
 	"output_file":"\/home\/ykm\/Large-Index-Expansion-CPP\/results\/lie_e2e\/Tri.m"
 }

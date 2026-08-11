@@ -1,0 +1,16 @@
+{
+	"family":"Box",
+	"ne":4,
+	"order":4,
+	"r":1,
+	"s":1,
+	"n_targets":5,
+	"n_sectors":1,
+	"timing_s":{
+		"importRelations":0.010572,
+		"setupGeneratingCone":0.955899,
+		"concreteFamilyReduce":0.017642,
+		"total":1.95818
+	},
+	"output_file":"\/home\/ykm\/Large-Index-Expansion-CPP\/results\/lie_e2e\/Box.m"
+}

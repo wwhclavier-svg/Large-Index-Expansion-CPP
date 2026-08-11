@@ -1,18 +1,16 @@
 {
 	"family":"bub00",
 	"ne":2,
+	"order":4,
 	"r":1,
 	"s":1,
 	"n_targets":3,
-	"n_sectors":0,
-	"n_regions":1,
+	"n_sectors":1,
 	"timing_s":{
-		"define":0.002908,
-		"MMA_expand":0.806463,
-		"MMA_reconstruct":0.201092,
-		"setupGeneratingCone":0.128695,
-		"concreteFamilyReduce":0.049344,
-		"total":1.18850
+		"importRelations":0.001409,
+		"setupGeneratingCone":0.627410,
+		"concreteFamilyReduce":0.000720,
+		"total":1.25812
 	},
 	"output_file":"\/home\/ykm\/Large-Index-Expansion-CPP\/results\/lie_e2e\/bub00.m"
 }

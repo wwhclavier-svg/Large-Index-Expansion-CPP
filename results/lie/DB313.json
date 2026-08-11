@@ -1,0 +1,174 @@
+{
+  "completeness": {
+    "status": "not_checked"
+  },
+  "config": {
+    "ansatz_mode": 0,
+    "deg_max": 2,
+    "deg_min": 0,
+    "incre": 2,
+    "lev_max": 3,
+    "lev_min": 1,
+    "nb": 1,
+    "ne": 9,
+    "order": 3,
+    "prime": 179424673,
+    "top_sector_only": true
+  },
+  "family": "DB313",
+  "machine": "ykm-B365M-DS3H",
+  "phases": {
+    "expand": {
+      "cache_hit": false,
+      "time_s": 48.197188913
+    },
+    "load_IBP": {
+      "time_s": 0.041494261
+    },
+    "relation_solve": {
+      "levels": [
+        {
+          "active_variables": 10,
+          "converged": true,
+          "deg": 0,
+          "lev": 1,
+          "num_variables": 10,
+          "sampling_points_used": 0,
+          "solution_dimension": 0,
+          "stable_order": 1,
+          "system_cols": 10,
+          "system_rows": 0,
+          "time_s": 0.0
+        },
+        {
+          "active_variables": 100,
+          "converged": true,
+          "deg": 1,
+          "lev": 1,
+          "num_variables": 100,
+          "sampling_points_used": 0,
+          "solution_dimension": 0,
+          "stable_order": 2,
+          "system_cols": 100,
+          "system_rows": 0,
+          "time_s": 0.0
+        },
+        {
+          "active_variables": 550,
+          "converged": true,
+          "deg": 2,
+          "lev": 1,
+          "num_variables": 550,
+          "sampling_points_used": 0,
+          "solution_dimension": 0,
+          "stable_order": 3,
+          "system_cols": 550,
+          "system_rows": 0,
+          "time_s": 0.0
+        },
+        {
+          "active_variables": 55,
+          "converged": true,
+          "deg": 0,
+          "lev": 2,
+          "num_variables": 55,
+          "sampling_points_used": 0,
+          "solution_dimension": 0,
+          "stable_order": 1,
+          "system_cols": 55,
+          "system_rows": 0,
+          "time_s": 0.0
+        },
+        {
+          "active_variables": 550,
+          "converged": false,
+          "deg": 1,
+          "lev": 2,
+          "num_variables": 550,
+          "sampling_points_used": 0,
+          "solution_dimension": 3,
+          "stable_order": -2,
+          "system_cols": 550,
+          "system_rows": 0,
+          "time_s": 0.0
+        },
+        {
+          "active_variables": 2995,
+          "converged": false,
+          "deg": 2,
+          "lev": 2,
+          "num_variables": 3025,
+          "sampling_points_used": 0,
+          "solution_dimension": 1735,
+          "stable_order": -2,
+          "system_cols": 2995,
+          "system_rows": 0,
+          "time_s": 0.0
+        },
+        {
+          "active_variables": 40,
+          "converged": true,
+          "deg": 0,
+          "lev": 3,
+          "num_variables": 220,
+          "sampling_points_used": 0,
+          "solution_dimension": 0,
+          "stable_order": 1,
+          "system_cols": 40,
+          "system_rows": 0,
+          "time_s": 0.0
+        },
+        {
+          "active_variables": 400,
+          "converged": true,
+          "deg": 1,
+          "lev": 3,
+          "num_variables": 2200,
+          "sampling_points_used": 0,
+          "solution_dimension": 0,
+          "stable_order": 3,
+          "system_cols": 400,
+          "system_rows": 0,
+          "time_s": 0.0
+        },
+        {
+          "active_variables": 2185,
+          "converged": false,
+          "deg": 2,
+          "lev": 3,
+          "num_variables": 12100,
+          "sampling_points_used": 0,
+          "solution_dimension": 925,
+          "stable_order": -2,
+          "system_cols": 2185,
+          "system_rows": 0,
+          "time_s": 0.0
+        }
+      ],
+      "total_time_s": 560.829756827
+    }
+  },
+  "relation_counts": {
+    "counts": {
+      "lev1": {
+        "deg0": 0,
+        "deg1": 0,
+        "deg2": 0
+      },
+      "lev2": {
+        "deg0": 0,
+        "deg1": 3,
+        "deg2": 1735
+      },
+      "lev3": {
+        "deg0": 0,
+        "deg1": 0,
+        "deg2": 925
+      }
+    },
+    "family": "DB313",
+    "ne": 9
+  },
+  "timestamp": "2026-07-14T16:05:35",
+  "total_time_s": 609.068816649
+}

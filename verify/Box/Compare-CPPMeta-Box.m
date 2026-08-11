@@ -1,24 +1,24 @@
 (* C++ Verify Metadata Export *)
 $CPPMeta = <|
   "Family" -> "Box",
-  "TotalTime" -> 6.498419,
+  "TotalTime" -> 0.332373,
   "Modulus" -> 179424673,
   "Regions" -> {
-    <| "RegionIndex" -> 1, "NE" -> 4, "NB" -> 1, "NIBP" -> 4, "Incre" -> 2, "Nimax" -> 455 |>,
-    <| "RegionIndex" -> 2, "NE" -> 4, "NB" -> 1, "NIBP" -> 4, "Incre" -> 2, "Nimax" -> 455 |>,
-    <| "RegionIndex" -> 3, "NE" -> 4, "NB" -> 1, "NIBP" -> 4, "Incre" -> 2, "Nimax" -> 455 |>,
-    <| "RegionIndex" -> 4, "NE" -> 4, "NB" -> 1, "NIBP" -> 4, "Incre" -> 2, "Nimax" -> 455 |>,
-    <| "RegionIndex" -> 5, "NE" -> 4, "NB" -> 1, "NIBP" -> 4, "Incre" -> 2, "Nimax" -> 455 |>,
-    <| "RegionIndex" -> 6, "NE" -> 4, "NB" -> 1, "NIBP" -> 4, "Incre" -> 2, "Nimax" -> 455 |>,
-    <| "RegionIndex" -> 7, "NE" -> 4, "NB" -> 1, "NIBP" -> 4, "Incre" -> 2, "Nimax" -> 455 |>,
-    <| "RegionIndex" -> 8, "NE" -> 4, "NB" -> 1, "NIBP" -> 4, "Incre" -> 2, "Nimax" -> 455 |>,
-    <| "RegionIndex" -> 9, "NE" -> 4, "NB" -> 1, "NIBP" -> 4, "Incre" -> 2, "Nimax" -> 455 |>,
-    <| "RegionIndex" -> 10, "NE" -> 4, "NB" -> 1, "NIBP" -> 4, "Incre" -> 2, "Nimax" -> 455 |>,
-    <| "RegionIndex" -> 11, "NE" -> 4, "NB" -> 1, "NIBP" -> 4, "Incre" -> 2, "Nimax" -> 455 |>,
-    <| "RegionIndex" -> 12, "NE" -> 4, "NB" -> 1, "NIBP" -> 4, "Incre" -> 2, "Nimax" -> 455 |>,
-    <| "RegionIndex" -> 13, "NE" -> 4, "NB" -> 2, "NIBP" -> 4, "Incre" -> 2, "Nimax" -> 910 |>,
-    <| "RegionIndex" -> 14, "NE" -> 4, "NB" -> 2, "NIBP" -> 4, "Incre" -> 2, "Nimax" -> 910 |>,
-    <| "RegionIndex" -> 15, "NE" -> 4, "NB" -> 1, "NIBP" -> 4, "Incre" -> 2, "Nimax" -> 455 |>
+    <| "RegionIndex" -> 1, "NE" -> 4, "NB" -> 1, "NIBP" -> 4, "Incre" -> 2, "Nimax" -> 165 |>,
+    <| "RegionIndex" -> 2, "NE" -> 4, "NB" -> 1, "NIBP" -> 4, "Incre" -> 2, "Nimax" -> 165 |>,
+    <| "RegionIndex" -> 3, "NE" -> 4, "NB" -> 1, "NIBP" -> 4, "Incre" -> 2, "Nimax" -> 165 |>,
+    <| "RegionIndex" -> 4, "NE" -> 4, "NB" -> 1, "NIBP" -> 4, "Incre" -> 2, "Nimax" -> 165 |>,
+    <| "RegionIndex" -> 5, "NE" -> 4, "NB" -> 1, "NIBP" -> 4, "Incre" -> 2, "Nimax" -> 165 |>,
+    <| "RegionIndex" -> 6, "NE" -> 4, "NB" -> 1, "NIBP" -> 4, "Incre" -> 2, "Nimax" -> 165 |>,
+    <| "RegionIndex" -> 7, "NE" -> 4, "NB" -> 1, "NIBP" -> 4, "Incre" -> 2, "Nimax" -> 165 |>,
+    <| "RegionIndex" -> 8, "NE" -> 4, "NB" -> 1, "NIBP" -> 4, "Incre" -> 2, "Nimax" -> 165 |>,
+    <| "RegionIndex" -> 9, "NE" -> 4, "NB" -> 1, "NIBP" -> 4, "Incre" -> 2, "Nimax" -> 165 |>,
+    <| "RegionIndex" -> 10, "NE" -> 4, "NB" -> 1, "NIBP" -> 4, "Incre" -> 2, "Nimax" -> 165 |>,
+    <| "RegionIndex" -> 11, "NE" -> 4, "NB" -> 1, "NIBP" -> 4, "Incre" -> 2, "Nimax" -> 165 |>,
+    <| "RegionIndex" -> 12, "NE" -> 4, "NB" -> 1, "NIBP" -> 4, "Incre" -> 2, "Nimax" -> 165 |>,
+    <| "RegionIndex" -> 13, "NE" -> 4, "NB" -> 1, "NIBP" -> 4, "Incre" -> 2, "Nimax" -> 165 |>,
+    <| "RegionIndex" -> 14, "NE" -> 4, "NB" -> 2, "NIBP" -> 4, "Incre" -> 2, "Nimax" -> 330 |>,
+    <| "RegionIndex" -> 15, "NE" -> 4, "NB" -> 2, "NIBP" -> 4, "Incre" -> 2, "Nimax" -> 330 |>
   },
   "Coefficients" -> {
     { (* k=0 *)
