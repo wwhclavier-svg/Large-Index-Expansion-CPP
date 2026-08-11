@@ -14,7 +14,7 @@ Print["#ibpeqs=", Length[ibpeqs]];
 Alist = Array[A, 5];
 aeqs0 = Coefficient[ibpeqs, n] /. g[a__] :> (Times @@ Thread@Power[Alist, {a} - vlist]);
 aeqs = Join[Together /@ aeqs0 // Numerator, {Times @@ Alist * f - 1}] // PolynomialMod[#, char] &;
-Export["/home/ykm/Large-Index-Expansion-NOTES/Code/Large-Index-Expansion-CPP/tools/sr212_true_aeqs.m", aeqs, "Package"];
+Export["/home/ykm/work-knowledge/Projects/Large-Index-Expansion-CPP/tools/sr212_true_aeqs.m", aeqs, "Package"];
 Print["#aeqs=", Length[aeqs]];
 
 (* meta top-sector regime A 点代入检验 *)

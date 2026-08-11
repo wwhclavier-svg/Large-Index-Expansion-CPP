@@ -21,7 +21,7 @@ expected = {{1,1,0,0,1},{1,0,1,0,1},{0,1,0,1,1},{0,0,1,1,1},
             {1,1,1,0,1},{1,1,0,1,1},{1,0,1,1,1},{0,1,1,1,1},{1,1,1,1,1}};
 Print["MATCH_SECTORS=", Sort[sectorlist] === Sort[expected]];
 
-Export["/home/ykm/Large-Index-Expansion-NOTES/Code/Large-Index-Expansion-CPP/tools/np222_probe5_result.m",
+Export["/home/ykm/work-knowledge/Projects/Large-Index-Expansion-CPP/tools/np222_probe5_result.m",
   <|"ne"->ne, "nibp"->nibp, "masters"->sectorlist,
     "match"->(Sort[sectorlist]===Sort[expected]),
     "ibpeqs"->(ibpeqs1 /. d -> 1/13)|>, "Package"];
