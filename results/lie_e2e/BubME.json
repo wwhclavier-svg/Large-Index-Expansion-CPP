@@ -1,0 +1,16 @@
+{
+	"family":"BubME",
+	"ne":2,
+	"order":4,
+	"r":2,
+	"s":1,
+	"n_targets":6,
+	"n_sectors":1,
+	"timing_s":{
+		"importRelations":0.002075,
+		"setupGeneratingCone":0.752081,
+		"concreteFamilyReduce":0.001530,
+		"total":1.50991
+	},
+	"output_file":"\/home\/ykm\/work-knowledge\/Projects\/Large-Index-Expansion-CPP\/results\/lie_e2e\/BubME.m"
+}
