@@ -1,0 +1,16 @@
+{
+	"family":"SR212-5m",
+	"ne":5,
+	"order":4,
+	"r":1,
+	"s":1,
+	"n_targets":6,
+	"n_sectors":0,
+	"timing_s":{
+		"importRelations":0.052524,
+		"setupGeneratingCone":1.932340,
+		"concreteFamilyReduce":0.261896,
+		"total":4.44209
+	},
+	"output_file":"\/home\/ykm\/work-knowledge\/Projects\/Large-Index-Expansion-CPP\/results\/lie_e2e\/SR212-5m.m"
+}

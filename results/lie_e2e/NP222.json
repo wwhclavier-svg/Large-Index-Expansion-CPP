@@ -1,0 +1,16 @@
+{
+	"family":"NP222",
+	"ne":7,
+	"order":4,
+	"r":1,
+	"s":1,
+	"n_targets":14,
+	"n_sectors":1,
+	"timing_s":{
+		"importRelations":23.110775,
+		"setupGeneratingCone":218.613287,
+		"concreteFamilyReduce":0.163787,
+		"total":460.66559
+	},
+	"output_file":"\/home\/ykm\/work-knowledge\/Projects\/Large-Index-Expansion-CPP\/results\/lie_e2e\/NP222.m"
+}

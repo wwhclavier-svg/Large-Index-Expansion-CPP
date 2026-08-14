@@ -2,15 +2,15 @@
 	"family":"bub11",
 	"ne":2,
 	"order":4,
-	"r":1,
+	"r":2,
 	"s":1,
-	"n_targets":3,
+	"n_targets":6,
 	"n_sectors":1,
 	"timing_s":{
-		"importRelations":0.001048,
-		"setupGeneratingCone":0.867259,
-		"concreteFamilyReduce":0.015821,
-		"total":1.76766
+		"importRelations":0.001214,
+		"setupGeneratingCone":0.558409,
+		"concreteFamilyReduce":0.001362,
+		"total":1.12123
 	},
-	"output_file":"\/home\/ykm\/Large-Index-Expansion-CPP\/results\/lie_e2e\/bub11.m"
+	"output_file":"\/home\/ykm\/work-knowledge\/Projects\/Large-Index-Expansion-CPP\/results\/lie_e2e\/bub11.m"
 }

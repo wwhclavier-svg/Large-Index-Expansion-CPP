@@ -7,10 +7,10 @@
 	"n_targets":6,
 	"n_sectors":1,
 	"timing_s":{
-		"importRelations":0.054270,
-		"setupGeneratingCone":0.507359,
-		"concreteFamilyReduce":0.001069,
-		"total":1.07155
+		"importRelations":0.001712,
+		"setupGeneratingCone":0.579241,
+		"concreteFamilyReduce":0.001132,
+		"total":1.16292
 	},
 	"output_file":"\/home\/ykm\/work-knowledge\/Projects\/Large-Index-Expansion-CPP\/results\/lie_e2e\/bub00.m"
 }

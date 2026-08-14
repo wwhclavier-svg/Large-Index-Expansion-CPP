@@ -1,18 +1,16 @@
 {
 	"family":"Penta1L",
 	"ne":5,
-	"r":1,
+	"order":4,
+	"r":2,
 	"s":1,
-	"n_targets":6,
-	"n_sectors":0,
-	"n_regions":1,
+	"n_targets":21,
+	"n_sectors":1,
 	"timing_s":{
-		"define":0.090172,
-		"MMA_expand":6.374591,
-		"MMA_reconstruct":1.477872,
-		"setupGeneratingCone":0.148917,
-		"concreteFamilyReduce":0.056930,
-		"total":8.14848
+		"importRelations":0.021282,
+		"setupGeneratingCone":0.630120,
+		"concreteFamilyReduce":0.015189,
+		"total":1.31265
 	},
-	"output_file":"\/home\/ykm\/Large-Index-Expansion-CPP\/results\/lie_e2e\/Penta1L.m"
+	"output_file":"\/home\/ykm\/work-knowledge\/Projects\/Large-Index-Expansion-CPP\/results\/lie_e2e\/Penta1L.m"
 }

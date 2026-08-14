@@ -1,0 +1,16 @@
+{
+	"family":"BoxM",
+	"ne":4,
+	"order":4,
+	"r":2,
+	"s":1,
+	"n_targets":15,
+	"n_sectors":1,
+	"timing_s":{
+		"importRelations":0.016502,
+		"setupGeneratingCone":0.617480,
+		"concreteFamilyReduce":0.007593,
+		"total":1.26723
+	},
+	"output_file":"\/home\/ykm\/work-knowledge\/Projects\/Large-Index-Expansion-CPP\/results\/lie_e2e\/BoxM.m"
+}
