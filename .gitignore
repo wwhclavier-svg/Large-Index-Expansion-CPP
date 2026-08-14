@@ -117,3 +117,6 @@ __pycache__/
 tools/hunt/
 tools/hunt_all/
 tools/ab_sub/
+
+# One-off experiment outputs (lev=4, deg=3, 2026-07)
+relations_l4d3/

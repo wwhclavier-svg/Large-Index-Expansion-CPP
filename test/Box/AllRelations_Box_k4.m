@@ -1,1 +1,1 @@
-/home/ykm/Large-Index-Expansion-CPP/relations/AllRelations_Box_k4.m
+../../relations/AllRelations_Box_k4.m

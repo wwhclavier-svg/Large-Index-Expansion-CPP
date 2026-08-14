@@ -550,7 +550,7 @@ void exportRelationMeta(
 int main(int argc, char* argv[]) {
     if (argc < 2) {
         cerr << "Usage: " << argv[0] << " <family_name> [order] [lev_min] [lev_max] [deg_max] [--topsector] [--mode <0|1|2>]" << endl;
-        cerr << "  family_name: e.g. bub, bub0, DBtop" << endl;
+        cerr << "  family_name: e.g. bub00, bub10, Box, Tri, DB313 (data/IBPMat_<family>.bin)" << endl;
         cerr << "  order      : expansion order (default: 4)" << endl;
         cerr << "  lev_min    : min |alpha| (default: 1)" << endl;
         cerr << "  lev_max    : max |alpha| (default: 2)" << endl;
@@ -560,11 +560,11 @@ int main(int argc, char* argv[]) {
         cerr << "  --mode <n> : ansatz mode: 0=Pyramid 1=DotPyramid 2=Star 3=ExtendedPyramid (default: 0)" << endl;
         cerr << "  --sector <s>: ExtendedPyramid sector (e.g. \"1101\"), default=auto top sector" << endl;
         cerr << endl;
-        cerr << "Example: " << argv[0] << " bub" << endl;
-        cerr << "         " << argv[0] << " DBtop 5 1 2 1" << endl;
-        cerr << "         " << argv[0] << " SR 5 1 2 2 --topsector" << endl;
-        cerr << "         " << argv[0] << " bub 4 1 2 2 --mode 1" << endl;
-        cerr << "         " << argv[0] << " bub 4 0 2 2 --mode 3 --sector 11" << endl;
+        cerr << "Example: " << argv[0] << " bub00" << endl;
+        cerr << "         " << argv[0] << " DB313 5 1 2 1" << endl;
+        cerr << "         " << argv[0] << " Box 5 1 2 2 --topsector" << endl;
+        cerr << "         " << argv[0] << " bub10 4 1 2 2 --mode 1" << endl;
+        cerr << "         " << argv[0] << " bub10 4 0 2 2 --mode 3 --sector 11" << endl;
         return 1;
     }
 

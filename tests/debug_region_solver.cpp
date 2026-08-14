@@ -143,8 +143,10 @@ int main() {
     auto gb = RegionSolver::computeGroebnerBasis(fullIdeal, allVars, MOD);
     dumpPolys("Groebner Basis (full)", gb);
 
-    // Minimal associated primes
-    auto [primelist, dims] = RegionSolver::computeMinAssPrimes(gb, allVars, MOD);
+    // Minimal associated primes (via combined GB + minAssGTZ in one Singular call)
+    auto primdec = RegionSolver::computePrimdec(gb, allVars, MOD);
+    const auto& primelist = primdec.primelist;
+    const auto& dims = primdec.dims;
     std::cout << "\n--- Minimal Associated Primes ---" << std::endl;
     std::cout << "Number of components: " << primelist.size() << std::endl;
     for (size_t p = 0; p < primelist.size(); ++p) {
